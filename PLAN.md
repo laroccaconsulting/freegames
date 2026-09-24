@@ -57,8 +57,14 @@ Ad-driven casual games (match-3, tile match, block and sort puzzles) run on
 - **Daily seed + share line**, e.g. `Pour · Daily #1 💎 / 22 moves · par 22 (par) / 🟩🟩🟩…`.
 
 Shared pieces live in `template/core/golf.js` (seeds, dates, links, rating,
-share text). Games in this family: Pour (sort puzzle, built), then tile match,
-block puzzle, gem swap puzzle mode.
+share text). Games in this family: Pour (sort puzzle) and Trio (tile match) are built;
+next are block puzzle and gem swap puzzle mode.
+
+Par has to measure something a player can do better or worse. Pour counts
+pours. In tile match every tile is tapped exactly once, so Trio scores the
+**tray peak** (most tiles held at once). With the whole stack visible, the
+solver can nearly always clear triple by triple, so par is usually 2–3: the
+challenge is spotting free triples among many tiles, not deep planning.
 
 **Visual bar:** these games should feel as rewarding as the ad-driven ones:
 glow, particles, sound that climbs with combos, and a jackpot moment on a win.
@@ -80,7 +86,7 @@ Themes are plug-ins (see `games/sort/js/themes.js`).
 | Game | Notes |
 |---|---|
 | **Pour** (water sort) | ✅ Built — `games/sort/`. First puzzle-golf game: solver par, daily, share links, 4 themes |
-| **Tile Trio** (triple tile match) | Puzzle golf: see-through stack, guaranteed winnable, par in moves |
+| **Trio** (triple tile match) | ✅ Built — `games/trio/`. X-ray through the stack, every board winnable, par = lowest tray peak |
 | **Block Puzzle** | Puzzle golf: visible piece queue, shared daily piece sequence, calm mode with no game over. Avoid Blokus-style competitive placement |
 | **Minesweeper** | No-guess boards by default, plus "why is this safe?" |
 | **Word Search** | Custom word lists shared by link, printable |
@@ -206,6 +212,16 @@ node scripts/build-sw.mjs                 # before every deploy
   stoppers, combo chimes that climb, win marquee + jackpot fountain, slot-reel results
 - Themes as plug-ins: Neon, Aurora, Sunny, Calm (colour-blind safe, symbols on)
 - Colour symbols, reduced motion, effects off, keyboard play, screen-reader announcements
+
+## Trio — feature list (v1)
+
+- Triple tile match: tap free tiles into a 7-slot tray; three of a kind clear
+- Symmetric pyramid boards, generated from a seed; types dealt along a clearing
+  order so every board is winnable; a solver sets par (lowest tray peak)
+- X-ray (hold) shows through the stack; nothing is hidden
+- Undo, restart, hints (💡), daily board, streaks, challenge links, slot-reel results
+- Queued taps (tapped tiles go see-through at once, so fast play never drops a tap)
+- Themes: Jewels (tiles drawn in code), Orchard and Garden (emoji), Calm (shape + colour)
 
 ### Ideas for later
 

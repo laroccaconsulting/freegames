@@ -1,7 +1,7 @@
 // Offline support for the hub page only. Each game has its own service
 // worker for its own folder, so requests outside FILES are left alone.
 // VERSION and FILES are rewritten by scripts/build-sw.mjs.
-const VERSION = '1ace1a580016';
+const VERSION = '9e78c6ac704f';
 const FILES = [
   './',
   './icons/apple-touch-icon.png',
@@ -12,7 +12,8 @@ const FILES = [
   './index.html',
   './manifest.webmanifest',
   './pour.svg',
-  './solitaire.svg'
+  './solitaire.svg',
+  './trio.svg'
 ];
 
 const PREFIX = `freegames-hub:${self.registration.scope}:`;
