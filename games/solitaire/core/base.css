@@ -439,6 +439,123 @@ dialog.closing::backdrop {
   white-space: nowrap;
 }
 
+/* ---------- Results card (core/results.js) ---------- */
+
+.results {
+  text-align: center;
+}
+.results .dialog-header {
+  justify-content: center;
+  padding-left: 14px;
+}
+.results .dialog-header h2 {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+.results .dialog-close {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+}
+.results .dialog-panel {
+  position: relative;
+}
+.stamp {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 2px 0 12px;
+  opacity: 0;
+  transform: scale(2.4) rotate(-8deg);
+}
+.stamp.show {
+  animation: stamp 0.42s cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
+}
+.stamp .emoji {
+  font-size: 54px;
+  line-height: 1;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.25));
+}
+.stamp .label {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  background: linear-gradient(90deg, #ff4fb0, #ffcf3d, #3de7ff, #ff4fb0);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 3s linear infinite;
+}
+@keyframes stamp {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes shimmer {
+  to {
+    background-position: 300% 0;
+  }
+}
+.reels {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin: 4px 0 12px;
+}
+.reel-box {
+  background: var(--surface-2);
+  border-radius: 16px;
+  padding: 10px 14px 8px;
+  min-width: 96px;
+}
+.reel-box small {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.reel {
+  display: inline-flex;
+  font-size: 2.4rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  height: 1.15em;
+  line-height: 1.15em;
+  overflow: hidden;
+  mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent);
+  -webkit-mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent);
+}
+.reel .strip {
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--spin, 1s) cubic-bezier(0.15, 0.9, 0.25, 1.08);
+}
+.reel .strip span {
+  display: block;
+  height: 1.15em;
+}
+.squares {
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  margin: 0 0 8px;
+}
+.result-note {
+  color: var(--text-muted);
+  margin: 4px 0;
+  font-weight: 600;
+}
+.result-note.win {
+  color: var(--accent);
+}
+.share-btn {
+  margin-top: 10px;
+  width: 100%;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

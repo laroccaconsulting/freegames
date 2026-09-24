@@ -3,7 +3,7 @@
 // against a horizontal line until the area matches the layer's volume.
 // Game rules live in rules.js; this file only draws and animates.
 import { CAPACITY } from './rules.js';
-import { Particles, drawStar } from './fx.js';
+import { Particles, drawStar } from '../core/fx.js';
 
 const UNIT = 1.1; // height of one unit of liquid, in tube widths
 const NECK = 0.6; // empty headspace at the top of a tube, in units

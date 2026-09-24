@@ -58,16 +58,18 @@ export function buildHash(params) {
   return parts.length ? `#${parts.join('&')}` : '';
 }
 
-// Par is the fewest moves possible, so the best result is "Perfect".
+// Lower is better. Matching par is "Perfect". Where par is the best a solver
+// found rather than a proven minimum, beating it scores a "Birdie".
 export function rating(moves, par) {
   const over = moves - par;
-  if (over <= 0) return { over: 0, label: 'Perfect', emoji: '💎', tier: 3 };
+  if (over < 0) return { over, label: 'Birdie!', emoji: '🐦', tier: 4 };
+  if (over === 0) return { over: 0, label: 'Perfect', emoji: '💎', tier: 3 };
   if (over <= Math.max(1, Math.round(par * 0.1))) return { over, label: 'Great', emoji: '🌟', tier: 2 };
   if (over <= Math.max(3, Math.round(par * 0.3))) return { over, label: 'Solved', emoji: '✅', tier: 1 };
   return { over, label: 'Finished', emoji: '👍', tier: 0 };
 }
 
-export const overText = (over) => (over > 0 ? `+${over}` : 'par');
+export const overText = (over) => (over > 0 ? `+${over}` : over < 0 ? `${over}` : 'par');
 
 // A spoiler-free row of squares: green up to par, yellow for each move over.
 export function squares(moves, par, max = 10) {
