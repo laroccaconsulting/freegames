@@ -1,0 +1,27 @@
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+}
+.topbar h1 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+.stage {
+  flex: 1;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+.footer {
+  text-align: center;
+  font-size: 0.8rem;
+  padding: 12px 16px;
+}

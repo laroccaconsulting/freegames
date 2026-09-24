@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <title>Solitaire — free, no ads</title>
+    <meta name="description" content="Klondike, Spider and FreeCell solitaire. Free forever, no ads, no tracking, works offline." />
+    <meta name="theme-color" content="#1d6b45" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Solitaire" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:title" content="Solitaire — free, no ads" />
+    <meta property="og:description" content="Klondike, Spider and FreeCell. No ads, no tracking, works offline." />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="core/base.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body data-felt="green">
+    <div class="app">
+      <header class="topbar">
+        <button class="game-switch" id="game-btn" aria-label="Change game">
+          <span class="game-title">
+            <span id="game-name">Solitaire</span>
+            <small id="game-mode"></small>
+          </span>
+          <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+        </button>
+        <div class="status" aria-live="off">
+          <div class="chip chip-time"><small>Time</small><b id="time">0:00</b></div>
+          <div class="chip"><small>Moves</small><b id="moves">0</b></div>
+          <div class="chip chip-score" id="score-chip"><small>Score</small><b id="score">0</b></div>
+        </div>
+      </header>
+
+      <main class="table">
+        <div class="board" id="board" aria-label="Card table"></div>
+        <span class="deal-no" id="deal-no" aria-label="Deal number"></span>
+      </main>
+
+      <nav class="toolbar" aria-label="Game controls">
+        <button class="tool" id="new-btn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2.5" /><path d="M12 9v6M9 12h6" /></svg>
+          <span>New</span>
+        </button>
+        <button class="tool" id="hint-btn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" /></svg>
+          <span>Hint</span>
+        </button>
+        <button class="tool" id="undo-btn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
+          <span>Undo</span>
+        </button>
+        <button class="tool tool-accent" id="auto-btn" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z" /></svg>
+          <span>Finish</span>
+        </button>
+        <button class="tool" id="menu-btn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          <span>Menu</span>
+        </button>
+      </nav>
+    </div>
+    <noscript><p style="padding: 24px; color: #fff">Solitaire needs JavaScript to run.</p></noscript>
+  </body>
+</html>
