@@ -134,6 +134,36 @@ button {
   background: var(--accent-soft);
 }
 
+/* ---------- Icons (core/icons.js) ---------- */
+
+.icon {
+  flex: none;
+  vertical-align: -0.2em;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45em;
+}
+.inline-icon {
+  display: inline-flex;
+  vertical-align: -0.25em;
+  color: var(--accent);
+}
+.medal {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: radial-gradient(circle at 35% 30%, var(--medal-light), var(--medal-deep) 70%);
+  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.25), inset 0 3px 6px rgba(255, 255, 255, 0.5), 0 8px 20px -6px var(--medal-deep);
+}
+.medal-icon {
+  stroke-width: 2.2;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+}
+
 /* ---------- Dialogs ---------- */
 
 dialog.dialog {
@@ -471,10 +501,8 @@ dialog.closing::backdrop {
 .stamp.show {
   animation: stamp 0.42s cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
 }
-.stamp .emoji {
-  font-size: 54px;
-  line-height: 1;
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.25));
+.stamp .medal {
+  margin-bottom: 8px;
 }
 .stamp .label {
   font-size: 2rem;
@@ -538,6 +566,29 @@ dialog.closing::backdrop {
   display: block;
   height: 1.15em;
 }
+.segments {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 10px;
+}
+.segments i {
+  width: 18px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--surface-2);
+}
+.segments i.good {
+  background: var(--accent);
+}
+.segments i.over {
+  background: #f2b01e;
+}
+.segment-star {
+  color: #f2b01e;
+  fill: #f2b01e;
+}
 .squares {
   font-size: 1.1rem;
   letter-spacing: 2px;
@@ -547,6 +598,10 @@ dialog.closing::backdrop {
   color: var(--text-muted);
   margin: 4px 0;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 .result-note.win {
   color: var(--accent);

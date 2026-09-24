@@ -5,10 +5,11 @@ import { setSoundEnabled } from './core/sound.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash, rating, overText, squares } from './core/golf.js';
 import { showResults, note } from './core/results.js';
+import { icon, withIcon } from './core/icons.js';
 import { TRAY, coverMap, pick, isFree, isWon, isLost, trayPeak } from './js/rules.js';
 import { generate, levelSpec, levelSeed, DAILY_SPEC, LAUNCH_DAY } from './js/levels.js';
 import { solve } from './js/solver.js';
-import { THEMES, themeById } from './js/themes.js';
+import { THEMES, themeById, iconColor } from './js/themes.js';
 import { Board } from './js/render.js';
 import { sfx, setSoundTheme } from './js/sfx.js';
 
@@ -113,7 +114,7 @@ function begin(enter) {
   save();
   const c = game.challenge;
   $('challenge').hidden = !c;
-  if (c) $('challenge').textContent = `🏁 Beat a peak of ${c} · par is ${game.par}`;
+  if (c) $('challenge').replaceChildren(icon('flag', { size: 16 }), ` Beat a peak of ${c} · par is ${game.par}`);
   announce(`${titleText()}. ${game.tiles.length} tiles. Par: never more than ${game.par} in the tray.`);
 }
 
@@ -127,7 +128,7 @@ function updateHud() {
   if (!game) sub.textContent = '';
   else if (game.mode === 'daily') {
     const streak = dailyStreak(dailyLog(), today());
-    sub.textContent = `${left} tiles left${streak ? ` · 🔥 ${streak}` : ''}`;
+    sub.textContent = `${left} tiles left${streak ? ` · ${streak}-day streak` : ''}`;
   } else sub.textContent = `${left} tiles left`;
   const peak = game ? peakNow() : 0;
   const peakEl = $('peak');
@@ -273,7 +274,7 @@ async function lost() {
 
 function resultRating() {
   const r = rating(peakNow(), game.par);
-  if (game.hints) return { ...r, label: 'Cleared with help', emoji: '💡', tier: Math.min(r.tier, 1) };
+  if (game.hints) return { ...r, label: 'Cleared with help', emoji: '💡', icon: 'bulb', tier: Math.min(r.tier, 1) };
   return r;
 }
 
@@ -315,12 +316,12 @@ function openResults() {
   const notes = [];
   if (game.mode === 'daily') {
     const streak = dailyStreak(dailyLog(), today());
-    if (streak) notes.push(note(`🔥 ${streak}-day streak`));
+    if (streak) notes.push(note(`${streak}-day streak`, { icon: 'flame' }));
   }
-  if (r.tier === 4) notes.push(note('You beat the solver’s best!', true));
+  if (r.tier === 4) notes.push(note('You beat the solver’s best!', { win: true, icon: 'bird' }));
   if (game.challenge) {
     const diff = Number(game.challenge) - peak;
-    notes.push(note(diff > 0 ? `🏆 You beat your friend by ${diff}!` : diff === 0 ? '🤝 Tied with your friend' : `Your friend peaked at ${game.challenge}`, diff > 0));
+    notes.push(note(diff > 0 ? `You beat your friend by ${diff}!` : diff === 0 ? 'Tied with your friend' : `Your friend peaked at ${game.challenge}`, { win: diff > 0, icon: diff > 0 ? 'trophy' : diff === 0 ? 'equal' : 'flag' }));
   }
   const actions =
     game.mode === 'level'
@@ -353,8 +354,8 @@ function openResults() {
 
 // ---------- Menus ----------
 
-function menuCard(icon, title, sub, onClick) {
-  return el('button', { class: 'menu-card', onclick: onClick }, el('span', { class: 'icon' }, icon), el('span', {}, el('b', {}, title), el('small', {}, sub)));
+function menuCard(name, title, sub, onClick) {
+  return el('button', { class: 'menu-card', onclick: onClick }, el('span', { class: 'menu-icon' }, icon(name, { size: 24 })), el('span', {}, el('b', {}, title), el('small', {}, sub)));
 }
 
 function openMenu() {
@@ -370,21 +371,21 @@ function openMenu() {
   const input = el('input', { type: 'number', min: 1, max: p.level, value: game?.mode === 'level' ? game.level : p.level, 'aria-label': 'Level number', inputmode: 'numeric' });
   const body = el('div', {},
     el('div', { class: 'menu-list' },
-      menuCard('📅', `Daily #${dailyNumber(key, LAUNCH_DAY)}`,
-        done ? `Cleared with peak ${done.peak} (par ${done.par})${streak ? ` · 🔥 ${streak}` : ''}` : `Same board for everyone today${streak ? ` · 🔥 ${streak}` : ''}`,
+      menuCard('calendar', `Daily #${dailyNumber(key, LAUNCH_DAY)}`,
+        done ? `Cleared with peak ${done.peak} (par ${done.par})${streak ? ` · ${streak}-day streak` : ''}` : `Same board for everyone today${streak ? ` · ${streak}-day streak` : ''}`,
         go(() => load({ mode: 'daily', date: key }))),
-      menuCard('🧩', `Level ${p.level}`, p.level > 1 ? `${p.level - 1} cleared · ${p.perfect} perfect` : 'Start from the beginning', go(() => load({ mode: 'level', level: p.level }))),
+      menuCard('tiles', `Level ${p.level}`, p.level > 1 ? `${p.level - 1} cleared · ${p.perfect} perfect` : 'Start from the beginning', go(() => load({ mode: 'level', level: p.level }))),
     ),
     el('div', { class: 'field' },
       el('span', { class: 'field-label' }, 'Play any level you have reached'),
       el('div', { class: 'level-picker' }, input,
         el('button', { class: 'btn', onclick: go(() => load({ mode: 'level', level: Math.max(1, Math.min(p.level, Math.floor(Number(input.value) || 1))) })) }, 'Play'))),
     el('div', { class: 'menu-row' },
-      el('button', { class: 'btn', onclick: go(openThemes) }, '🎨 Themes'),
-      el('button', { class: 'btn', onclick: go(openSettings) }, '⚙︎ Settings')),
+      el('button', { class: 'btn', onclick: go(openThemes) }, withIcon('palette', 'Themes')),
+      el('button', { class: 'btn', onclick: go(openSettings) }, withIcon('settings', 'Settings'))),
     el('div', { class: 'menu-row' },
-      el('button', { class: 'btn', onclick: go(openStats) }, '📊 Stats'),
-      el('button', { class: 'btn', onclick: go(openHelp) }, '❔ How to play')),
+      el('button', { class: 'btn', onclick: go(openStats) }, withIcon('chart', 'Stats')),
+      el('button', { class: 'btn', onclick: go(openHelp) }, withIcon('help', 'How to play'))),
   );
   openDialog({ title: 'Trio', body });
   dialog = document.querySelector('dialog.dialog:last-of-type');
@@ -392,7 +393,7 @@ function openMenu() {
 
 function openThemes() {
   const current = settings.get('skin');
-  const sample = (t) => (t.icons.kind === 'emoji' ? t.icons.set.slice(0, 5).join(' ') : '◆ ● ★ ♥ ⬢');
+  const sample = (t) => el('span', { class: 'dots' }, [0, 1, 2, 3, 4, 5].map((k) => el('i', { style: `background:${iconColor(t, k)}` })));
   openDialog({
     title: 'Themes',
     body: el('div', {},
@@ -400,7 +401,7 @@ function openThemes() {
         THEMES.map((t) =>
           el('label', { class: 'theme-card' },
             el('input', { type: 'radio', name: 'skin', value: t.id, checked: t.id === current, onchange: () => settings.set('skin', t.id), 'aria-label': t.name }),
-            el('span', { class: `face ${t.dark ? 'dark' : 'light'}`, style: `background:${t.preview}` }, el('b', {}, t.name), el('span', { class: 'sample' }, sample(t)))))),
+            el('span', { class: `face ${t.dark ? 'dark' : 'light'}`, style: `background:${t.preview}` }, el('b', {}, t.name), sample(t))))),
       el('p', { class: 'muted' }, 'Every theme has its own tiles, sounds and effects.')),
   });
 }
@@ -439,10 +440,10 @@ function openHelp() {
     body: el('div', {},
       el('p', {}, 'Tap a bright tile to move it to the tray. Three of a kind in the tray clear. Clear the whole board before the tray fills up.'),
       el('p', {}, 'Dimmed tiles are covered. Hold ', el('b', {}, 'X-ray'), ' to see through the stack — nothing is hidden, and every board can be cleared.'),
-      el('p', {}, el('b', {}, 'Peak'), ' is the most tiles your tray has held. ', el('b', {}, 'Par'), ' is the lowest peak the solver found. Match it for 💎 Perfect, or beat it for a 🐦 Birdie.'),
+      el('p', {}, el('b', {}, 'Peak'), ' is the most tiles your tray has held. ', el('b', {}, 'Par'), ' is the lowest peak the solver found. Match it for a Perfect, or beat it for a Birdie.'),
       el('ul', {},
         el('li', {}, 'Undo as much as you like: your peak counts only the moves you keep.'),
-        el('li', {}, 'Hints are free. Results that used them are marked 💡.'),
+        el('li', {}, 'Hints are free. Results that used them are marked as helped.'),
         el('li', {}, 'The daily board is the same for everyone. Share your result to challenge a friend.')),
       el('p', { class: 'muted' }, 'Free forever. No ads, no tracking, works offline.')),
   });

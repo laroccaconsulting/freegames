@@ -1,6 +1,7 @@
 import { makeStore } from './core/storage.js';
 import { makeSettings } from './core/settings.js';
 import { applyTheme, watchSystemTheme, openDialog, segmented, toggle, el, toast, formatTime } from './core/ui.js';
+import { medal } from './core/icons.js';
 import { sounds, setSoundEnabled } from './core/sound.js';
 import { registerServiceWorker, isStandalone } from './core/pwa.js';
 import { randomSeed } from './core/rng.js';
@@ -291,7 +292,7 @@ async function onWin() {
   const body = el(
     'div',
     { class: 'win' },
-    el('div', { class: 'win-trophy', 'aria-hidden': 'true' }, '🏆'),
+    el('div', { class: 'win-trophy', 'aria-hidden': 'true' }, medal('trophy', { size: 72 })),
     records.length > 0 && el('p', { class: 'win-records' }, `New record: ${records.join(' · ')}!`),
     el(
       'div',

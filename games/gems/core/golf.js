@@ -58,15 +58,16 @@ export function buildHash(params) {
   return parts.length ? `#${parts.join('&')}` : '';
 }
 
+// `emoji` is for plain-text share lines; `icon` names the medal shown in the app.
 // Lower is better. Matching par is "Perfect". Where par is the best a solver
 // found rather than a proven minimum, beating it scores a "Birdie".
 export function rating(moves, par) {
   const over = moves - par;
-  if (over < 0) return { over, label: 'Birdie!', emoji: '🐦', tier: 4 };
-  if (over === 0) return { over: 0, label: 'Perfect', emoji: '💎', tier: 3 };
-  if (over <= Math.max(1, Math.round(par * 0.1))) return { over, label: 'Great', emoji: '🌟', tier: 2 };
-  if (over <= Math.max(3, Math.round(par * 0.3))) return { over, label: 'Solved', emoji: '✅', tier: 1 };
-  return { over, label: 'Finished', emoji: '👍', tier: 0 };
+  if (over < 0) return { over, label: 'Birdie!', emoji: '🐦', icon: 'bird', tier: 4 };
+  if (over === 0) return { over: 0, label: 'Perfect', emoji: '💎', icon: 'diamond', tier: 3 };
+  if (over <= Math.max(1, Math.round(par * 0.1))) return { over, label: 'Great', emoji: '🌟', icon: 'star', tier: 2 };
+  if (over <= Math.max(3, Math.round(par * 0.3))) return { over, label: 'Solved', emoji: '✅', icon: 'check', tier: 1 };
+  return { over, label: 'Finished', emoji: '👍', icon: 'medal', tier: 0 };
 }
 
 export const overText = (over) => (over > 0 ? `+${over}` : over < 0 ? `${over}` : 'par');
@@ -112,12 +113,12 @@ export async function shareText(text, url) {
 // For games where a higher score is better and par is a target to beat
 // (for example a bot's score on the same daily pieces).
 export function scoreRating(score, target) {
-  if (score > target) return { over: target - score, label: 'Beat it!', emoji: '🏆', tier: 4 };
+  if (score > target) return { over: target - score, label: 'Beat it!', emoji: '🏆', icon: 'trophy', tier: 4 };
   const ratio = target ? score / target : 1;
-  if (ratio >= 0.999) return { over: 0, label: 'Matched', emoji: '💎', tier: 3 };
-  if (ratio >= 0.85) return { over: target - score, label: 'So close', emoji: '🌟', tier: 2 };
-  if (ratio >= 0.5) return { over: target - score, label: 'Solid', emoji: '✅', tier: 1 };
-  return { over: target - score, label: 'Finished', emoji: '👍', tier: 0 };
+  if (ratio >= 0.999) return { over: 0, label: 'Matched', emoji: '💎', icon: 'diamond', tier: 3 };
+  if (ratio >= 0.85) return { over: target - score, label: 'So close', emoji: '🌟', icon: 'star', tier: 2 };
+  if (ratio >= 0.5) return { over: target - score, label: 'Solid', emoji: '✅', icon: 'check', tier: 1 };
+  return { over: target - score, label: 'Finished', emoji: '👍', icon: 'medal', tier: 0 };
 }
 
 // Ten squares filled in proportion to the target, with a star for beating it.

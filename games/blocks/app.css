@@ -450,10 +450,15 @@ body.no-effects .motes {
 .menu-card:focus-visible {
   outline: 3px solid var(--accent);
 }
-.menu-card .icon {
-  font-size: 28px;
+.menu-card .menu-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
   width: 44px;
-  text-align: center;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 .menu-card b {
   display: block;
@@ -469,6 +474,8 @@ body.no-effects .motes {
 }
 .menu-row .btn {
   flex: 1;
+  padding-inline: 0.8em;
+  white-space: nowrap;
 }
 
 .level-picker {
