@@ -27,6 +27,44 @@ A good candidate meets all four:
 | No content to license or keep producing | The rules are the product |
 | Evergreen search demand | People find it without marketing |
 
+## How we stand out
+
+"Free with no ads" earns trust but is not a reason to switch: clean clones of
+Sudoku and 2048 already exist. Every game should use some of these, built once
+in `template/core` so each new game gets them for free:
+
+1. **Social without a server.** The puzzle lives in the link (`#d=2026-09-24&m=22`
+   means "beat my 22 on today's puzzle"). Daily puzzles come from a date seed, so
+   everyone gets the same one, with a spoiler-free result to share.
+2. **Every game can be won, and we say so.** Winnable deals, no-guess boards,
+   unique solutions. No luck, no dead ends.
+3. **Hints that teach.** Explain why a move works, don't just make it.
+4. **Built for older players.** Large print, no timers, no streak guilt, high contrast.
+5. **Print it.** Print stylesheets for grid puzzles (teachers, activity coordinators).
+6. **Puzzles you make yourself, shared by link.** For example, a teacher's word list becomes a word search link.
+7. **No dark patterns.** No energy, no fake rewards, no nagging notifications.
+
+### Puzzle golf
+
+Ad-driven casual games (match-3, tile match, block and sort puzzles) run on
+*hidden* randomness so they can sell boosters and revives. We remove it:
+
+- **Nothing hidden.** Visible queues and see-through stacks: the game becomes a real puzzle.
+- **A solver sets par**, the fewest moves possible, so every level is winnable
+  and scoring is honest. Unlimited undo is fine because par is the challenge.
+- **Help is free but marked.** Hints (💡) and extra space (🧪) are one tap away,
+  never sold; results that used them can't be "Perfect".
+- **Daily seed + share line**, e.g. `Pour · Daily #1 💎 / 22 moves · par 22 (par) / 🟩🟩🟩…`.
+
+Shared pieces live in `template/core/golf.js` (seeds, dates, links, rating,
+share text). Games in this family: Pour (sort puzzle, built), then tile match,
+block puzzle, gem swap puzzle mode.
+
+**Visual bar:** these games should feel as rewarding as the ad-driven ones:
+glow, particles, sound that climbs with combos, and a jackpot moment on a win.
+The difference is that the rewards come from solving the puzzle, not from buying anything.
+Themes are plug-ins (see `games/sort/js/themes.js`).
+
 ## Roadmap
 
 ### Wave 1 — Flagships (own domains)
@@ -41,16 +79,21 @@ A good candidate meets all four:
 
 | Game | Notes |
 |---|---|
-| **Minesweeper** | Classic sizes + custom, optional "no guessing" boards, chording, flag mode for touch |
-| **Block Puzzle** (1010!/Block Blast style) | One of the most ad-heavy mobile genres; very small to build |
-| **2048** | Original is MIT-licensed; write our own anyway |
-| **Word Search** | Generated grids from a public-domain word list |
+| **Pour** (water sort) | ✅ Built — `games/sort/`. First puzzle-golf game: solver par, daily, share links, 4 themes |
+| **Tile Trio** (triple tile match) | Puzzle golf: see-through stack, guaranteed winnable, par in moves |
+| **Block Puzzle** | Puzzle golf: visible piece queue, shared daily piece sequence, calm mode with no game over. Avoid Blokus-style competitive placement |
+| **Minesweeper** | No-guess boards by default, plus "why is this safe?" |
+| **Word Search** | Custom word lists shared by link, printable |
+| **Gem Swap** (match-3 puzzle mode) | Fixed boards, refills from a visible queue, clear in N moves |
+| **Dots and Boxes** | Strong AI that teaches the chain rule; pass-and-play |
+| **Number Link** | Generated boards with a unique solution, daily |
+| ~~2048~~ | Dropped: too many clean clones already, so nothing to stand out on |
 
 ### Wave 3 — Bigger builds
 
 | Game | Notes |
 |---|---|
-| **Chess vs. computer** | Stockfish (WebAssembly) — GPL, so the game must be published as open source |
+| **Chess vs. computer** | Low priority: lichess already does this free and well. Stockfish is GPL |
 | **Jigsaw** | Public-domain art from Met / Rijksmuseum / Art Institute of Chicago open access |
 | **Hearts, Spades, Dominoes, Checkers, Backgammon** | Offline vs. AI; reuse the solitaire card engine |
 | **Nonograms / Picross** | Generated puzzles with unique-solution check |
@@ -59,7 +102,9 @@ A good candidate meets all four:
 ### Avoid
 
 - **Trademarked names or trade dress**: Tetris (very aggressive enforcement,
-  including look-alikes), Wordle, Scrabble, Boggle, Yahtzee, Candy Crush, Uno.
+  including look-alikes), Wordle, Scrabble, Boggle, Yahtzee, Candy Crush, Uno,
+  Bejeweled, Two Dots, Flow Free, Block Blast, 1010!, Zen Match, Blokus,
+  KenKen (use "Calcudoku"), LinkedIn's Queens (the generic name is "Star Battle").
   Build the genre under a generic name.
 - **Anything needing a server**: online multiplayer, global leaderboards, cloud sync.
 - **Content treadmills**: crosswords, trivia — they need a constant supply of new content.
@@ -75,6 +120,7 @@ template/              Starter app — copy this to begin a new game
     ui.js              Dialogs, toasts, theme application
     sound.js           Tiny synthesized sound effects (Web Audio, no files)
     rng.js             Seeded RNG so every deal has a replayable number
+    golf.js            Puzzle golf: daily seeds, share links, par rating, share text
     pwa.js             Service worker registration + update notice
   sw.js                Offline cache; file list + version generated by script
   manifest.webmanifest
@@ -148,6 +194,24 @@ node scripts/build-sw.mjs                 # before every deploy
 - Daily deal with a streak
 - More variants: Pyramid, TriPeaks, Golf, Yukon, Forty Thieves
 - Manifest screenshots for a richer Android install sheet
+
+## Pour — feature list (v1)
+
+- Water sort: pour the top run onto a matching colour or an empty tube
+- Endless levels (3 → 12 colours), generated on device from a seed; an A* solver
+  (in a Web Worker) proves each level solvable and sets par = fewest pours
+- Daily puzzle (same for everyone), streaks, share line + link with your score as a challenge
+- Unlimited undo, restart, hints from the solver (💡), one free extra tube (🧪)
+- Canvas renderer: liquid stays level as tubes tip, pour stream, splashes, bubbles,
+  stoppers, combo chimes that climb, win marquee + jackpot fountain, slot-reel results
+- Themes as plug-ins: Neon, Aurora, Sunny, Calm (colour-blind safe, symbols on)
+- Colour symbols, reduced motion, effects off, keyboard play, screen-reader announcements
+
+### Ideas for later
+
+- Ball-sort look (one ball per move) as a rules variant
+- Harder shapes: 5-unit tubes, a single spare tube
+- More themes (seasonal); theme packs anyone can contribute as a single object
 
 ---
 
