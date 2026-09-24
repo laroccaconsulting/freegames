@@ -6,6 +6,7 @@ import { registerServiceWorker } from './core/pwa.js';
 import { randomSeed } from './core/rng.js';
 import { dateKey, dailyNumber, dailyStreak, parseHash, buildHash, scoreRating, scoreSquares } from './core/golf.js';
 import { showResults, note } from './core/results.js';
+import { icon, withIcon } from './core/icons.js';
 import { PIECES, pieceAt, emptyBoard, place, fitsAnywhere, sweep } from './js/rules.js';
 import { botScore, bestMove } from './js/bot.js';
 import { THEMES, themeById } from './js/themes.js';
@@ -105,7 +106,7 @@ function begin() {
   save();
   const c = game.challenge;
   $('challenge').hidden = !c;
-  if (c) $('challenge').textContent = `🏁 Beat ${fmt(c)} points`;
+  if (c) $('challenge').replaceChildren(icon('flag', { size: 16 }), ` Beat ${fmt(c)} points`);
   $('undo-btn').hidden = $('hint-btn').hidden = game.mode !== 'zen';
   announce(`${titleText()}. Drag pieces onto the board, or tap a piece and then a square.`);
 }
@@ -139,7 +140,7 @@ function updateHud(snap = false) {
   if (game.mode === 'daily') {
     const left = Math.max(0, DAILY_PIECES - game.n + game.hand.filter((h) => h != null).length);
     const streak = dailyStreak(dailyLog(), today());
-    sub.textContent = `${left} pieces left${streak ? ` · 🔥 ${streak}` : ''}`;
+    sub.textContent = `${left} pieces left${streak ? ` · ${streak}-day streak` : ''}`;
   } else sub.textContent = game.mode === 'zen' ? 'No game over — take your time' : 'Endless';
   $('target-label').textContent = game.mode === 'daily' ? 'Bot' : 'Best';
   const r = records();
@@ -250,7 +251,7 @@ async function finish(complete) {
 
 function resultRating(prevBest) {
   if (game.mode === 'daily') return scoreRating(game.score, game.target);
-  if (game.score > prevBest) return { label: prevBest ? 'New best!' : 'First score!', emoji: '🏆', tier: 4 };
+  if (game.score > prevBest) return { label: prevBest ? 'New best!' : 'First score!', emoji: '🏆', icon: 'trophy', tier: 4 };
   return scoreRating(game.score, prevBest);
 }
 
@@ -265,13 +266,13 @@ function openResults(complete, prevBest) {
   const r = resultRating(prevBest);
   const notes = [];
   if (game.mode === 'daily') {
-    notes.push(note(complete ? 'All 90 pieces placed!' : 'Ran out of room before the last piece.', complete));
+    notes.push(note(complete ? 'All 90 pieces placed!' : 'Ran out of room before the last piece.', { win: complete, icon: complete ? 'check' : 'blocks' }));
     const streak = dailyStreak(dailyLog(), today());
-    if (streak) notes.push(note(`🔥 ${streak}-day streak`));
+    if (streak) notes.push(note(`${streak}-day streak`, { icon: 'flame' }));
   }
   if (game.challenge) {
     const diff = game.score - Number(game.challenge);
-    notes.push(note(diff > 0 ? `🏆 You beat your friend by ${fmt(diff)}!` : diff === 0 ? '🤝 Tied with your friend' : `Your friend scored ${fmt(game.challenge)}`, diff > 0));
+    notes.push(note(diff > 0 ? `You beat your friend by ${fmt(diff)}!` : diff === 0 ? 'Tied with your friend' : `Your friend scored ${fmt(game.challenge)}`, { win: diff > 0, icon: diff > 0 ? 'trophy' : diff === 0 ? 'equal' : 'flag' }));
   }
   const other = game.mode === 'daily' ? { label: 'Bot', value: game.target } : { label: 'Best', value: Math.max(prevBest, game.score) };
   showResults({
@@ -335,8 +336,8 @@ async function newGameConfirm() {
 
 // ---------- Menus ----------
 
-function menuCard(icon, title, sub, onClick) {
-  return el('button', { class: 'menu-card', onclick: onClick }, el('span', { class: 'icon' }, icon), el('span', {}, el('b', {}, title), el('small', {}, sub)));
+function menuCard(name, title, sub, onClick) {
+  return el('button', { class: 'menu-card', onclick: onClick }, el('span', { class: 'menu-icon' }, icon(name, { size: 24 })), el('span', {}, el('b', {}, title), el('small', {}, sub)));
 }
 
 function openMenu() {
@@ -351,18 +352,18 @@ function openMenu() {
   };
   const body = el('div', {},
     el('div', { class: 'menu-list' },
-      menuCard('📅', `Daily #${dailyNumber(key, LAUNCH_DAY)}`,
-        done ? `Scored ${fmt(done.score)} (bot ${fmt(done.target)})${streak ? ` · 🔥 ${streak}` : ''}` : `90 pieces, same for everyone. Beat the bot!${streak ? ` · 🔥 ${streak}` : ''}`,
+      menuCard('calendar', `Daily #${dailyNumber(key, LAUNCH_DAY)}`,
+        done ? `Scored ${fmt(done.score)} (bot ${fmt(done.target)})${streak ? ` · ${streak}-day streak` : ''}` : `90 pieces, same for everyone. Beat the bot!${streak ? ` · ${streak}-day streak` : ''}`,
         go(() => newGame('daily', { date: key }))),
-      menuCard('🧱', 'Classic', r.best ? `Endless · best ${fmt(r.best)}` : 'Endless — how long can you last?', go(() => newGame('classic'))),
-      menuCard('🍃', 'Zen', 'No game over, undo and hints', go(() => newGame('zen'))),
+      menuCard('infinity', 'Classic', r.best ? `Endless · best ${fmt(r.best)}` : 'Endless — how long can you last?', go(() => newGame('classic'))),
+      menuCard('leaf', 'Zen', 'No game over, undo and hints', go(() => newGame('zen'))),
     ),
     el('div', { class: 'menu-row' },
-      el('button', { class: 'btn', onclick: go(openThemes) }, '🎨 Themes'),
-      el('button', { class: 'btn', onclick: go(openSettings) }, '⚙︎ Settings')),
+      el('button', { class: 'btn', onclick: go(openThemes) }, withIcon('palette', 'Themes')),
+      el('button', { class: 'btn', onclick: go(openSettings) }, withIcon('settings', 'Settings'))),
     el('div', { class: 'menu-row' },
-      el('button', { class: 'btn', onclick: go(openStats) }, '📊 Stats'),
-      el('button', { class: 'btn', onclick: go(openHelp) }, '❔ How to play')),
+      el('button', { class: 'btn', onclick: go(openStats) }, withIcon('chart', 'Stats')),
+      el('button', { class: 'btn', onclick: go(openHelp) }, withIcon('help', 'How to play'))),
   );
   openDialog({ title: 'Blocks', body });
   dialog = document.querySelector('dialog.dialog:last-of-type');

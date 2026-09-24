@@ -5,6 +5,7 @@ import { setSoundEnabled } from './core/sound.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash, rating, overText, squares } from './core/golf.js';
 import { showResults, note } from './core/results.js';
+import { icon, withIcon } from './core/icons.js';
 import { CAPACITY, pourAmount, pour, isComplete, isSolved, hasLegalMove } from './js/rules.js';
 import { levelColors, levelSeed, generate, DAILY_COLORS, LAUNCH_DAY } from './js/levels.js';
 import { solve } from './js/solver.js';
@@ -161,7 +162,7 @@ function begin() {
   save();
   const c = game.challenge;
   $('challenge').hidden = !c;
-  if (c) $('challenge').textContent = `🏁 Beat ${c} moves · par is ${game.par}`;
+  if (c) $('challenge').replaceChildren(icon('flag', { size: 16 }), ` Beat ${c} moves · par is ${game.par}`);
   announce(`${titleText()}. ${game.colors} colours, par ${game.par}.`);
 }
 
@@ -179,7 +180,7 @@ function updateHud() {
   else if (game.mode === 'daily') {
     const d = new Date(`${game.date}T12:00`);
     const streak = dailyStreak(dailyLog(), today());
-    sub.textContent = `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}${streak ? ` · 🔥 ${streak}` : ''}`;
+    sub.textContent = `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}${streak ? ` · ${streak}-day streak` : ''}`;
   } else {
     const best = progress().best[game.level];
     sub.textContent = `${game.colors} colours${best ? ` · best ${best.moves}` : ''}`;
@@ -326,7 +327,7 @@ async function addTube() {
   if (!store.get('tubeExplained')) {
     const ok = await openDialog({
       title: 'Add an empty tube?',
-      body: el('p', {}, 'One extra tube makes any puzzle easier. It is free here — your result is just marked 🧪 so par stays honest.'),
+      body: el('p', {}, 'One extra tube makes any puzzle easier. It is free here — your result is just marked as helped, so par stays honest.'),
       actions: [
         { label: 'Cancel', value: false },
         { label: 'Add tube', value: true, primary: true },
@@ -346,7 +347,7 @@ async function addTube() {
 
 function resultRating() {
   const r = rating(game.history.length, game.par);
-  if (game.hints || game.extra) return { ...r, label: 'Solved with help', emoji: game.extra ? '🧪' : '💡', tier: Math.min(r.tier, 1) };
+  if (game.hints || game.extra) return { ...r, label: 'Solved with help', emoji: game.extra ? '🧪' : '💡', icon: game.extra ? 'flask' : 'bulb', tier: Math.min(r.tier, 1) };
   return r;
 }
 
@@ -392,14 +393,14 @@ function openResults() {
   const notes = [];
   if (game.mode === 'daily') {
     const streak = dailyStreak(dailyLog(), today());
-    if (streak) notes.push(note(`🔥 ${streak}-day streak`));
+    if (streak) notes.push(note(`${streak}-day streak`, { icon: 'flame' }));
   } else {
     const best = progress().best[game.level];
     if (best && best.moves < moves) notes.push(note(`Your best here: ${best.moves}`));
   }
   if (game.challenge) {
     const diff = Number(game.challenge) - moves;
-    notes.push(note(diff > 0 ? `🏆 You beat your friend by ${diff}!` : diff === 0 ? '🤝 Tied with your friend' : `Your friend did it in ${game.challenge}`, diff > 0));
+    notes.push(note(diff > 0 ? `You beat your friend by ${diff}!` : diff === 0 ? 'Tied with your friend' : `Your friend did it in ${game.challenge}`, { win: diff > 0, icon: diff > 0 ? 'trophy' : diff === 0 ? 'equal' : 'flag' }));
   }
   const r = resultRating();
   const actions =
@@ -433,8 +434,8 @@ function openResults() {
 
 // ---------- Menus ----------
 
-function menuCard(icon, title, sub, onClick) {
-  return el('button', { class: 'menu-card', onclick: onClick }, el('span', { class: 'icon' }, icon), el('span', {}, el('b', {}, title), el('small', {}, sub)));
+function menuCard(name, title, sub, onClick) {
+  return el('button', { class: 'menu-card', onclick: onClick }, el('span', { class: 'menu-icon' }, icon(name, { size: 24 })), el('span', {}, el('b', {}, title), el('small', {}, sub)));
 }
 
 function openMenu() {
@@ -450,10 +451,10 @@ function openMenu() {
   const input = el('input', { type: 'number', min: 1, max: p.level, value: game?.mode === 'level' ? game.level : p.level, 'aria-label': 'Level number', inputmode: 'numeric' });
   const body = el('div', {},
     el('div', { class: 'menu-list' },
-      menuCard('📅', `Daily #${dailyNumber(key, LAUNCH_DAY)}`,
-        done ? `Solved in ${done.moves} (par ${done.par})${streak ? ` · 🔥 ${streak}` : ''}` : `Same puzzle for everyone today${streak ? ` · 🔥 ${streak}` : ''}`,
+      menuCard('calendar', `Daily #${dailyNumber(key, LAUNCH_DAY)}`,
+        done ? `Solved in ${done.moves} (par ${done.par})${streak ? ` · ${streak}-day streak` : ''}` : `Same puzzle for everyone today${streak ? ` · ${streak}-day streak` : ''}`,
         go(() => load({ mode: 'daily', date: key }))),
-      menuCard('🧪', `Level ${p.level}`, p.level > 1 ? `${p.level - 1} solved · ${p.perfect} perfect` : 'Start from the beginning', go(() => load({ mode: 'level', level: p.level }))),
+      menuCard('tube', `Level ${p.level}`, p.level > 1 ? `${p.level - 1} solved · ${p.perfect} perfect` : 'Start from the beginning', go(() => load({ mode: 'level', level: p.level }))),
     ),
     el('div', { class: 'field' },
       el('span', { class: 'field-label' }, 'Play any level you have reached'),
@@ -463,11 +464,11 @@ function openMenu() {
           load({ mode: 'level', level: n });
         }) }, 'Play'))),
     el('div', { class: 'menu-row' },
-      el('button', { class: 'btn', onclick: go(openThemes) }, '🎨 Themes'),
-      el('button', { class: 'btn', onclick: go(openSettings) }, '⚙︎ Settings')),
+      el('button', { class: 'btn', onclick: go(openThemes) }, withIcon('palette', 'Themes')),
+      el('button', { class: 'btn', onclick: go(openSettings) }, withIcon('settings', 'Settings'))),
     el('div', { class: 'menu-row' },
-      el('button', { class: 'btn', onclick: go(openStats) }, '📊 Stats'),
-      el('button', { class: 'btn', onclick: go(openHelp) }, '❔ How to play')),
+      el('button', { class: 'btn', onclick: go(openStats) }, withIcon('chart', 'Stats')),
+      el('button', { class: 'btn', onclick: go(openHelp) }, withIcon('help', 'How to play'))),
   );
   openDialog({ title: 'Pour', body });
   dialog = document.querySelector('dialog.dialog:last-of-type');
@@ -524,10 +525,10 @@ function openHelp() {
     className: 'help',
     body: el('div', {},
       el('p', {}, 'Tap a tube, then tap another to pour. Liquid only lands on the same colour or in an empty tube. Fill every tube with a single colour.'),
-      el('p', {}, el('b', {}, 'Par'), ' is the fewest pours that can solve the puzzle — worked out on your device. Match it for 💎 Perfect.'),
+      el('p', {}, el('b', {}, 'Par'), ' is the fewest pours that can solve the puzzle — worked out on your device. Match it for a Perfect.'),
       el('ul', {},
         el('li', {}, 'Undo as much as you like; your score is the pours in your final solution.'),
-        el('li', {}, 'Hints and the extra tube are free. Results that used them are marked 💡 or 🧪.'),
+        el('li', {}, 'Hints and the extra tube are free. Results that used them are marked as helped.'),
         el('li', {}, 'The daily puzzle is the same for everyone. Share your result to challenge a friend.')),
       el('p', { class: 'muted' }, 'Keys: ← → choose, Space pour, Z undo, H hint.'),
       el('p', { class: 'muted' }, 'Free forever. No ads, no tracking, works offline.')),

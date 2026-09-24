@@ -2,6 +2,7 @@
 // rating stamps down. Shared by the puzzle-golf games. Uses the DOM.
 import { el, openDialog, toast } from './ui.js';
 import { shareText } from './golf.js';
+import { icon, medal } from './icons.js';
 
 function reel(value) {
   const digits = String(value).split('');
@@ -18,13 +19,24 @@ function reel(value) {
   return node;
 }
 
+// The share line's emoji squares, drawn as a tidy bar in the app.
+function segments(text) {
+  const kinds = { '🟩': 'good', '🟨': 'over', '⬜': 'empty' };
+  const bar = el('div', { class: 'segments', role: 'img', 'aria-label': 'Result bar' });
+  for (const ch of text) {
+    if (kinds[ch]) bar.append(el('i', { class: kinds[ch] }));
+    else if (ch === '⭐') bar.append(icon('star', { size: 16, className: 'icon segment-star' }));
+  }
+  return bar;
+}
+
 // Opens the card and resolves with the chosen action's value.
-//   rating   { emoji, label, tier } from golf.rating()
+//   rating   { icon, label, tier } from golf.rating()
 //   reels    [{ label, value }] (usually yours and par)
 //   share    () => { text, url }, or null for no share button
 //   sounds   { tick(), stamp(tier) } optional
 export function showResults({ title, rating, reels, squares, notes = [], share, actions, sounds = {}, reduced = false }) {
-  const stamp = el('div', { class: 'stamp' }, el('span', { class: 'emoji' }, rating.emoji), el('span', { class: 'label' }, rating.label));
+  const stamp = el('div', { class: 'stamp' }, medal(rating.icon || 'medal'), el('span', { class: 'label' }, rating.label));
   const spinners = reels.map((r) => ({ ...r, node: reel(r.value) }));
   const shareBtn =
     share &&
@@ -36,11 +48,11 @@ export function showResults({ title, rating, reels, squares, notes = [], share, 
         if (how === 'copied') toast('Result copied — paste it anywhere');
         else if (how === 'failed') toast('Could not share on this device');
       },
-    }, '📤 Share result');
+    }, icon('share'), 'Share result');
   const body = el('div', {},
     stamp,
     el('div', { class: 'reels' }, spinners.map((r) => el('div', { class: 'reel-box' }, el('small', {}, r.label), r.node))),
-    squares && el('p', { class: 'squares' }, squares),
+    squares && segments(squares),
     notes,
     shareBtn,
   );
@@ -69,4 +81,6 @@ export function showResults({ title, rating, reels, squares, notes = [], share, 
   return done;
 }
 
-export const note = (text, win = false) => el('p', { class: `result-note ${win ? 'win' : ''}` }, text);
+// A line under the reels, optionally with an icon: note('3-day streak', { icon: 'flame' }).
+export const note = (text, { win = false, icon: name = null } = {}) =>
+  el('p', { class: `result-note ${win ? 'win' : ''}` }, name && icon(name, { size: 18 }), text);

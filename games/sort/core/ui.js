@@ -1,4 +1,5 @@
 // Dialogs, toasts, and theme handling shared by every game.
+import { icon } from './icons.js';
 
 export function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -36,7 +37,7 @@ export function openDialog({ title, body, actions = [], className = '', dismissi
       'header',
       { class: 'dialog-header' },
       el('h2', {}, title),
-      dismissible && el('button', { class: 'icon-btn dialog-close', 'aria-label': 'Close', onclick: () => close(null) }, '✕'),
+      dismissible && el('button', { class: 'icon-btn dialog-close', 'aria-label': 'Close', onclick: () => close(null) }, icon('close', { size: 18 })),
     );
     const content = el('div', { class: 'dialog-body' });
     if (typeof body === 'string') content.innerHTML = body;
