@@ -4,7 +4,7 @@
 let ctx = null;
 let enabled = true;
 
-function audio() {
+export function audio() {
   if (!enabled) return null;
   try {
     ctx ||= new (window.AudioContext || window.webkitAudioContext)();
@@ -19,7 +19,7 @@ export function setSoundEnabled(on) {
   enabled = on;
 }
 
-function noiseBurst(ac, { duration = 0.05, freq = 2500, q = 1, gain = 0.25, when = 0 }) {
+export function noiseBurst(ac, { duration = 0.05, freq = 2500, q = 1, gain = 0.25, when = 0 }) {
   const len = Math.max(1, Math.floor(ac.sampleRate * duration));
   const buffer = ac.createBuffer(1, len, ac.sampleRate);
   const data = buffer.getChannelData(0);
@@ -36,7 +36,7 @@ function noiseBurst(ac, { duration = 0.05, freq = 2500, q = 1, gain = 0.25, when
   src.start(ac.currentTime + when);
 }
 
-function tone(ac, { freq, duration = 0.2, gain = 0.12, when = 0, type = 'sine' }) {
+export function tone(ac, { freq, duration = 0.2, gain = 0.12, when = 0, type = 'sine' }) {
   const osc = ac.createOscillator();
   const g = ac.createGain();
   osc.type = type;
