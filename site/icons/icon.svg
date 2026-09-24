@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="30%" r="85%">
+      <stop offset="0" stop-color="#3b1470" />
+      <stop offset="0.55" stop-color="#170a3a" />
+      <stop offset="1" stop-color="#07031a" />
+    </radialGradient>
+    <linearGradient id="pink" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7ad9" /><stop offset="1" stop-color="#e0157f" /></linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6ff3ff" /><stop offset="1" stop-color="#1383e8" /></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe675" /><stop offset="1" stop-color="#ff8a1a" /></linearGradient>
+    <linearGradient id="lime" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8ff6b" /><stop offset="1" stop-color="#14b86a" /></linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.55" />
+      <stop offset="0.45" stop-color="#fff" stop-opacity="0.08" />
+      <stop offset="0.5" stop-color="#fff" stop-opacity="0" />
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14" />
+    </filter>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.45" />
+    </filter>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)" />
+  <!-- neon halos -->
+  <g filter="url(#glow)" opacity="0.8">
+    <rect x="86" y="86" width="150" height="150" rx="38" fill="#ff2fb0" />
+    <rect x="276" y="86" width="150" height="150" rx="38" fill="#20c8ff" />
+    <rect x="86" y="276" width="150" height="150" rx="38" fill="#ff9a1f" />
+    <rect x="276" y="276" width="150" height="150" rx="38" fill="#2fe07a" />
+  </g>
+  <g filter="url(#shadow)">
+    <!-- solitaire: spade -->
+    <rect x="86" y="86" width="150" height="150" rx="38" fill="url(#pink)" />
+    <path fill="#fff" d="M161 116c-8 20-44 38-44 64 0 15 11 25 24 25 7 0 12-3 15-7-2 12-6 19-13 25h36c-7-6-11-13-13-25 3 4 8 7 15 7 13 0 24-10 24-25 0-26-36-44-44-64z" />
+    <!-- pour: test tube with liquid -->
+    <rect x="276" y="86" width="150" height="150" rx="38" fill="url(#cyan)" />
+    <g transform="translate(351 161) rotate(-28)">
+      <rect x="-19" y="-58" width="38" height="112" rx="19" fill="#fff" fill-opacity="0.28" />
+      <path d="M-19 0h38v35a19 19 0 0 1-38 0z" fill="#fff" />
+      <rect x="-25" y="-62" width="50" height="10" rx="5" fill="#fff" />
+    </g>
+    <!-- trio: three stacked tiles -->
+    <rect x="86" y="276" width="150" height="150" rx="38" fill="url(#gold)" />
+    <g fill="#fff">
+      <rect x="113" y="348" width="42" height="48" rx="9" />
+      <rect x="167" y="348" width="42" height="48" rx="9" />
+      <rect x="140" y="306" width="42" height="48" rx="9" stroke="#ffb13b" stroke-width="5" />
+    </g>
+    <!-- more to come: sparkle -->
+    <rect x="276" y="276" width="150" height="150" rx="38" fill="url(#lime)" />
+    <path fill="#fff" d="M351 301c5 30 14 39 44 50-30 11-39 20-44 50-5-30-14-39-44-50 30-11 39-20 44-50z" />
+  </g>
+  <!-- gloss -->
+  <g fill="url(#gloss)">
+    <rect x="86" y="86" width="150" height="150" rx="38" />
+    <rect x="276" y="86" width="150" height="150" rx="38" />
+    <rect x="86" y="276" width="150" height="150" rx="38" />
+    <rect x="276" y="276" width="150" height="150" rx="38" />
+  </g>
+</svg>

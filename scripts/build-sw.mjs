@@ -8,7 +8,8 @@ import { ROOT, appDirs, listFiles } from './lib.mjs';
 
 const SKIP = /(^|\/)(sw\.js|README\.md|.*\.test\.js)$/;
 
-for (const dir of await appDirs()) {
+// The hub page (site/) is installable too and gets its own worker.
+for (const dir of [...(await appDirs()), join(ROOT, 'site')]) {
   const files = (await listFiles(dir)).filter((f) => !SKIP.test(f));
   const hash = createHash('sha256');
   for (const f of files) hash.update(f).update(await readFile(join(dir, f)));

@@ -32,6 +32,8 @@ test('rating against par', () => {
   assert.equal(rating(40, 20).label, 'Finished');
   assert.equal(overText(0), 'par');
   assert.equal(overText(3), '+3');
+  assert.equal(rating(18, 20).label, 'Birdie!');
+  assert.equal(overText(-2), '-2');
 });
 
 test('squares show par in green and overage in yellow', () => {

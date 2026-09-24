@@ -3,7 +3,8 @@ import { makeSettings } from './core/settings.js';
 import { applyTheme, openDialog, toggle, segmented, el, toast } from './core/ui.js';
 import { setSoundEnabled } from './core/sound.js';
 import { registerServiceWorker } from './core/pwa.js';
-import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash, rating, overText, squares, shareText } from './core/golf.js';
+import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash, rating, overText, squares } from './core/golf.js';
+import { showResults, note } from './core/results.js';
 import { CAPACITY, pourAmount, pour, isComplete, isSolved, hasLegalMove } from './js/rules.js';
 import { levelColors, levelSeed, generate, DAILY_COLORS, LAUNCH_DAY } from './js/levels.js';
 import { solve } from './js/solver.js';
@@ -373,7 +374,7 @@ async function win() {
   updateHud();
   announce(`Solved in ${moves} moves. Par ${game.par}. ${r.label}.`);
   await renderer.celebrate({ onStep: (i) => sfx.marquee(i), onJackpot: () => sfx.jackpot() });
-  showResults();
+  openResults();
 }
 
 function shareLine() {
@@ -386,60 +387,21 @@ function shareLine() {
   return { text, url: location.origin + location.pathname + buildHash(params) };
 }
 
-// A number on spinning reels, like a fruit machine.
-function reel(value) {
-  const digits = String(value).split('');
-  const strips = digits.map((d, i) => {
-    const strip = el('span', { class: 'strip' });
-    for (let k = 0; k < 30; k++) strip.append(el('span', {}, k % 10));
-    strip.dataset.stop = 20 + Number(d);
-    strip.style.setProperty('--spin', `${0.9 + i * 0.35}s`);
-    return strip;
-  });
-  const node = el('span', { class: 'reel', 'aria-label': String(value) }, strips);
-  node.spin = () => strips.forEach((s) => (s.style.transform = `translateY(${-s.dataset.stop * 1.15}em)`));
-  node.duration = 0.9 + (digits.length - 1) * 0.35;
-  return node;
-}
-
-async function showResults() {
+function openResults() {
   const moves = game.history.length;
-  const r = resultRating();
-  const reduced = reducedMotion.matches;
-  const stamp = el('div', { class: 'stamp' }, el('span', { class: 'emoji' }, r.emoji), el('span', { class: 'label' }, r.label));
-  const movesReel = reel(moves);
-  const parReel = reel(game.par);
   const notes = [];
   if (game.mode === 'daily') {
     const streak = dailyStreak(dailyLog(), today());
-    if (streak) notes.push(el('p', { class: 'result-note' }, `🔥 ${streak}-day streak`));
+    if (streak) notes.push(note(`🔥 ${streak}-day streak`));
   } else {
     const best = progress().best[game.level];
-    if (best && best.moves < moves) notes.push(el('p', { class: 'result-note' }, `Your best here: ${best.moves}`));
+    if (best && best.moves < moves) notes.push(note(`Your best here: ${best.moves}`));
   }
   if (game.challenge) {
     const diff = Number(game.challenge) - moves;
-    notes.push(
-      el('p', { class: `result-note ${diff > 0 ? 'win' : ''}` },
-        diff > 0 ? `🏆 You beat your friend by ${diff}!` : diff === 0 ? '🤝 Tied with your friend' : `Your friend did it in ${game.challenge}`),
-    );
+    notes.push(note(diff > 0 ? `🏆 You beat your friend by ${diff}!` : diff === 0 ? '🤝 Tied with your friend' : `Your friend did it in ${game.challenge}`, diff > 0));
   }
-  const share = el('button', { class: 'btn share-btn' }, '📤 Share result');
-  share.addEventListener('click', async () => {
-    const { text, url } = shareLine();
-    const how = await shareText(text, url);
-    if (how === 'copied') toast('Result copied — paste it anywhere');
-    else if (how === 'failed') toast('Could not share on this device');
-  });
-  const body = el('div', {},
-    stamp,
-    el('div', { class: 'reels' },
-      el('div', { class: 'reel-box' }, el('small', {}, 'Moves'), movesReel),
-      el('div', { class: 'reel-box' }, el('small', {}, 'Par'), parReel)),
-    el('p', { class: 'squares' }, squares(moves, game.par)),
-    notes,
-    share,
-  );
+  const r = resultRating();
   const actions =
     game.mode === 'level'
       ? [
@@ -450,38 +412,23 @@ async function showResults() {
           { label: 'Replay', value: 'replay' },
           { label: `Level ${progress().level} →`, value: 'levels', primary: true },
         ];
-  const dialogDone = openDialog({ title: titleText(), body, actions, className: 'results' });
-
-  // Spin the reels, tick as they slow, then stamp the rating.
-  const spinFor = Math.max(movesReel.duration, parReel.duration + 0.2) * 1000;
-  if (reduced) {
-    movesReel.spin();
-    parReel.spin();
-    stamp.classList.add('show');
-  } else {
-    setTimeout(() => {
-      movesReel.spin();
-      setTimeout(() => parReel.spin(), 200);
-    }, 60);
-    let t = 0;
-    const tick = () => {
-      t += 70 + t * 0.12;
-      if (t < spinFor - 120) {
-        sfx.tick();
-        setTimeout(tick, 70 + t * 0.12);
-      }
-    };
-    setTimeout(tick, 80);
-    setTimeout(() => {
-      stamp.classList.add('show');
-      setTimeout(() => sfx.stamp(r.tier), 180);
-    }, spinFor + 80);
-  }
-
-  const choice = await dialogDone;
-  if (choice === 'next') load({ mode: 'level', level: game.level + 1 });
-  else if (choice === 'levels') load({ mode: 'level', level: progress().level });
-  else if (choice === 'replay') load(specOf(game), { fresh: true, challenge: game.challenge });
+  const current = game;
+  showResults({
+    title: titleText(),
+    rating: r,
+    reels: [{ label: 'Moves', value: moves }, { label: 'Par', value: game.par }],
+    squares: squares(moves, game.par),
+    notes,
+    share: shareLine,
+    actions,
+    sounds: { tick: sfx.tick, stamp: sfx.stamp },
+    reduced: reducedMotion.matches,
+  }).then((choice) => {
+    if (current !== game) return;
+    if (choice === 'next') load({ mode: 'level', level: game.level + 1 });
+    else if (choice === 'levels') load({ mode: 'level', level: progress().level });
+    else if (choice === 'replay') load(specOf(game), { fresh: true, challenge: game.challenge });
+  });
 }
 
 // ---------- Menus ----------
