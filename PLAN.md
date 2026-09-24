@@ -57,8 +57,13 @@ Ad-driven casual games (match-3, tile match, block and sort puzzles) run on
 - **Daily seed + share line**, e.g. `Pour · Daily #1 💎 / 22 moves · par 22 (par) / 🟩🟩🟩…`.
 
 Shared pieces live in `template/core/golf.js` (seeds, dates, links, rating,
-share text). Games in this family: Pour (sort puzzle) and Trio (tile match) are built;
-next are block puzzle and gem swap puzzle mode.
+share text). Games in this family: Pour (sort puzzle), Trio (tile match) and Blocks
+(block puzzle) are built; next is gem swap puzzle mode.
+
+Blocks is endless and scores points (higher is better), so its daily target
+is a bot's score on the same 90 pieces: `golf.scoreRating` / `scoreSquares`.
+The daily seed is re-rolled until the bot places every piece, so every daily
+can be finished.
 
 Par has to measure something a player can do better or worse. Pour counts
 pours. In tile match every tile is tapped exactly once, so Trio scores the
@@ -87,7 +92,7 @@ Themes are plug-ins (see `games/sort/js/themes.js`).
 |---|---|
 | **Pour** (water sort) | ✅ Built — `games/sort/`. First puzzle-golf game: solver par, daily, share links, 4 themes |
 | **Trio** (triple tile match) | ✅ Built — `games/trio/`. X-ray through the stack, every board winnable, par = lowest tray peak |
-| **Block Puzzle** | Puzzle golf: visible piece queue, shared daily piece sequence, calm mode with no game over. Avoid Blokus-style competitive placement |
+| **Blocks** (block puzzle) | ✅ Built — `games/blocks/`. Next hand always visible, daily 90 pieces vs a bot, Zen with no game over |
 | **Minesweeper** | No-guess boards by default, plus "why is this safe?" |
 | **Word Search** | Custom word lists shared by link, printable |
 | **Gem Swap** (match-3 puzzle mode) | Fixed boards, refills from a visible queue, clear in N moves |
@@ -222,6 +227,17 @@ node scripts/build-sw.mjs                 # before every deploy
 - Undo, restart, hints (💡), daily board, streaks, challenge links, slot-reel results
 - Queued taps (tapped tiles go see-through at once, so fast play never drops a tap)
 - Themes: Jewels (tiles drawn in code), Orchard and Garden (emoji), Calm (shape + colour)
+
+## Blocks — feature list (v1)
+
+- 8×8 board, hand of three, full rows and columns clear; streak and multi-line bonuses
+- The next hand is always shown, so you can plan
+- Daily: 90 pieces in the same order for everyone; beat the bot's score
+- Classic (endless, best score) and Zen (no game over: the fullest lines clear
+  themselves when stuck; undo and hints)
+- Drag with a ghost and a preview of the lines that will clear; tap-to-place and keyboard too
+- Clears ripple out from the piece with particles, shake and callouts; jackpot on a win
+- Themes: Neon, Wood, Glass, Calm
 
 ### Ideas for later
 

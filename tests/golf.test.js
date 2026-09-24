@@ -50,3 +50,13 @@ test('daily streak counts back from today or yesterday', () => {
   assert.equal(dailyStreak(log, '2026-09-26'), 0);
   assert.equal(dailyStreak({}, '2026-09-24'), 0);
 });
+
+test('score rating for higher-is-better games', async () => {
+  const { scoreRating, scoreSquares } = await import('../template/core/golf.js');
+  assert.equal(scoreRating(1200, 1000).label, 'Beat it!');
+  assert.equal(scoreRating(1000, 1000).tier, 3);
+  assert.equal(scoreRating(900, 1000).tier, 2);
+  assert.equal(scoreRating(100, 1000).tier, 0);
+  assert.equal(scoreSquares(500, 1000), '🟩'.repeat(5) + '⬜'.repeat(5));
+  assert.ok(scoreSquares(1100, 1000).endsWith('⭐'));
+});
