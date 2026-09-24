@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <title>Blocks — block puzzle, free, no ads</title>
+    <meta name="description" content="Block puzzle with your next pieces always in view, a daily challenge against a bot, and a calm mode with no game over. Free forever, no ads, no tracking, works offline." />
+    <meta name="theme-color" content="#0d0724" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Blocks" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:title" content="Blocks — block puzzle, no ads" />
+    <meta property="og:description" content="See your next pieces, beat the daily bot, or relax in Zen. No ads, no tracking, works offline." />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="core/base.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body data-skin="neon">
+    <div class="scene" aria-hidden="true">
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+      <div class="blob b3"></div>
+      <div class="floor"></div>
+      <div class="motes"></div>
+    </div>
+    <canvas id="canvas" aria-hidden="true"></canvas>
+
+    <div class="app">
+      <header class="topbar">
+        <button class="title-btn" id="mode-btn" aria-label="Choose a mode">
+          <span class="title-main" id="title">Blocks</span>
+          <small class="title-sub" id="subtitle"></small>
+        </button>
+        <div class="score" aria-live="off">
+          <div class="chip chip-wide"><small>Score</small><b id="score">0</b></div>
+          <div class="chip"><small id="target-label">Best</small><b id="target">0</b></div>
+        </div>
+      </header>
+
+      <div class="challenge" id="challenge" hidden></div>
+
+      <main class="stage" id="stage" aria-label="Board"></main>
+
+      <nav class="toolbar" aria-label="Game controls">
+        <button class="tool" id="new-btn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M12 8v8M8 12h8" /></svg>
+          <span>New</span>
+        </button>
+        <button class="tool" id="undo-btn" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
+          <span>Undo</span>
+        </button>
+        <button class="tool" id="hint-btn" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" /></svg>
+          <span>Hint</span>
+        </button>
+        <button class="tool" id="menu-btn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          <span>Menu</span>
+        </button>
+      </nav>
+    </div>
+    <p class="visually-hidden" id="announce" aria-live="polite"></p>
+    <noscript><p style="padding: 24px; color: #fff">Blocks needs JavaScript to run.</p></noscript>
+  </body>
+</html>

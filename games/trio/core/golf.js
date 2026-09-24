@@ -108,3 +108,20 @@ export async function shareText(text, url) {
     return 'failed';
   }
 }
+
+// For games where a higher score is better and par is a target to beat
+// (for example a bot's score on the same daily pieces).
+export function scoreRating(score, target) {
+  if (score > target) return { over: target - score, label: 'Beat it!', emoji: '🏆', tier: 4 };
+  const ratio = target ? score / target : 1;
+  if (ratio >= 0.999) return { over: 0, label: 'Matched', emoji: '💎', tier: 3 };
+  if (ratio >= 0.85) return { over: target - score, label: 'So close', emoji: '🌟', tier: 2 };
+  if (ratio >= 0.5) return { over: target - score, label: 'Solid', emoji: '✅', tier: 1 };
+  return { over: target - score, label: 'Finished', emoji: '👍', tier: 0 };
+}
+
+// Ten squares filled in proportion to the target, with a star for beating it.
+export function scoreSquares(score, target, max = 10) {
+  const filled = Math.max(0, Math.min(max, Math.round((max * score) / Math.max(1, target))));
+  return '🟩'.repeat(filled) + '⬜'.repeat(max - filled) + (score > target ? '⭐' : '');
+}
