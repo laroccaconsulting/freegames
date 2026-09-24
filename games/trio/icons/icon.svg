@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="100%" r="100%">
+      <stop offset="0" stop-color="#4a1277" />
+      <stop offset="0.6" stop-color="#150834" />
+      <stop offset="1" stop-color="#08031c" />
+    </radialGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdff" /><stop offset="1" stop-color="#e2d9f5" /></linearGradient>
+    <radialGradient id="gem" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#ffb3c6" /><stop offset="0.45" stop-color="#ff3b6b" /><stop offset="1" stop-color="#a3002b" /></radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="20" /></filter>
+    <filter id="shadow" x="-20%" y="-20%" width="150%" height="150%"><feDropShadow dx="6" dy="12" stdDeviation="8" flood-color="#000" flood-opacity="0.5" /></filter>
+    <symbol id="tile" viewBox="0 0 150 170">
+      <rect x="10" y="12" width="140" height="158" rx="30" fill="#8e7fb8" />
+      <rect x="0" y="0" width="140" height="158" rx="30" fill="url(#face)" />
+      <rect x="10" y="8" width="120" height="60" rx="24" fill="#fff" opacity="0.6" />
+      <path d="M70 128c-52-30-46-72-20-76 12-2 18 6 20 12 2-6 8-14 20-12 26 4 32 46-20 76z" fill="url(#gem)" stroke="#8a0024" stroke-width="4" />
+      <ellipse cx="55" cy="70" rx="12" ry="6" fill="#fff" opacity="0.7" transform="rotate(-30 55 70)" />
+    </symbol>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)" />
+  <circle cx="256" cy="280" r="170" fill="#ff2fb0" opacity="0.45" filter="url(#glow)" />
+  <g filter="url(#shadow)">
+    <use href="#tile" x="70" y="220" width="150" height="170" />
+    <use href="#tile" x="292" y="220" width="150" height="170" />
+    <use href="#tile" x="181" y="110" width="150" height="170" />
+  </g>
+  <g fill="#fff27a">
+    <path d="M110 150l8 22 22 8-22 8-8 22-8-22-22-8 22-8z" />
+    <path d="M410 120l6 16 16 6-16 6-6 16-6-16-16-6 16-6z" opacity="0.8" />
+    <path d="M420 420l5 13 13 5-13 5-5 13-5-13-13-5 13-5z" opacity="0.7" />
+  </g>
+</svg>
