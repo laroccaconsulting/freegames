@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fc8f8" /><stop offset="1" stop-color="#d8f0ff" /></linearGradient></defs>
+  <rect width="512" height="512" fill="url(#s)" />
+  <rect x="360" y="-10" width="96" height="170" fill="#4caf50" /><rect x="350" y="130" width="116" height="36" rx="6" fill="#4caf50" stroke="#2e7d32" stroke-width="6" />
+  <rect x="360" y="340" width="96" height="120" fill="#4caf50" /><rect x="350" y="336" width="116" height="36" rx="6" fill="#4caf50" stroke="#2e7d32" stroke-width="6" />
+  <rect y="440" width="512" height="72" fill="#e2c07a" /><rect y="440" width="512" height="16" fill="#7bc86c" />
+  <g transform="translate(200 250) rotate(-14)">
+    <ellipse rx="92" ry="80" fill="#ffcc33" />
+    <ellipse cx="12" cy="30" rx="50" ry="30" fill="#fff" opacity=".45" />
+    <ellipse cx="-28" cy="4" rx="50" ry="30" fill="#f5a623" transform="rotate(-18)" />
+    <circle cx="38" cy="-26" r="28" fill="#fff" /><circle cx="48" cy="-26" r="13" fill="#222" />
+    <path d="M84 -6 L140 12 L84 32 Z" fill="#f26b3a" />
+  </g>
+</svg>

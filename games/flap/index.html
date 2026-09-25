@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Flap — tap to fly, free, no ads</title>
+    <meta name="description" content="Tap to flap through the gaps. A daily course that's the same for everyone, endless runs and medals. Free, no ads, works offline." />
+    <meta name="theme-color" content="#f4f1ea" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Flap" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="core/base.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <button class="title-btn" id="mode-btn" aria-label="Choose course">
+          <span class="title-main" id="title">Flap</span>
+          <small class="title-sub" id="subtitle"></small>
+        </button>
+        <div class="score">
+          <div class="chip"><small>Best</small><b id="best">0</b></div>
+        </div>
+      </header>
+      <main class="stage" id="stage" aria-label="Sky. Tap, click or press space to flap.">
+        <canvas id="canvas"></canvas>
+        <div class="overlay" id="overlay"><b id="overlay-title"></b><small id="overlay-sub"></small></div>
+      </main>
+      <nav class="toolbar" aria-label="Game controls">
+        <button class="tool" id="daily-btn"><span>Daily</span></button>
+        <button class="tool" id="endless-btn"><span>Endless</span></button>
+        <button class="tool" id="menu-btn"><span>Menu</span></button>
+      </nav>
+    </div>
+    <noscript><p style="padding: 24px">Flap needs JavaScript to run.</p></noscript>
+  </body>
+</html>
