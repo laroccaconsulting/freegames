@@ -157,7 +157,7 @@ Collection (MIT) is a good reference for generators and rules.
 | **Jigsaw** | Public-domain art from Met / Rijksmuseum / Art Institute of Chicago open access |
 | **Backgammon** | ✅ Built — `games/backgammon/`. Computer at three levels, pass-and-play, hits, doubles, bear-off, gammon/backgammon scoring |
 | **Hearts, Spades, Dominoes, Checkers** | Offline vs. AI; reuse the solitaire card engine |
-| **Nonograms / Picross** | Generated puzzles with unique-solution check |
+| **Nonograms** | ✅ Built — `games/nonograms/`: blobby seeded pictures kept only when line-by-line solving finishes them (so unique, no guessing); 5×5, 10×10, 15×15 and a daily 10×10; drag to fill or cross, finished lines cross themselves, hints name the deciding line. Never call it "Picross" (a trademark) |
 | **Dice poker** (Yahtzee-style) | Must *not* be called Yahtzee |
 
 ### Avoid
