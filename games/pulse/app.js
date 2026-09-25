@@ -1,6 +1,7 @@
 import { makeStore } from './core/storage.js';
 import { makeSettings } from './core/settings.js';
-import { applyTheme, openDialog, toggle, el, toast } from './core/ui.js';
+import { applyTheme, openDialog, toggle, segmented, el, toast, offerHallows } from './core/ui.js';
+import { themeFor, onLookChange } from './core/hallows.js';
 import { audio, setSoundEnabled } from './core/sound.js';
 import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
@@ -32,16 +33,26 @@ const settings = makeSettings(store, {
   secondary: '#3ae8ff',
   face: 0,
   genDiff: 1,
+  theme: null,
 });
+// The newer of the player's pick here and the look chosen on the games list
+// (core/hallows.js); with neither, the season's theme (Hallows in autumn).
+const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'classic');
+const pickTheme = (id) => {
+  settings.set('themeAt', Date.now());
+  settings.set('theme', id);
+};
 const $ = (id) => document.getElementById(id);
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const view = new View($('canvas'));
 const music = new Music();
 $('canvas').view = view; // reachable from browser tests
 
-applyTheme('dark');
-
 function applySettings() {
+  const hallows = themeId() === 'hallows';
+  applyTheme(hallows ? 'hallows' : 'dark');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', hallows ? '#120c22' : '#101238');
+  view.setHallows(hallows);
   setSoundEnabled(settings.get('sound') || settings.get('music'));
   setSfxEnabled(settings.get('sound'));
   view.fx = { effects: settings.get('effects'), reduced: reducedMotion.matches, hitboxes: false };
@@ -55,6 +66,8 @@ settings.onChange((key, value) => {
   if (key === 'music' && value && game && !game.paused) startMusic();
 });
 reducedMotion.addEventListener?.('change', applySettings);
+onLookChange(applySettings);
+offerHallows(store, themeId(), () => pickTheme('hallows'));
 
 const announce = (text) => ($('announce').textContent = text);
 const vibrate = (pattern) => {
@@ -963,6 +976,8 @@ function openSettings() {
   openDialog({
     title: 'Settings',
     body: el('div', {},
+      el('div', { class: 'field' }, el('span', { class: 'field-label' }, 'Theme'),
+        segmented('theme', [['classic', 'Neon'], ['hallows', 'Hallows']], themeId(), pickTheme)),
       toggle('Music', settings.get('music'), (v) => settings.set('music', v)),
       toggle('Sounds', settings.get('sound'), (v) => settings.set('sound', v)),
       toggle('Vibration', settings.get('vibrate'), (v) => settings.set('vibrate', v), 'On phones that support it'),

@@ -1,5 +1,6 @@
 // Particles for pours, finished tubes and wins. Drawn on the game canvas in
-// CSS pixels. Styles come from the theme (sparks, stars, confetti, petals).
+// CSS pixels. Styles come from the theme (sparks, stars, confetti, petals,
+// leaves).
 
 const TAU = Math.PI * 2;
 const MAX = 900;
@@ -35,6 +36,8 @@ export class Particles {
         this.add({ ...base, kind: 'confetti', size: 4 + Math.random() * 4, spin: (Math.random() - 0.5) * 18, gravity: 700, drag: 2.2, life: base.life + 0.6 });
       else if (style === 'petals')
         this.add({ ...base, kind: 'petal', size: 4 + Math.random() * 3, spin: (Math.random() - 0.5) * 6, gravity: 260, drag: 3, life: base.life + 0.8 });
+      else if (style === 'leaves')
+        this.add({ ...base, kind: 'leaf', size: 5 + Math.random() * 4, spin: (Math.random() - 0.5) * 7, gravity: 240, drag: 3, life: base.life + 1 });
       else if (style === 'stars')
         this.add({ ...base, kind: 'star', size: 3 + Math.random() * 4, spin: (Math.random() - 0.5) * 8, gravity: 420, drag: 1.8 });
       else this.add({ ...base, kind: 'spark', size: 1.5 + Math.random() * 2.5, gravity: 620, drag: 1.1 });
@@ -71,7 +74,7 @@ export class Particles {
   rain(width, palette, style, count = 90) {
     for (let i = 0; i < count; i++) {
       const color = palette[i % palette.length];
-      const kind = style === 'sparks' ? 'star' : style === 'petals' ? 'petal' : style === 'stars' ? 'star' : 'confetti';
+      const kind = { sparks: 'star', stars: 'star', petals: 'petal', leaves: 'leaf' }[style] || 'confetti';
       this.add({
         kind, color, x: Math.random() * width, y: -20 - Math.random() * 260,
         vx: (Math.random() - 0.5) * 60, vy: 120 + Math.random() * 160,
@@ -141,6 +144,13 @@ export class Particles {
           ctx.fill();
           ctx.restore();
           break;
+        case 'leaf':
+          ctx.save();
+          ctx.translate(p.x + Math.sin(p.age * 3 + p.size) * 10, p.y);
+          ctx.rotate(p.rot + Math.sin(p.age * 4) * 0.6);
+          drawLeaf(ctx, p.size);
+          ctx.restore();
+          break;
         case 'ring':
           ctx.lineWidth = p.width * (1 - t);
           ctx.beginPath();
@@ -184,4 +194,18 @@ export function drawStar(ctx, x, y, r, rot = 0) {
   }
   ctx.closePath();
   ctx.fill();
+}
+
+// A small falling leaf: pointed oval with a stem, centred at (0, 0).
+function drawLeaf(ctx, r) {
+  ctx.beginPath();
+  ctx.moveTo(0, -r);
+  ctx.quadraticCurveTo(r * 0.9, -r * 0.2, 0, r * 0.8);
+  ctx.quadraticCurveTo(-r * 0.9, -r * 0.2, 0, -r);
+  ctx.fill();
+  ctx.lineWidth = Math.max(1, r * 0.14);
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.5);
+  ctx.lineTo(0, r * 1.2);
+  ctx.stroke();
 }

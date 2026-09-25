@@ -337,6 +337,10 @@ book or film is used: no names, crests, house colours, lightning bolts or logos.
 - Canvas games: a `hallows` theme plug-in. Shapes in `core/jewels.js`: hat,
   pumpkin, bat, potion, moon, star, crystal orb, maple leaf, owl, cauldron,
   candle, key. New `leaves` particle style in `core/fx.js`. Minor-key chimes.
+- Pulse: its canvas covers the page, so it draws its own night instead
+  (`drawNight` in `js/render.js`): stars, a harvest moon, and pines and castles
+  scrolling along the horizon, with night palettes in place of the level colours.
+  Theme picker in Settings (Neon / Hallows).
 - Solitaire: parchment faces and a crescent-moon card back. Corridors:
   flagstone board, candlelight walls. Both get it as a fourth theme option.
 - **One switch for every game:** the hub's "Theme for every game" (Hallows /

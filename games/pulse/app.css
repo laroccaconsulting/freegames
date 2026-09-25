@@ -12,6 +12,12 @@
   --chrome-bg: #101238;
 }
 
+/* Hallows: the canvas draws its own night sky, moon and castles, so the
+   shared scenery behind it (core/hallows.js) would never be seen. */
+.hallows-scene {
+  display: none;
+}
+
 body {
   position: fixed;
   inset: 0;
