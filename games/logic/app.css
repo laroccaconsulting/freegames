@@ -259,6 +259,106 @@ body {
   }
 }
 
+/* ---------- Calcudoku ---------- */
+
+.board-wrap.calc {
+  width: min(100cqw, 100cqh - 120px, 560px);
+}
+.cc-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--n), 1fr);
+  aspect-ratio: 1;
+  border: 3px solid var(--wall);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.cc-cell {
+  position: relative;
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: inset -1px -1px 0 var(--line);
+  cursor: pointer;
+  font: inherit;
+  container-type: inline-size;
+}
+.cc-cell.et { border-top: 2.5px solid var(--wall); }
+.cc-cell.eb { border-bottom: 2.5px solid var(--wall); }
+.cc-cell.el { border-left: 2.5px solid var(--wall); }
+.cc-cell.er { border-right: 2.5px solid var(--wall); }
+.cc-cell.line {
+  background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface));
+}
+.cc-cell.sel {
+  background: color-mix(in srgb, var(--star) 35%, var(--surface));
+}
+.cc-cell .cage {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  font-size: max(9px, 17cqi);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-muted);
+}
+.cc-cell b {
+  font-size: 48cqi;
+  font-weight: 800;
+}
+.cc-cell.bad b {
+  color: var(--bad);
+}
+.cc-cell .notes {
+  position: absolute;
+  inset: 30% 6% 6%;
+  font-size: max(8px, 15cqi);
+  line-height: 1.15;
+  color: var(--text-muted);
+  text-align: center;
+  word-spacing: 2px;
+}
+.cc-grid.solved .cc-cell b {
+  animation: pop 0.4s ease;
+}
+.pad {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 12px auto 0;
+  width: min(100%, 520px);
+}
+.pad-key {
+  appearance: none;
+  flex: 1 1 0;
+  min-width: 44px;
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.3rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.pad-key.wide {
+  flex: 1 1 40%;
+  min-height: 42px;
+  font-size: 0.95rem;
+}
+.pad-key.on {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: transparent;
+}
+.pad-key:active {
+  transform: scale(0.96);
+}
+
 /* ---------- Menus ---------- */
 
 .mode-block {
