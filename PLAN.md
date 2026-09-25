@@ -61,7 +61,7 @@ Ad-driven casual games (match-3, tile match, block and sort puzzles) run on
 
 Shared pieces live in `template/core/golf.js` (seeds, dates, links, rating,
 share text). Games in this family: Pour (sort puzzle), Trio (tile match), Blocks
-(block puzzle) and Gems (match-3 puzzle) are built.
+(block puzzle), Gems (match-3 puzzle) and Slide (sliding blocks and tiles) are built.
 
 Blocks is endless and scores points (higher is better), so its daily target
 is a bot's score on the same 90 pieces: `golf.scoreRating` / `scoreSquares`.
@@ -102,8 +102,47 @@ Themes are plug-ins (see `games/sort/js/themes.js`).
 | **Dots and Boxes** | Strong AI that teaches the chain rule; pass-and-play |
 | **Corridors** (wall-race board game) | ✅ Built — `games/corridors/`. Computer at three levels, pass-and-play for 2 or 4, optional online rooms by link |
 | **Number Link** | Generated boards with a unique solution, daily |
+| **Four in a Row** | ✅ Built — `games/four/`. Strong computer (three levels) whose hints explain why; pass and play; optional threat overlay |
+| **Slide** (sliding blocks + tiles) | ✅ Built — `games/slide/`. Unblock (parking-lot puzzle) and 3×3 / 4×4 number tiles; solver-exact par, daily, levels |
 | **Pulse** (one-tap rhythm platformer) | ✅ Built — `games/pulse/`. Five hand-made levels, daily and endless generated levels, practice mode; a bot proves every level beatable without frame-perfect timing |
 | ~~2048~~ | Dropped: too many clean clones already, so nothing to stand out on |
+
+### Wave 2½ — Words without a content treadmill
+
+Crosswords normally need a steady stream of new clues. These formats don't:
+they need only a **word list**, and the generator makes endless puzzles from
+a seed (daily + share line, like the puzzle-golf games).
+
+| Game | Notes |
+|---|---|
+| **Codeword** (cipher crossword) | A real crossword grid where every letter is a number. No clues at all. Solver proves a unique solution; a few letters given to start |
+| **Word Wheel** | Seven letters, make words; one word uses all seven. Not "Spelling Bee" |
+| **Word Grid** | Find words in a 4×4 letter grid against the clock (or not). Not "Boggle" |
+| **Word Ladder** | Change one letter at a time; a solver sets par |
+| **Fill-in** (criss-cross) | Given the word list, fit every word into the grid |
+| **Mini crossword** (5×5) | Needs clues, so later: a one-time clue bank of ~5–10k common words that we own, drafted from Open English WordNet definitions (CC BY 4.0) and edited by hand. The generator fills a new grid each day from the fixed bank |
+
+Word lists: **ENABLE** and **12dicts** (public domain), **SCOWL** (permissive).
+Filter out slurs and profanity. Avoid scraped newspaper clue sets (copyrighted)
+and raw Wiktionary text (CC BY-SA: share-alike would follow the data).
+Shared code goes in one word module used by all of these games.
+
+### Wave 2¾ — More generated logic puzzles
+
+Every one is generated on the device with a unique solution, so they are
+endless without shipping puzzle files. Simon Tatham's Portable Puzzle
+Collection (MIT) is a good reference for generators and rules.
+
+- **Star Battle** (not "Queens"), **Calcudoku** (not "KenKen"), Kakuro, Futoshiki, Skyscrapers
+- **Bridges** (Hashi), Slitherlink, Nurikabe, Light Up, Tents, Pipes
+- More for Slide: Klotski-style blocks, box pushing
+
+### Board, dice and arcade (vs. the computer, no content)
+
+- **Reversi** (not "Othello"), Checkers, Mancala, Nine Men's Morris, 9×9 Go
+- **Code Breaker** (not "Mastermind") and **Fleet** (not "Battleship"), both with a daily
+- Dice: **Yacht** (the public-domain ancestor) and **Ten Thousand**
+- Quick arcade: Snake, a Breakout-style game, two-player Pong on one phone, SameGame, Flood
 
 ### Wave 3 — Bigger builds
 
@@ -120,12 +159,15 @@ Themes are plug-ins (see `games/sort/js/themes.js`).
 - **Trademarked names or trade dress**: Tetris (very aggressive enforcement,
   including look-alikes), Wordle, Scrabble, Boggle, Yahtzee, Candy Crush, Uno,
   Bejeweled, Two Dots, Flow Free, Block Blast, 1010!, Zen Match, Blokus, Geometry Dash,
-  KenKen (use "Calcudoku"), LinkedIn's Queens (the generic name is "Star Battle").
+  KenKen (use "Calcudoku"), LinkedIn's Queens (the generic name is "Star Battle"),
+  Connect Four (use "Four in a Row"; also avoid the blue grid with red and yellow
+  discs), Rush Hour (use "Unblock"), Othello, Mastermind, Battleship, Spelling Bee.
   Build the genre under a generic name.
 - **Anything needing a server**: online multiplayer, global leaderboards, cloud sync.
   Exception: Corridors' online rooms, because a two-player board game needs them.
   They run on Cloudflare's free plan, in `worker/`, and are strictly optional.
-- **Content treadmills**: crosswords, trivia — they need a constant supply of new content.
+- **Content treadmills**: trivia, and crosswords that need new clues every day.
+  Clue-free word puzzles and a fixed clue bank are fine (see Wave 2½).
 
 ## Architecture
 
@@ -143,11 +185,13 @@ template/              Starter app — copy this to begin a new game
     fx.js              Canvas particles: bursts, rings, fountains, floating text
     jewels.js          Glossy jewel shapes drawn in code
     pwa.js             Service worker registration + update notice
-    hub.js             Back button to the games list, when opened from it
+    hub.js             Back button to the games list, when opened from it; records recently played
     hallows.js         Autumn "Hallows" scenery (moon, castle, candles, bats, leaves); also copied to site/
   sw.js                Offline cache; file list + version generated by script
   manifest.webmanifest
   icons/               icon.svg → PNGs generated by script
+site/                  The games list (hub): index.html, arcade.js (search, categories,
+                       "Jump back in", saves every game for offline), hub service worker
 games/<name>/          One self-contained, deployable static site per game
 scripts/
   new-game.mjs         Copy the template into games/<name> and fill in names
@@ -322,6 +366,52 @@ node scripts/build-sw.mjs                 # before every deploy
 - A level editor with levels shared by link (the builder format is already compact)
 - Slopes, saws, dash orbs, mini/mirror portals, a UFO mode
 - Beat-synced level layouts (obstacles placed on the music's beats)
+
+## The arcade (hub) — feature list
+
+- One page lists every game; install it and the whole arcade is on your home screen
+- **Every game works offline after one visit to the hub.** The hub registers each
+  game's own service worker (`site/arcade.js`), so each game caches itself right
+  away and keeps itself up to date, exactly as if it had been opened. A status line
+  says when all games are saved. With Data Saver on, it asks first
+- Search (`/` to focus, Enter opens the first match), category chips (Puzzles, Board,
+  Cards, Arcade), and a "Jump back in" row of recently played games
+- Phones get a launcher layout: three games to a row, one-line chips
+- `tests/hub.test.js` fails if a game folder is missing from the list
+
+## Four in a Row — feature list (v1)
+
+- 7×6 (and 9×7) board; drop discs, first to line up four wins
+- Pure rules engine (`js/engine.js`); saved games are rebuilt from the move list
+- Computer in a Web Worker (`js/bot.js`): negamax with alpha-beta, a Zobrist
+  transposition table, iterative deepening, centre-first ordering, and an
+  evaluation that knows the odd/even threat rule. Easy (sometimes plays by feel),
+  Medium (5 moves deep), Hard (about a second of search)
+- Hints that teach: "wins", "blocks", "makes two threats at once", "you can force a
+  win in N moves", and which columns to avoid because a disc there lets the
+  opponent win on top of it
+- Optional "Show threats" overlay: every empty space that would complete four
+- Pass and play; who goes first (or take turns); undo; stats per level with streaks
+- Discs: black and white stones by default, coral and gold as an option; Hallows theme
+
+## Slide — feature list (v1)
+
+- **Unblock**: 6×6 sliding blocks; get the gold block out through the gap.
+  Levels are generated on the device: random layouts, then hill-climbing (change one
+  block, keep it if the puzzle didn't get easier), then start the player exactly
+  *par* moves from a solution. The whole position graph is searched, so par is exact
+- **Tiles**: 3×3 and 4×4 number tiles; tap a tile in line with the gap to slide a
+  row of them. Scrambled by a seeded random walk; IDA* (Manhattan distance plus
+  linear conflicts) proves the exact par
+- Daily Unblock puzzle (par 18), levels that ramp up to par 22, share line and
+  challenge links (`#d=`, `#u=`, `#t=4-12`)
+- Drag blocks, or tap a block to see where it can go; keyboard play too
+- Hints from the solver, results marked as helped; generated puzzles cached
+
+### Ideas for later
+
+- Klotski-style blocks (2×2 key piece), box pushing, picture tiles from public-domain art
+- Unblock par above 22 needs a faster generator (bitboards) or pre-made packs
 
 ## Hallows — the autumn theme
 
