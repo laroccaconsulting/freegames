@@ -339,9 +339,16 @@ book or film is used: no names, crests, house colours, lightning bolts or logos.
   candle, key. New `leaves` particle style in `core/fx.js`. Minor-key chimes.
 - Solitaire: parchment faces and a crescent-moon card back. Corridors:
   flagstone board, candlelight walls. Both get it as a fourth theme option.
-- **Seasonal default:** players who never picked a theme get Hallows from
-  1 September to 7 November (`isHallowsSeason`); anyone who picked a theme is
-  told about it once a year with a toast. The hub has an Autumn/Classic toggle.
+- **One switch for every game:** the hub's "Theme for every game" (Hallows /
+  Classic) is saved in localStorage (`freegames:look`) and read by each game
+  through `themeFor` in `core/hallows.js`. The newest choice wins: the hub
+  switch applies to every game, and picking a theme inside a game afterwards
+  overrides it for that game only. Classic keeps each game's own non-Hallows
+  theme. It works while the games share the hub's site; a game on its own
+  domain just uses its own setting.
+- **Seasonal default:** with no choice anywhere, games show Hallows from
+  1 September to 7 November (`isHallowsSeason`). Players who picked another
+  theme in a game (and never used the hub switch) get a one-time toast.
 
 ---
 

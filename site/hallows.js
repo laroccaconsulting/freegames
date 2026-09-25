@@ -13,6 +13,48 @@ export function isHallowsSeason(date = new Date()) {
   return m === 8 || m === 9 || (m === 10 && date.getDate() <= 7);
 }
 
+// The games list (hub) has one look for every game: 'hallows' or 'classic'.
+// Games on the same site read it from localStorage. The newest choice wins:
+// changing the look on the hub applies to every game, and picking a theme
+// inside a game afterwards overrides it for that game only. A game hosted on
+// its own domain can't see the hub's choice and just uses its own.
+const LOOK_KEY = 'freegames:look';
+
+export function readLook() {
+  try {
+    const v = JSON.parse(localStorage.getItem(LOOK_KEY));
+    return v && (v.look === 'hallows' || v.look === 'classic') ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveLook(look) {
+  try {
+    localStorage.setItem(LOOK_KEY, JSON.stringify({ look, at: Date.now() }));
+  } catch {
+    /* private mode: applies to this page only */
+  }
+}
+
+// The theme a game shows. `picked` is the player's choice in the game (null
+// if none), made at time `pickedAt`; `normal` is the game's usual default.
+export function themeFor(picked, pickedAt, normal) {
+  const look = readLook();
+  if (look && look.at >= (pickedAt || 0)) {
+    if (look.look === 'hallows') return 'hallows';
+    return picked && picked !== 'hallows' ? picked : normal;
+  }
+  return picked ?? (isHallowsSeason() ? 'hallows' : normal);
+}
+
+// Calls fn when the hub's look changes in another tab, or when the player
+// comes back to a game page kept in the back/forward cache.
+export function onLookChange(fn) {
+  addEventListener('storage', (e) => e.key === LOOK_KEY && fn());
+  addEventListener('pageshow', (e) => e.persisted && fn());
+}
+
 const CSS = `
 .hallows-scene{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;contain:strict}
 .hallows-scene svg{position:absolute;display:block}

@@ -19,7 +19,8 @@
       try {
         const d = new Date();
         const season = d.getMonth() === 8 || d.getMonth() === 9 || (d.getMonth() === 10 && d.getDate() <= 7);
-        if ((localStorage.getItem('freegames:look') ?? (season ? 'hallows' : 'classic')) === 'hallows') document.documentElement.dataset.theme = 'hallows';
+        const saved = JSON.parse(localStorage.getItem('freegames:look'));
+        if ((saved?.look ?? (season ? 'hallows' : 'classic')) === 'hallows') document.documentElement.dataset.theme = 'hallows';
       } catch {}
     </script>
     <style>
@@ -78,20 +79,16 @@
       .game b { display: block; font-size: 1.1rem; }
       .game small { color: var(--muted); }
       .soon { opacity: 0.65; }
-      footer { margin-top: 48px; color: var(--muted); font-size: 0.9rem; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
-      .look-btn {
-        appearance: none;
-        font: inherit;
-        font-size: 0.9rem;
-        color: inherit;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 999px;
-        padding: 8px 14px;
-        min-height: 40px;
-        cursor: pointer;
-      }
-      .look-btn:focus-visible, a.game:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+      footer { margin-top: 48px; color: var(--muted); font-size: 0.9rem; }
+      .look { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: -16px 0 28px; }
+      .look-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+      .look-options { display: inline-flex; padding: 3px; gap: 3px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); }
+      .look-options label { position: relative; }
+      .look-options input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+      .look-options span { display: block; padding: 8px 16px; border-radius: 999px; font-weight: 600; font-size: 0.95rem; color: var(--muted); pointer-events: none; }
+      .look-options input:checked + span { background: var(--accent); color: var(--bg); }
+      .look-options input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+      a.game:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
       /* Hallows: the autumn look (scenery drawn by hallows.js). */
       :root[data-theme='hallows'] {
@@ -132,13 +129,19 @@
       }
       .hallows-only { display: none; }
       :root[data-theme='hallows'] .hallows-only { display: inline; }
-      :root[data-theme='hallows'] .classic-only { display: none; }
     </style>
   </head>
   <body>
     <main>
       <h1>Free Games</h1>
       <p class="lede"><span class="hallows-only">A spellbook of games for long autumn nights. </span>Classic games without the ads. No tracking, no accounts, and they work offline. Add any of them to your home screen.</p>
+      <div class="look">
+        <span class="look-label" id="look-label">Theme for every game</span>
+        <div class="look-options" role="radiogroup" aria-labelledby="look-label">
+          <label><input type="radio" name="look" value="hallows" /><span>Hallows</span></label>
+          <label><input type="radio" name="look" value="classic" /><span>Classic</span></label>
+        </div>
+      </div>
       <div class="grid">
         <a class="game" href="solitaire/">
           <img src="solitaire.svg" alt="" />
@@ -172,41 +175,30 @@
         <div class="game soon"><span class="soon-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="9" height="12" rx="2"/><rect x="11.5" y="5" width="9" height="12" rx="2"/></svg></span><span><b>Mahjong</b><small>Coming soon</small></span></div>
         <div class="game soon"><span class="soon-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="6"/><path d="M12 3.5v3M3.5 13h2M18.5 13h2M6 7l1.5 1.5M18 7l-1.5 1.5"/></svg></span><span><b>Minesweeper</b><small>Coming soon</small></span></div>
       </div>
-      <footer>
-        <span>Free forever. Everything stays on your device.</span>
-        <button class="look-btn" id="look-btn" type="button" hidden><span class="classic-only">Autumn look</span><span class="hallows-only">Classic look</span></button>
-      </footer>
+      <footer>Free forever. Everything stays on your device.</footer>
     </main>
     <script type="module">
-      // The autumn look: on by default in autumn, and a button to switch.
-      import { isHallowsSeason, setHallows } from './hallows.js';
-      const KEY = 'freegames:look';
-      const read = () => {
-        try {
-          return localStorage.getItem(KEY);
-        } catch {
-          return null;
-        }
-      };
-      const apply = (on) => {
+      // One theme for every game. Games opened from here read it (see
+      // themeFor in hallows.js); picking a theme inside a game later
+      // overrides it for that game only.
+      import { isHallowsSeason, setHallows, readLook, saveLook, onLookChange } from './hallows.js';
+      const current = () => readLook()?.look ?? (isHallowsSeason() ? 'hallows' : 'classic');
+      const apply = () => {
+        const on = current() === 'hallows';
         if (on) document.documentElement.dataset.theme = 'hallows';
         else delete document.documentElement.dataset.theme;
         setHallows(on);
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', on ? '#120c22' : '#f4f1ea');
+        for (const input of document.querySelectorAll('input[name="look"]')) input.checked = input.value === current();
       };
-      let on = (read() ?? (isHallowsSeason() ? 'hallows' : 'classic')) === 'hallows';
-      apply(on);
-      const btn = document.getElementById('look-btn');
-      btn.hidden = !on && !isHallowsSeason() && read() == null;
-      btn.addEventListener('click', () => {
-        on = !on;
-        try {
-          localStorage.setItem(KEY, on ? 'hallows' : 'classic');
-        } catch {
-          /* private mode: still switches for this visit */
-        }
-        apply(on);
-      });
+      for (const input of document.querySelectorAll('input[name="look"]')) {
+        input.addEventListener('change', () => {
+          saveLook(input.value);
+          apply();
+        });
+      }
+      onLookChange(apply);
+      apply();
     </script>
     <script>
       if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

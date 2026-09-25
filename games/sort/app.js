@@ -1,6 +1,6 @@
 import { makeStore } from './core/storage.js';
 import { makeSettings } from './core/settings.js';
-import { isHallowsSeason } from './core/hallows.js';
+import { themeFor, onLookChange } from './core/hallows.js';
 import { applyTheme, openDialog, toggle, segmented, el, toast, offerHallows } from './core/ui.js';
 import { setSoundEnabled } from './core/sound.js';
 import { addHubLink } from './core/hub.js';
@@ -24,8 +24,13 @@ const settings = makeSettings(store, {
   effects: true,
   speed: 'normal',
 });
-// No theme picked yet: follow the season (Hallows in autumn).
-const skinId = () => settings.get('skin') ?? (isHallowsSeason() ? 'hallows' : 'neon');
+// The newer of the player's pick here and the look chosen on the games list
+// (core/hallows.js); with neither, the season's theme (Hallows in autumn).
+const skinId = () => themeFor(settings.get('skin'), settings.get('skinAt'), 'neon');
+const pickSkin = (id) => {
+  settings.set('skinAt', Date.now());
+  settings.set('skin', id);
+};
 
 const COLOR_NAMES = ['red', 'yellow', 'cyan', 'lime', 'violet', 'orange', 'pink', 'blue', 'green', 'white', 'brown', 'grey'];
 const $ = (id) => document.getElementById(id);
@@ -62,7 +67,8 @@ function applySettings() {
 settings.onChange(applySettings);
 reducedMotion.addEventListener?.('change', applySettings);
 applySettings();
-offerHallows(store, skinId(), () => settings.set('skin', 'hallows'));
+offerHallows(store, skinId(), () => pickSkin('hallows'));
+onLookChange(applySettings);
 
 const colorName = (c) => (themeById(skinId()).names || COLOR_NAMES)[c] || `colour ${c + 1}`;
 const announce = (text) => ($('announce').textContent = text);
@@ -484,7 +490,7 @@ function openThemes() {
   const grid = el('div', { class: 'theme-grid', role: 'radiogroup' },
     THEMES.map((t) =>
       el('label', { class: 'theme-card' },
-        el('input', { type: 'radio', name: 'skin', value: t.id, checked: t.id === current, onchange: () => settings.set('skin', t.id), 'aria-label': t.name }),
+        el('input', { type: 'radio', name: 'skin', value: t.id, checked: t.id === current, onchange: () => pickSkin(t.id), 'aria-label': t.name }),
         el('span', { class: `face ${t.dark ? 'dark' : 'light'}`, style: `background:${t.preview}` },
           el('b', {}, t.name),
           el('span', { class: 'dots' }, t.colors.slice(0, 6).map((c) => el('i', { style: `background:${c}` })))))),

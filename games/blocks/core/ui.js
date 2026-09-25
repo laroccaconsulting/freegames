@@ -1,6 +1,6 @@
 // Dialogs, toasts, and theme handling shared by every game.
 import { icon } from './icons.js';
-import { setHallows, isHallowsSeason } from './hallows.js';
+import { setHallows, isHallowsSeason, readLook } from './hallows.js';
 
 export function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -106,10 +106,11 @@ export function applyTheme(theme) {
 }
 
 // In autumn, tells players who picked another theme (once a year) that the
-// Hallows theme is here. `apply` switches to it.
+// Hallows theme is here. `apply` switches to it. Skipped when the player has
+// already chosen a look for every game on the games list.
 export function offerHallows(store, current, apply) {
   const year = new Date().getFullYear();
-  if (!isHallowsSeason() || current === 'hallows' || store.get('hallowsOffered') === year) return;
+  if (!isHallowsSeason() || current === 'hallows' || readLook() || store.get('hallowsOffered') === year) return;
   store.set('hallowsOffered', year);
   setTimeout(() => toast('The autumn Hallows theme is here', { duration: 4000, action: { label: 'Try it', onClick: apply } }), 1200);
 }
