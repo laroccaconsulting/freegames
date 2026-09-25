@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs><radialGradient id="t" cx="50%" cy="40%" r="70%"><stop offset="0" stop-color="#3a9068" /><stop offset="1" stop-color="#1f5a3d" /></radialGradient></defs>
+  <rect width="512" height="512" fill="url(#t)" />
+  <g transform="translate(96 92)">
+    <rect x="18" y="18" width="190" height="250" rx="26" fill="#a8997a" /><rect x="9" y="9" width="190" height="250" rx="26" fill="#d9cfb3" /><rect x="0" y="0" width="190" height="250" rx="26" fill="#fbf7ea" />
+    <g fill="#2e8540"><rect x="62" y="40" width="20" height="74" rx="9" /><rect x="108" y="40" width="20" height="74" rx="9" /><rect x="62" y="136" width="20" height="74" rx="9" /><rect x="108" y="136" width="20" height="74" rx="9" /></g>
+  </g>
+  <g transform="translate(236 150)">
+    <rect x="18" y="18" width="190" height="250" rx="26" fill="#a8997a" /><rect x="9" y="9" width="190" height="250" rx="26" fill="#d9cfb3" /><rect x="0" y="0" width="190" height="250" rx="26" fill="#fbf7ea" />
+    <g><circle cx="95" cy="125" r="56" fill="#c9302c" /><circle cx="95" cy="125" r="26" fill="#fff" opacity=".85" /></g>
+  </g>
+</svg>

@@ -703,3 +703,12 @@ dialog.closing::backdrop {
 :root[data-theme='hallows'] .toast-action {
   color: #ffcf5a;
 }
+
+/* Inline line icons in toolbars (drawn with strokes, never filled). */
+.tool svg:not(.icon) {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
