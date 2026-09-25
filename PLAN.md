@@ -13,6 +13,9 @@ cheap domain (or subdomain).
 4. **Mobile-first, polished.** Big touch targets, drag *and* tap-to-move, smooth
    animations, light/dark themes, respects reduced motion.
 5. **Zero running cost.** Static files only, deployable to any free static host.
+   The one exception is Corridors' *optional* online play (see below): a tiny
+   Worker on Cloudflare's free plan. The game never needs it, and it is hidden
+   unless a server is configured.
 6. **No build step.** Plain HTML/CSS/ES modules. Anyone can read, fork, or host it.
 7. **Clean names.** Generic game names only — never a trademark (see below).
 
@@ -97,6 +100,7 @@ Themes are plug-ins (see `games/sort/js/themes.js`).
 | **Word Search** | Custom word lists shared by link, printable |
 | **Gems** (match-3 puzzle mode) | ✅ Built — `games/gems/`. Fixed boards, no refills, clear the board in par swaps |
 | **Dots and Boxes** | Strong AI that teaches the chain rule; pass-and-play |
+| **Corridors** (wall-race board game) | ✅ Built — `games/corridors/`. Computer at three levels, pass-and-play for 2 or 4, optional online rooms by link |
 | **Number Link** | Generated boards with a unique solution, daily |
 | ~~2048~~ | Dropped: too many clean clones already, so nothing to stand out on |
 
@@ -118,6 +122,8 @@ Themes are plug-ins (see `games/sort/js/themes.js`).
   KenKen (use "Calcudoku"), LinkedIn's Queens (the generic name is "Star Battle").
   Build the genre under a generic name.
 - **Anything needing a server**: online multiplayer, global leaderboards, cloud sync.
+  Exception: Corridors' online rooms, because a two-player board game needs them.
+  They run on Cloudflare's free plan, in `worker/`, and are strictly optional.
 - **Content treadmills**: crosswords, trivia — they need a constant supply of new content.
 
 ## Architecture
@@ -146,6 +152,7 @@ scripts/
   build-sw.mjs         Regenerate each game's precache list + content-hash version
   icons.mjs            Render icon.svg to PNG sizes with the preinstalled Chromium
 tests/                 node:test unit tests for game rules (no dependencies)
+worker/                Optional Corridors online server (Cloudflare Worker + Durable Object)
 ```
 
 Each `games/<name>/` folder is a complete static site. It uses only relative
@@ -257,6 +264,25 @@ node scripts/build-sw.mjs                 # before every deploy
 - Ball-sort look (one ball per move) as a rules variant
 - Harder shapes: 5-unit tubes, a single spare tube
 - More themes (seasonal); theme packs anyone can contribute as a single object
+
+## Corridors — feature list (v1)
+
+- The wall-race board game under a generic name: 9×9 board, walls two squares long,
+  jumps and diagonal side-steps; 2 players (10 walls each) or 4 (5 each)
+- One pure rules engine (`js/engine.js`) shared by the UI, the bot and the online server
+- Computer opponent in a Web Worker: Easy (wanders), Medium (one move deep),
+  Hard (alpha-beta, iterative deepening, ~1 s); pick who goes first
+- Pass-and-play for 2 or 4; undo; hints that explain themselves
+  ("a wall here makes Red's route 3 steps longer"); steps-to-go shown for everyone
+- Tap a groove to preview a wall, tap again to place it (a mouse click places at once);
+  arrow keys move
+- Online (optional, `worker/`): make a room, share the link; seats are kept by a random
+  token in localStorage so refreshes reconnect; extra visitors watch; rematch
+- Board turns so your pawn is always at the bottom in online games
+
+### Ideas for later
+
+- Bot seats in online rooms; move timers via DO alarms; a lobby of open rooms; replays
 
 ---
 

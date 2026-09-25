@@ -6,6 +6,7 @@ Each game is a static web app you can install to your home screen.
 | Game | Folder | Live |
 |---|---|---|
 | Solitaire (Klondike, Spider, FreeCell) | [`games/solitaire`](games/solitaire) | https://laroccaconsulting.github.io/freegames/solitaire/ |
+| Corridors (wall-race board game) | [`games/corridors`](games/corridors) | https://laroccaconsulting.github.io/freegames/corridors/ |
 
 See [PLAN.md](PLAN.md) for the roadmap, principles and architecture.
 
@@ -31,3 +32,5 @@ Shared code lives in `template/core/`; `node scripts/sync-core.mjs` copies it in
 ## Deploy
 
 Pushing to `main` deploys to GitHub Pages (enable **Settings → Pages → Source: GitHub Actions** once).
+
+Corridors' optional online play is a small Cloudflare Worker in [`worker/`](worker/README.md), deployed separately with `wrangler`.
