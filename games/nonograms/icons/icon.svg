@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#f4f1ea" />
+  <rect x="136" y="136" width="330" height="330" rx="10" fill="#fff" stroke="#26313f" stroke-opacity=".5" stroke-width="6" />
+  <g fill="#26313f">
+    <rect x="202" y="136" width="66" height="66" /><rect x="268" y="136" width="66" height="66" /><rect x="334" y="136" width="66" height="66" />
+    <rect x="136" y="202" width="66" height="66" /><rect x="202" y="202" width="66" height="66" /><rect x="334" y="202" width="66" height="66" /><rect x="400" y="202" width="66" height="66" />
+    <rect x="136" y="268" width="66" height="66" /><rect x="202" y="268" width="66" height="66" /><rect x="268" y="268" width="66" height="66" /><rect x="334" y="268" width="66" height="66" /><rect x="400" y="268" width="66" height="66" />
+    <rect x="202" y="334" width="66" height="66" /><rect x="268" y="334" width="66" height="66" /><rect x="334" y="334" width="66" height="66" />
+    <rect x="268" y="400" width="66" height="66" />
+  </g>
+  <g font-family="system-ui, sans-serif" font-weight="800" font-size="40" fill="#26313f" text-anchor="middle">
+    <text x="235" y="118">2</text><text x="301" y="118">3</text><text x="367" y="118">4</text>
+    <text x="100" y="183">3</text><text x="100" y="249">2 2</text><text x="100" y="315">5</text><text x="100" y="381">3</text><text x="100" y="447">1</text>
+  </g>
+</svg>
