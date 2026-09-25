@@ -70,6 +70,9 @@
   font-family: var(--font-display);
   letter-spacing: 0;
 }
+:root[data-theme='hallows'] .hw-candle {
+  display: none; /* they would drift behind the topbar, dice and board */
+}
 
 body {
   min-height: 100dvh;
@@ -235,8 +238,8 @@ body {
   container-type: size;
 }
 .board-wrap {
-  width: min(100cqw, 780px, 100cqh * 1.9);
-  aspect-ratio: 1.9;
+  width: min(100cqw, 780px, 100cqh * 1.603);
+  aspect-ratio: 1218 / 760;
   position: relative;
 }
 .board {
@@ -457,7 +460,7 @@ body {
     min-height: 0;
   }
   .board-wrap {
-    width: calc((100dvh - var(--safe-top) - var(--safe-bottom) - 16px) * 1.9);
+    width: calc((100dvh - var(--safe-top) - var(--safe-bottom) - 16px) * 1.603);
     max-width: calc(100vw - 220px);
   }
 }
