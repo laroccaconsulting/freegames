@@ -12,6 +12,7 @@ import * as codeword from './js/codeword.js';
 import * as wheel from './js/wheel.js';
 import * as ladder from './js/ladder.js';
 import * as wgrid from './js/grid.js';
+import * as wsearch from './js/search.js';
 import { rating, overText, squares } from './core/golf.js';
 
 const LAUNCH_DAY = '2026-09-25';
@@ -60,8 +61,8 @@ async function loadDict() {
 
 // ---------- Puzzles ----------
 
-// spec: { mode: 'codeword' | 'wheel' | 'ladder' | 'grid', daily: 'YYYY-MM-DD' } or { mode, n } (numbered puzzles)
-const MODE_NAMES = { codeword: 'Codeword', wheel: 'Word Wheel', ladder: 'Word Ladder', grid: 'Word Grid' };
+// spec: { mode: 'codeword' | 'wheel' | 'ladder' | 'grid' | 'search', daily: 'YYYY-MM-DD' } or { mode, n } (numbered puzzles)
+const MODE_NAMES = { codeword: 'Codeword', wheel: 'Word Wheel', ladder: 'Word Ladder', grid: 'Word Grid', search: 'Word Search' };
 const specId = (s) => `${s.mode}:${s.daily ? `d${s.daily}` : `n${s.n}`}`;
 const seedOf = (s) => (s.daily ? dailySeed(`words-${s.mode}`, s.daily) : hashSeed(`words-${s.mode}:${s.n}`));
 const titleOf = (s) => `${MODE_NAMES[s.mode]} ${s.daily ? `· Daily #${dailyNumber(s.daily, LAUNCH_DAY)}` : `#${s.n}`}`;
@@ -77,12 +78,12 @@ function open(next) {
   spec = next;
   store.set('last', spec);
   const seed = seedOf(spec);
-  const fresh = { codeword: () => codeword.generate(dict, seed), wheel: () => wheel.generate(dict, seed), ladder: () => ladder.generate(dict, seed), grid: () => wgrid.generate(dict, seed, prefixes()) };
+  const fresh = { codeword: () => codeword.generate(dict, seed), wheel: () => wheel.generate(dict, seed), ladder: () => ladder.generate(dict, seed), grid: () => wgrid.generate(dict, seed, prefixes()), search: () => wsearch.generate(dict, seed) };
   puzzle = fresh[spec.mode]();
   const saved = store.get(`p:${specId(spec)}`);
-  const blank = { codeword: { guesses: {}, hints: 0, checks: 0, time: 0, done: false }, wheel: { found: [], revealed: false, done: false }, ladder: { steps: [], hints: 0, done: false }, grid: { found: [], revealed: false, done: false } };
+  const blank = { codeword: { guesses: {}, hints: 0, checks: 0, time: 0, done: false }, wheel: { found: [], revealed: false, done: false }, ladder: { steps: [], hints: 0, done: false }, grid: { found: [], revealed: false, done: false }, search: { found: [], hints: 0, time: 0, done: false } };
   play = { ...blank[spec.mode], ...saved };
-  ({ codeword: startCodeword, wheel: startWheel, ladder: startLadder, grid: startGrid })[spec.mode]();
+  ({ codeword: startCodeword, wheel: startWheel, ladder: startLadder, grid: startGrid, search: startSearch })[spec.mode]();
   $('title').textContent = MODE_NAMES[spec.mode];
   $('subtitle').textContent = spec.daily ? `Daily #${dailyNumber(spec.daily, LAUNCH_DAY)}${streakText()}` : `Puzzle #${spec.n}`;
   announce(titleOf(spec));
@@ -609,6 +610,185 @@ function renderGrid() {
   $('score').replaceChildren(el('div', { class: 'chip' }, el('small', {}, 'Words'), el('b', {}, play.found.length)), el('div', { class: 'chip' }, el('small', {}, 'Points'), el('b', {}, pts)));
 }
 
+// ---------- Word Search ----------
+
+let anchor = -1; // first square of a tap-tap selection
+let sel = [];
+const HUES = [8, 40, 140, 200, 265, 320, 90, 180, 290, 20, 230, 60, 160, 340, 110];
+
+function startSearch() {
+  anchor = -1;
+  sel = [];
+  const n = puzzle.size;
+  const board = el('div', { class: 'ws-board', style: `--n: ${n}`, role: 'grid', 'aria-label': 'Letters' });
+  puzzle.cells.forEach((ch, i) => board.append(el('div', { class: 'ws-cell', dataset: { i } }, ch.toUpperCase())));
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'ws-lines');
+  svg.setAttribute('viewBox', `0 0 ${n} ${n}`);
+  svg.setAttribute('aria-hidden', 'true');
+  board.prepend(svg);
+  // Drag from the first letter to the last, or tap both ends.
+  const cellAt = (e) => {
+    const b = board.getBoundingClientRect();
+    const c = Math.floor(((e.clientX - b.left) / b.width) * n);
+    const r = Math.floor(((e.clientY - b.top) / b.height) * n);
+    return { r: Math.max(0, Math.min(n - 1, r)), c: Math.max(0, Math.min(n - 1, c)), inside: c >= 0 && r >= 0 && c < n && r < n };
+  };
+  // Snap the pointer to the nearest of the eight directions from the start.
+  const snap = (start, e) => {
+    const b = board.getBoundingClientRect();
+    const size = b.width / n;
+    const x = (e.clientX - b.left) / size - ((start % n) + 0.5);
+    const y = (e.clientY - b.top) / size - (Math.floor(start / n) + 0.5);
+    const len = Math.round(Math.max(Math.abs(x), Math.abs(y)));
+    if (!len) return [start];
+    const angle = Math.round(Math.atan2(y, x) / (Math.PI / 4));
+    const dr = Math.round(Math.sin((angle * Math.PI) / 4));
+    const dc = Math.round(Math.cos((angle * Math.PI) / 4));
+    const out = [start];
+    for (let k = 1; k <= len; k++) {
+      const r = Math.floor(start / n) + dr * k;
+      const c = (start % n) + dc * k;
+      if (r < 0 || c < 0 || r >= n || c >= n) break;
+      out.push(r * n + c);
+    }
+    return out;
+  };
+  let dragFrom = -1;
+  let moved = false;
+  board.addEventListener('pointerdown', (e) => {
+    if (play.done) return;
+    const { r, c, inside } = cellAt(e);
+    if (!inside) return;
+    board.setPointerCapture?.(e.pointerId);
+    dragFrom = r * n + c;
+    moved = false;
+    if (anchor < 0) sel = [dragFrom];
+  });
+  board.addEventListener('pointermove', (e) => {
+    if (dragFrom < 0) return;
+    const next = snap(dragFrom, e);
+    if (next.length > 1) moved = true;
+    if (moved) {
+      anchor = -1;
+      sel = next;
+      renderSearch();
+    }
+  });
+  board.addEventListener('pointerup', () => {
+    if (dragFrom < 0) return;
+    const from = dragFrom;
+    dragFrom = -1;
+    if (moved) return searchSubmit(sel);
+    // A tap: the first sets the start, the second finishes the line.
+    if (anchor < 0 || anchor === from) {
+      anchor = anchor === from ? -1 : from;
+      sel = anchor < 0 ? [] : [anchor];
+      sfx.key();
+      return renderSearch();
+    }
+    const line = wsearch.line(n, anchor, from);
+    anchor = -1;
+    if (!line) {
+      sel = [];
+      sfx.bad();
+      toast('Words run in straight lines: across, down or diagonally.');
+      return renderSearch();
+    }
+    searchSubmit(line);
+  });
+  $('stage').replaceChildren(el('div', { class: 'ws' }, board, el('div', { class: 'ws-words', id: 'ws-words' })));
+  $('toolbar').replaceChildren(
+    tool('hint-btn', 'bulb', 'Hint', searchHint),
+    tool('new-btn', 'infinity', 'New', () => open({ mode: 'search', n: nextNumber('search') })),
+    tool('help-btn', 'help', 'Rules', openHelp),
+    tool('menu-btn', 'levels', 'Menu', openMenu),
+  );
+  clearInterval(clock);
+  let last = Date.now();
+  clock = setInterval(() => {
+    const now = Date.now();
+    if (spec?.mode === 'search' && !play.done && document.visibilityState === 'visible') {
+      play.time += (now - last) / 1000;
+      if (Math.round(play.time) % 5 === 0) save();
+      renderSearchScore();
+    }
+    last = now;
+  }, 1000);
+  renderSearch();
+}
+
+function searchSubmit(line) {
+  sel = [];
+  const k = wsearch.match(puzzle, line);
+  if (k < 0) {
+    if (line.length > 1) sfx.bad();
+  } else if (play.found.includes(k)) toast('Already found.');
+  else {
+    play.found = [...play.found, k];
+    sfx.good(Math.min(8, puzzle.words[k].word.length));
+    navigator.vibrate?.(12);
+    save();
+    if (play.found.length === puzzle.words.length) finishSearch();
+  }
+  renderSearch();
+}
+
+function searchHint() {
+  if (play.done) return;
+  const left = puzzle.words.map((_, k) => k).filter((k) => !play.found.includes(k));
+  const k = left.sort((a, b) => puzzle.words[b].word.length - puzzle.words[a].word.length)[0];
+  if (k == null) return;
+  play.hints++;
+  save();
+  const first = wsearch.squaresOf(puzzle, k)[0];
+  const cell = document.querySelector(`.ws-cell[data-i="${first}"]`);
+  cell?.classList.remove('hinted');
+  void cell?.offsetWidth;
+  cell?.classList.add('hinted');
+  toast(`${puzzle.words[k].word.toUpperCase()} starts at the flashing letter.`, { duration: 2500 });
+  renderSearchScore();
+}
+
+function finishSearch() {
+  play.done = true;
+  save();
+  clearInterval(clock);
+  markDaily({ time: Math.round(play.time), hints: play.hints });
+  const clean = !play.hints;
+  const text = `Words · ${titleOf(spec)} ${clean ? '💎' : '✅'}\nAll ${puzzle.words.length} words in ${formatTime(play.time)}${play.hints ? ` · 💡${play.hints}` : ''}`;
+  setTimeout(() => results({ title: 'All found!', medalIcon: clean ? 'diamond' : 'check', lines: [`Time: ${formatTime(play.time)}`, play.hints ? `Hints: ${play.hints}` : 'No hints'], text }), 700);
+}
+
+function renderSearch() {
+  const n = puzzle.size;
+  const svg = document.querySelector('.ws-lines');
+  if (!svg) return;
+  const capsule = (squares, hue, cls) => {
+    const a = squares[0];
+    const b = squares[squares.length - 1];
+    const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    l.setAttribute('x1', (a % n) + 0.5);
+    l.setAttribute('y1', Math.floor(a / n) + 0.5);
+    l.setAttribute('x2', (b % n) + 0.5);
+    l.setAttribute('y2', Math.floor(b / n) + 0.5);
+    l.setAttribute('class', cls);
+    if (hue != null) l.style.setProperty('--h', hue);
+    return l;
+  };
+  const lines = play.found.map((k) => capsule(wsearch.squaresOf(puzzle, k), HUES[k % HUES.length], 'found'));
+  if (sel.length) lines.push(capsule(sel, null, 'live'));
+  svg.replaceChildren(...lines);
+  const on = new Set(sel);
+  for (const c of document.querySelectorAll('.ws-cell')) c.classList.toggle('on', on.has(Number(c.dataset.i)));
+  $('ws-words').replaceChildren(...puzzle.words.map((w, k) => el('span', { class: `word${play.found.includes(k) ? ' got' : ''}`, style: play.found.includes(k) ? `--h: ${HUES[k % HUES.length]}` : '' }, w.word)));
+  renderSearchScore();
+}
+
+function renderSearchScore() {
+  $('score').replaceChildren(el('div', { class: 'chip' }, el('small', {}, 'Found'), el('b', {}, `${play.found.length}/${puzzle.words.length}`)), el('div', { class: 'chip' }, el('small', {}, 'Time'), el('b', {}, formatTime(play.time))));
+}
+
 // ---------- Shared ----------
 
 function results({ title, medalIcon, lines, text }) {
@@ -663,8 +843,9 @@ function openMenu() {
     const r = store.get(`daily-${mode}`, {})[key];
     const s = dailyStreak(store.get(`daily-${mode}`, {}), key);
     const streak = s ? ` · ${s}-day streak` : '';
-    if (!r) return `${{ codeword: 'Crack the number code', wheel: 'Nine letters, one in the middle', ladder: 'One letter at a time', grid: 'Trace words through the letters' }[mode]}${streak}`;
+    if (!r) return `${{ codeword: 'Crack the number code', wheel: 'Nine letters, one in the middle', ladder: 'One letter at a time', grid: 'Trace words through the letters', search: 'Find the hidden words' }[mode]}${streak}`;
     if (mode === 'codeword') return `Cracked in ${formatTime(r.time)}${streak}`;
+    if (mode === 'search') return `All found in ${formatTime(r.time)}${streak}`;
     if (mode === 'ladder') return `${r.n} steps (par ${r.par})${streak}`;
     return `${r.n} of ${r.total} words${streak}`;
   };
@@ -678,9 +859,10 @@ function openMenu() {
       menuCard('disc', `Daily Word Wheel #${dailyNumber(key, LAUNCH_DAY)}`, dailySub('wheel'), go({ mode: 'wheel', daily: key })),
       menuCard('share', `Daily Word Ladder #${dailyNumber(key, LAUNCH_DAY)}`, dailySub('ladder'), go({ mode: 'ladder', daily: key })),
       menuCard('blocks', `Daily Word Grid #${dailyNumber(key, LAUNCH_DAY)}`, dailySub('grid'), go({ mode: 'grid', daily: key })),
+      menuCard('tiles', `Daily Word Search #${dailyNumber(key, LAUNCH_DAY)}`, dailySub('search'), go({ mode: 'search', daily: key })),
     ),
     el('div', { class: 'size-row' },
-      ...['codeword', 'wheel', 'ladder', 'grid'].map((m) => el('button', { class: 'btn', onclick: go({ mode: m, n: nextNumber(m) }) }, `New ${MODE_NAMES[m].replace('Word ', '').toLowerCase()}`)),
+      ...['codeword', 'wheel', 'ladder', 'grid', 'search'].map((m) => el('button', { class: 'btn', onclick: go({ mode: m, n: nextNumber(m) }) }, `New ${MODE_NAMES[m].replace('Word ', '').toLowerCase()}`)),
     ),
     el('div', { class: 'menu-row' }, el('button', { class: 'btn', onclick: () => (dialog?.closeWith?.(null), openSettings()) }, withIcon('settings', 'Settings')), el('button', { class: 'btn', onclick: () => (dialog?.closeWith?.(null), openHelp()) }, withIcon('help', 'How to play'))),
   );
@@ -711,6 +893,7 @@ function openHelp() {
       el('p', {}, el('b', {}, 'Word Wheel.'), ' Make words of four letters or more. Every word must use the middle letter, and each letter only once. One word uses all nine. Rarer words count as bonus words.'),
       el('p', {}, el('b', {}, 'Word Ladder.'), ' Change one letter at a time to turn the top word into the bottom one. Every step must be a real word. Par is the shortest possible ladder.'),
       el('p', {}, el('b', {}, 'Word Grid.'), ' Drag across neighbouring letters (diagonals count) to spell words of three letters or more, using each square once per word. Longer words score more.'),
+      el('p', {}, el('b', {}, 'Word Search.'), ' Find every word in the list. Words run in straight lines across, down or diagonally, forwards or backwards. Drag from the first letter to the last, or tap both ends.'),
       el('p', { class: 'muted' }, 'Keyboard: type letters, Backspace deletes, Enter submits. Words come from the public-domain ENABLE list.'),
       el('p', { class: 'muted' }, 'Free forever. No ads, no tracking, works offline.'),
     ),
@@ -734,6 +917,12 @@ document.addEventListener('keydown', (e) => {
     else if (k === 'backspace') ladderKey('Backspace');
     else if (k === 'enter') ladderKey('Enter');
     else return;
+  } else if (spec.mode === 'search') {
+    if (k === 'escape') {
+      anchor = -1;
+      sel = [];
+      renderSearch();
+    } else return;
   } else if (spec.mode === 'grid') {
     if (k === 'enter') gridSubmit();
     else if (k === 'escape' || k === 'backspace') {
