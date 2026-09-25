@@ -134,7 +134,7 @@ Every one is generated on the device with a unique solution, so they are
 endless without shipping puzzle files. Simon Tatham's Portable Puzzle
 Collection (MIT) is a good reference for generators and rules.
 
-- **Logic** app ✅ Built — `games/logic/`: one app for these puzzles (modes share daily, saving, results). **Star Battle** ✅ (6×6, 8×8, 10×10 two-star; regions repaired until the solver proves one answer; automatic dots, hints)
+- **Logic** app ✅ Built — `games/logic/`: one app for these puzzles (modes share daily, saving, results). **Star Battle** ✅ (6×6, 8×8, 10×10 two-star; regions repaired until the solver proves one answer; automatic dots, hints). **Calcudoku** ✅ (4×4 to 6×6; random Latin square cut into cages, kept when the solver proves one answer; notes, hints)
 - **Star Battle** (not "Queens"), **Calcudoku** (not "KenKen"), Kakuro, Futoshiki, Skyscrapers
 - **Bridges** (Hashi), Slitherlink, Nurikabe, Light Up, Tents, Pipes
 - More for Slide: Klotski-style blocks, box pushing
