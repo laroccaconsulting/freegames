@@ -150,7 +150,8 @@ Collection (MIT) is a good reference for generators and rules.
 |---|---|
 | **Chess vs. computer** | Low priority: lichess already does this free and well. Stockfish is GPL |
 | **Jigsaw** | Public-domain art from Met / Rijksmuseum / Art Institute of Chicago open access |
-| **Hearts, Spades, Dominoes, Checkers, Backgammon** | Offline vs. AI; reuse the solitaire card engine |
+| **Backgammon** | ✅ Built — `games/backgammon/`. Computer at three levels, pass-and-play, hits, doubles, bear-off, gammon/backgammon scoring |
+| **Hearts, Spades, Dominoes, Checkers** | Offline vs. AI; reuse the solitaire card engine |
 | **Nonograms / Picross** | Generated puzzles with unique-solution check |
 | **Dice poker** (Yahtzee-style) | Must *not* be called Yahtzee |
 
