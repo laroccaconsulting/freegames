@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Words — Codeword and Word Wheel, free, no ads</title>
+    <meta name="description" content="Word puzzles with no ads: crack the Codeword (a crossword where every letter is a number) or find every word in the Word Wheel. A new daily puzzle, endless more, works offline." />
+    <meta name="theme-color" content="#f4f1ea" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Words" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta property="og:title" content="Words — Codeword and Word Wheel, no ads" />
+    <meta property="og:description" content="Crack the code or find every word. Daily puzzles, share your result." />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="core/base.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <button class="title-btn" id="mode-btn" aria-label="Choose puzzle">
+          <span class="title-main" id="title">Words</span>
+          <small class="title-sub" id="subtitle"></small>
+        </button>
+        <div class="score" id="score" aria-live="off"></div>
+      </header>
+      <main class="stage" id="stage" aria-label="Puzzle">
+        <p class="loading" id="loading">Loading words…</p>
+      </main>
+      <nav class="toolbar" id="toolbar" aria-label="Game controls"></nav>
+    </div>
+    <p class="visually-hidden" id="announce" aria-live="polite"></p>
+    <noscript><p style="padding: 24px">Words needs JavaScript to run.</p></noscript>
+  </body>
+</html>

@@ -115,8 +115,9 @@ a seed (daily + share line, like the puzzle-golf games).
 
 | Game | Notes |
 |---|---|
-| **Codeword** (cipher crossword) | A real crossword grid where every letter is a number. No clues at all. Solver proves a unique solution; a few letters given to start |
-| **Word Wheel** | Seven letters, make words; one word uses all seven. Not "Spelling Bee" |
+| **Words** app | ✅ Built — `games/words/`: Codeword and Word Wheel share one word list (ENABLE + a public-domain common-words list, built by `scripts/build-words.mjs`, offensive words filtered) |
+| **Codeword** (cipher crossword) | ✅ Built (in Words). Criss-cross grid of common words; the solver adds given letters until only one solution fits the full word list | A real crossword grid where every letter is a number. No clues at all. Solver proves a unique solution; a few letters given to start |
+| **Word Wheel** | ✅ Built (in Words): nine letters, one in the middle; targets from common words, rarer words count as bonus. Was: seven letters, make words; one word uses all seven. Not "Spelling Bee" |
 | **Word Grid** | Find words in a 4×4 letter grid against the clock (or not). Not "Boggle" |
 | **Word Ladder** | Change one letter at a time; a solver sets par |
 | **Fill-in** (criss-cross) | Given the word list, fit every word into the grid |

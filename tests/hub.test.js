@@ -11,7 +11,7 @@ test('the games list links every game, with an icon and a category', () => {
   for (const slug of slugs) {
     const card = new RegExp(`<a class="game" href="${slug}/" data-slug="${slug}" data-tags="([a-z ]+)"[^>]*>\\s*<img src="([^"]+)"`).exec(html);
     assert.ok(card, `${slug} is on the games list`);
-    assert.ok(card[1].split(' ').every((t) => ['puzzle', 'board', 'cards', 'arcade'].includes(t)), `${slug} has known categories`);
+    assert.ok(card[1].split(' ').every((t) => ['puzzle', 'words', 'board', 'cards', 'arcade'].includes(t)), `${slug} has known categories`);
     assert.ok(existsSync(new URL(`../site/${card[2]}`, import.meta.url)), `${slug} icon ${card[2]} exists`);
     assert.ok(existsSync(new URL(`${slug}/sw.js`, gamesDir)), `${slug} has a service worker to save it offline`);
   }

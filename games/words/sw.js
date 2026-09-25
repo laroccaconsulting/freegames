@@ -1,6 +1,6 @@
 // Offline support: every file is cached on install and served cache-first.
 // VERSION and FILES are rewritten by scripts/build-sw.mjs; run it before deploying.
-const VERSION = '633b102856a0';
+const VERSION = 'd28bca174b65';
 const FILES = [
   './',
   './app.css',
@@ -19,18 +19,18 @@ const FILES = [
   './core/sound.js',
   './core/storage.js',
   './core/ui.js',
+  './data/common.txt',
+  './data/words.txt',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon.svg',
   './icons/maskable-512.png',
   './index.html',
-  './js/art.js',
-  './js/board.js',
-  './js/cards.js',
-  './js/celebrate.js',
-  './js/engine.js',
-  './js/variants.js',
+  './js/blocklist.js',
+  './js/codeword.js',
+  './js/dict.js',
+  './js/wheel.js',
   './manifest.webmanifest'
 ];
 
