@@ -2,6 +2,7 @@ import { makeStore } from './core/storage.js';
 import { makeSettings } from './core/settings.js';
 import { applyTheme, watchSystemTheme, openDialog, segmented, toggle, el, toast } from './core/ui.js';
 import { sounds, setSoundEnabled, audio, noiseBurst, tone } from './core/sound.js';
+import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { parseHash } from './core/golf.js';
 import { icon } from './core/icons.js';
@@ -750,6 +751,8 @@ function resume() {
 }
 
 resume();
+
+addHubLink();
 
 registerServiceWorker({
   onUpdateReady: () => toast('A new version is ready', { action: { label: 'Reload', onClick: () => location.reload() } }),

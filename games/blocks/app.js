@@ -2,6 +2,7 @@ import { makeStore } from './core/storage.js';
 import { makeSettings } from './core/settings.js';
 import { applyTheme, openDialog, toggle, el, toast } from './core/ui.js';
 import { setSoundEnabled } from './core/sound.js';
+import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { randomSeed } from './core/rng.js';
 import { dateKey, dailyNumber, dailyStreak, parseHash, buildHash, scoreRating, scoreSquares } from './core/golf.js';
@@ -448,6 +449,8 @@ document.addEventListener('keydown', (e) => {
   else return;
   e.preventDefault();
 });
+
+addHubLink();
 
 registerServiceWorker({
   onUpdateReady: () => toast('A new version is ready', { action: { label: 'Reload', onClick: () => location.reload() } }),

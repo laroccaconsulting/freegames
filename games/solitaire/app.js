@@ -3,6 +3,7 @@ import { makeSettings } from './core/settings.js';
 import { applyTheme, watchSystemTheme, openDialog, segmented, toggle, el, toast, formatTime } from './core/ui.js';
 import { medal } from './core/icons.js';
 import { sounds, setSoundEnabled } from './core/sound.js';
+import { addHubLink } from './core/hub.js';
 import { registerServiceWorker, isStandalone } from './core/pwa.js';
 import { randomSeed } from './core/rng.js';
 import { injectSprite } from './js/art.js';
@@ -653,6 +654,8 @@ if (saved && !saved.won) {
   const last = store.get('last') || { variantId: 'klondike', options: { draw: 1 } };
   startGame(VARIANTS[last.variantId] ? last.variantId : 'klondike', last.options);
 }
+
+addHubLink();
 
 registerServiceWorker({
   onUpdateReady: () => toast('A new version is ready', { action: { label: 'Reload', onClick: () => location.reload() } }),
