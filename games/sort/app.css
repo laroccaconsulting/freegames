@@ -171,6 +171,35 @@ body[data-skin='sunny'] .b3 {
   opacity: 0.45;
 }
 
+/* Hallows: autumn night with a harvest glow. The moon, castle, candles,
+   bats and leaves are drawn by core/hallows.js behind everything. */
+body[data-skin='hallows'] {
+  --ink: #f6ead0;
+  --ink-muted: rgba(246, 234, 208, 0.62);
+  --bar: rgba(22, 13, 40, 0.55);
+  --bar-border: rgba(232, 176, 74, 0.22);
+  --pop: #ffb347;
+}
+body[data-skin='hallows'] .title-main {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+body[data-skin='hallows'] .b1 {
+  background: radial-gradient(circle, #ff8a1f 0%, transparent 60%);
+  left: -30vmax;
+  top: auto;
+  bottom: -45vmax;
+  opacity: 0.22;
+}
+body[data-skin='hallows'] .b2 {
+  background: radial-gradient(circle, #7b3dff 0%, transparent 60%);
+  opacity: 0.2;
+}
+body[data-skin='hallows'] .b3 {
+  display: none;
+}
+
 /* Calm: quiet paper, nothing moves. */
 body[data-skin='calm'] {
   --ink: #2a2723;

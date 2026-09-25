@@ -1,6 +1,7 @@
 import { makeStore } from './core/storage.js';
 import { makeSettings } from './core/settings.js';
-import { applyTheme, watchSystemTheme, openDialog, segmented, toggle, el, toast, formatTime } from './core/ui.js';
+import { isHallowsSeason } from './core/hallows.js';
+import { applyTheme, watchSystemTheme, offerHallows, openDialog, segmented, toggle, el, toast, formatTime } from './core/ui.js';
 import { medal } from './core/icons.js';
 import { sounds, setSoundEnabled } from './core/sound.js';
 import { addHubLink } from './core/hub.js';
@@ -17,7 +18,7 @@ import {
 
 const store = makeStore('solitaire');
 const settings = makeSettings(store, {
-  theme: 'auto',
+  theme: null,
   felt: 'green',
   back: 'red',
   sound: true,
@@ -28,6 +29,8 @@ const settings = makeSettings(store, {
   showTimer: true,
   showScore: true,
 });
+// No theme picked yet: follow the season (Hallows in autumn).
+const themeId = () => settings.get('theme') ?? (isHallowsSeason() ? 'hallows' : 'auto');
 
 const FELTS = { green: '#1d6b45', blue: '#1f4f7a', teal: '#17645f', red: '#7a2331', purple: '#4a2f73', charcoal: '#2c3036' };
 const BACKS = { red: '#a52a38', blue: '#2a5aa0', green: '#2a7550', purple: '#5d3f94', black: '#30333a', gold: '#b87424' };
@@ -44,7 +47,7 @@ let installPrompt = null;
 // ---------- Settings ----------
 
 function applySettings() {
-  applyTheme(settings.get('theme'));
+  applyTheme(themeId());
   setSoundEnabled(settings.get('sound'));
   document.body.dataset.felt = settings.get('felt');
   document.body.style.setProperty('--felt', FELTS[settings.get('felt')]);
@@ -478,7 +481,7 @@ function settingsDialog() {
       'div',
       {},
       el('div', { class: 'field' }, el('span', { class: 'field-label' }, 'Theme'),
-        segmented('theme', [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']], settings.get('theme'), set('theme'))),
+        segmented('theme', [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark'], ['hallows', 'Hallows']], themeId(), set('theme'))),
       el('div', { class: 'field' }, el('span', { class: 'field-label' }, 'Table'),
         swatches('felt', FELTS, settings.get('felt'), set('felt'), 'felt-swatch')),
       el('div', { class: 'field' }, el('span', { class: 'field-label' }, 'Card back'),
@@ -619,7 +622,8 @@ const board = new Board(boardEl, {
   onDragInvalid: () => sounds.invalid(),
 });
 applySettings();
-watchSystemTheme(() => settings.get('theme'));
+watchSystemTheme(() => themeId());
+offerHallows(store, themeId(), () => settings.set('theme', 'hallows'));
 settings.onChange(() => applySettings());
 
 $('game-btn').addEventListener('click', gamePicker);

@@ -1,6 +1,7 @@
 import { makeStore } from './core/storage.js';
 import { makeSettings } from './core/settings.js';
-import { applyTheme, openDialog, toggle, segmented, el, toast } from './core/ui.js';
+import { isHallowsSeason } from './core/hallows.js';
+import { applyTheme, openDialog, toggle, segmented, el, toast, offerHallows } from './core/ui.js';
 import { setSoundEnabled } from './core/sound.js';
 import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
@@ -15,7 +16,9 @@ import { Board } from './js/render.js';
 import { sfx, setSoundTheme } from './js/sfx.js';
 
 const store = makeStore('gems');
-const settings = makeSettings(store, { skin: 'jewels', sound: true, vibrate: true, effects: true, speed: 'normal' });
+const settings = makeSettings(store, { skin: null, sound: true, vibrate: true, effects: true, speed: 'normal' });
+// No theme picked yet: follow the season (Hallows in autumn).
+const skinId = () => settings.get('skin') ?? (isHallowsSeason() ? 'hallows' : 'jewels');
 const $ = (id) => document.getElementById(id);
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -27,10 +30,10 @@ $('canvas').board = board; // reachable from browser tests
 // ---------- Settings ----------
 
 function applySettings() {
-  const theme = themeById(settings.get('skin'));
+  const theme = themeById(skinId());
   document.body.dataset.skin = theme.id;
-  applyTheme(theme.dark ? 'dark' : 'light');
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.dark ? '#0d0724' : '#fff0f6');
+  applyTheme(theme.id === 'hallows' ? 'hallows' : theme.dark ? 'dark' : 'light');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.id === 'hallows' ? '#120c22' : theme.dark ? '#0d0724' : '#fff0f6');
   setSoundEnabled(settings.get('sound'));
   setSoundTheme(theme);
   board.setTheme(theme);
@@ -40,6 +43,7 @@ function applySettings() {
 settings.onChange(applySettings);
 reducedMotion.addEventListener?.('change', applySettings);
 applySettings();
+offerHallows(store, skinId(), () => settings.set('skin', 'hallows'));
 
 const announce = (text) => ($('announce').textContent = text);
 const vibrate = (pattern) => {
@@ -319,7 +323,7 @@ function openMenu() {
 }
 
 function openThemes() {
-  const current = settings.get('skin');
+  const current = skinId();
   const sample = (t) => el('span', { class: 'dots' }, [0, 1, 2, 3, 4, 5].map((k) => el('i', { style: `background:${gemColor(t, k)}` })));
   openDialog({
     title: 'Themes',

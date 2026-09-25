@@ -6,10 +6,11 @@
 //   id, name      identifier and display name
 //   dark          true for dark backgrounds (dialogs follow it)
 //   colors        12 liquid colours, most distinct first (small levels use the first few)
+//   names         optional spoken names for the colours (screen readers)
 //   glass         { fill, edge, rim, shine, shade, glow } tube look; glow 0–1
 //   bubbles       idle bubbles rising in the liquid
 //   additive      particles blend with 'lighter' (glows on dark themes)
-//   particles     burst style: 'sparks' | 'stars' | 'confetti' | 'petals'
+//   particles     burst style: 'sparks' | 'stars' | 'confetti' | 'petals' | 'leaves'
 //   cap           colour of the stopper that seals a finished tube (null = liquid colour)
 //   sound         { wave, root, scale } notes for chimes (semitones above root)
 //   preview       CSS background used for the theme's card in the picker
@@ -53,6 +54,21 @@ export const THEMES = [
     cap: '#c77a2e',
     sound: { wave: 'sine', root: 587.33, scale: [0, 2, 4, 7, 9, 12, 14, 16, 19] },
     preview: 'radial-gradient(circle at 75% 20%, #ffd76a, transparent 45%), linear-gradient(#fff4e0, #ffd9c2)',
+  },
+  {
+    id: 'hallows',
+    name: 'Hallows',
+    dark: true,
+    // Potions: brews in stoppered vials by candlelight.
+    colors: ['#ff7a1a', '#7dde3c', '#9b5cff', '#ffd24a', '#d7263d', '#5ec8ff', '#ff6fb5', '#3552ff', '#1fc9a0', '#efe9ff', '#9a6436', '#7b7f92'],
+    names: ['orange', 'green', 'violet', 'gold', 'red', 'sky blue', 'pink', 'blue', 'teal', 'white', 'brown', 'grey'],
+    glass: { fill: 'rgba(255,220,160,0.06)', edge: 'rgba(255,214,140,0.5)', rim: 'rgba(255,240,210,0.85)', shine: 0.3, shade: 0.4, glow: 0.6 },
+    bubbles: true,
+    additive: true,
+    particles: 'stars',
+    cap: '#a0703c',
+    sound: { wave: 'triangle', root: 440, scale: [0, 3, 7, 10, 12, 15, 19, 22, 24] },
+    preview: 'radial-gradient(circle at 78% 22%, #fff3c4 0 7%, #ffd98a55 9%, transparent 26%), radial-gradient(ellipse at 50% 120%, #ff8a1f66, transparent 55%), linear-gradient(#0b0718, #23133b)',
   },
   {
     id: 'calm',

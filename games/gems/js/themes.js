@@ -6,7 +6,7 @@
 //                    in code, or { kind: 'emoji', set: [...], colors: [...] }
 //   board            { bg, cell, line } board colours
 //   additive         particles glow ('lighter' blending)
-//   particles        'sparks' | 'stars' | 'confetti' | 'petals'
+//   particles        'sparks' | 'stars' | 'confetti' | 'petals' | 'leaves'
 //   sound            { wave, root, scale } chime notes (semitones above root)
 //   preview          CSS background for the theme picker card
 import { drawJewel } from '../core/jewels.js';
@@ -44,6 +44,17 @@ export const THEMES = [
     particles: 'stars',
     sound: { wave: 'sine', root: 440, scale: [0, 2, 5, 7, 9, 12, 14, 17, 19] },
     preview: 'radial-gradient(circle at 70% 20%, #3fd5e066, transparent 55%), linear-gradient(#03243f, #0a4a6e)',
+  },
+  {
+    id: 'hallows',
+    name: 'Hallows',
+    dark: true,
+    gems: { kind: 'shapes', shapes: [['hat', '#8b5cff'], ['pumpkin', '#ff7a1a'], ['potion', '#35d072'], ['orb', '#29c9ff'], ['star', '#ffd84a'], ['leaf', '#e0452b']] },
+    board: { bg: 'rgba(18,10,36,0.88)', cell: 'rgba(255,220,160,0.05)', line: 'rgba(232,176,74,0.35)' },
+    additive: true,
+    particles: 'leaves',
+    sound: { wave: 'triangle', root: 440, scale: [0, 3, 7, 10, 12, 15, 19, 22, 24] },
+    preview: 'radial-gradient(circle at 78% 22%, #fff3c4 0 7%, #ffd98a55 9%, transparent 26%), radial-gradient(ellipse at 50% 120%, #ff8a1f66, transparent 55%), linear-gradient(#0b0718, #23133b)',
   },
   {
     id: 'calm',

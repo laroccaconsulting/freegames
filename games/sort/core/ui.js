@@ -1,5 +1,6 @@
 // Dialogs, toasts, and theme handling shared by every game.
 import { icon } from './icons.js';
+import { setHallows, isHallowsSeason } from './hallows.js';
 
 export function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -91,16 +92,26 @@ export function toast(message, { duration = 2600, action } = {}) {
   toastTimer = setTimeout(() => host.classList.remove('show'), action ? duration * 3 : duration);
 }
 
-// theme: 'auto' | 'light' | 'dark'
+// theme: 'auto' | 'light' | 'dark' | 'hallows' (the autumn night theme)
 export function applyTheme(theme) {
   const root = document.documentElement;
   if (theme === 'auto') root.removeAttribute('data-theme');
   else root.dataset.theme = theme;
+  setHallows(theme === 'hallows');
   requestAnimationFrame(() => {
     const meta = document.querySelector('meta[name="theme-color"]');
     const color = getComputedStyle(document.body).getPropertyValue('--chrome-bg').trim();
     if (meta && color) meta.setAttribute('content', color);
   });
+}
+
+// In autumn, tells players who picked another theme (once a year) that the
+// Hallows theme is here. `apply` switches to it.
+export function offerHallows(store, current, apply) {
+  const year = new Date().getFullYear();
+  if (!isHallowsSeason() || current === 'hallows' || store.get('hallowsOffered') === year) return;
+  store.set('hallowsOffered', year);
+  setTimeout(() => toast('The autumn Hallows theme is here', { duration: 4000, action: { label: 'Try it', onClick: apply } }), 1200);
 }
 
 export function watchSystemTheme(getTheme) {

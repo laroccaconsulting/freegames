@@ -1,6 +1,7 @@
 import { makeStore } from './core/storage.js';
 import { makeSettings } from './core/settings.js';
-import { applyTheme, openDialog, toggle, el, toast } from './core/ui.js';
+import { isHallowsSeason } from './core/hallows.js';
+import { applyTheme, openDialog, toggle, el, toast, offerHallows } from './core/ui.js';
 import { setSoundEnabled } from './core/sound.js';
 import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
@@ -18,7 +19,9 @@ const LAUNCH_DAY = '2026-09-24';
 const DAILY_PIECES = 90;
 
 const store = makeStore('blocks');
-const settings = makeSettings(store, { skin: 'neon', sound: true, vibrate: true, effects: true });
+const settings = makeSettings(store, { skin: null, sound: true, vibrate: true, effects: true });
+// No theme picked yet: follow the season (Hallows in autumn).
+const skinId = () => settings.get('skin') ?? (isHallowsSeason() ? 'hallows' : 'neon');
 const $ = (id) => document.getElementById(id);
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -34,10 +37,10 @@ $('canvas').view = view; // reachable from browser tests
 // ---------- Settings ----------
 
 function applySettings() {
-  const theme = themeById(settings.get('skin'));
+  const theme = themeById(skinId());
   document.body.dataset.skin = theme.id;
-  applyTheme(theme.dark ? 'dark' : 'light');
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.dark ? '#0d0724' : '#f6e3c3');
+  applyTheme(theme.id === 'hallows' ? 'hallows' : theme.dark ? 'dark' : 'light');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.id === 'hallows' ? '#120c22' : theme.dark ? '#0d0724' : '#f6e3c3');
   setSoundEnabled(settings.get('sound'));
   setSoundTheme(theme);
   view.setTheme(theme);
@@ -47,6 +50,7 @@ function applySettings() {
 settings.onChange(applySettings);
 reducedMotion.addEventListener?.('change', applySettings);
 applySettings();
+offerHallows(store, skinId(), () => settings.set('skin', 'hallows'));
 
 const announce = (text) => ($('announce').textContent = text);
 const vibrate = (pattern) => {
@@ -371,7 +375,7 @@ function openMenu() {
 }
 
 function openThemes() {
-  const current = settings.get('skin');
+  const current = skinId();
   openDialog({
     title: 'Themes',
     body: el('div', {},

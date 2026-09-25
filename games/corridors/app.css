@@ -34,6 +34,26 @@
   --bad: #ff6b5e;
 }
 
+/* Hallows (autumn): flagstones in a castle hall, walls of candlelight. */
+:root[data-theme='hallows'] {
+  --board-frame: #3a2a4f;
+  --board-frame-edge: #1c1330;
+  --cell: #2a2140;
+  --cell-edge: rgba(232, 176, 74, 0.14);
+  --groove: #1c1330;
+  --wall: #e8b04a;
+  --wall-light: #ffe29a;
+  --ghost: rgba(232, 176, 74, 0.5);
+  --bad: #ff7a5c;
+}
+:root[data-theme='hallows'] .hw-candle {
+  display: none; /* they would sit behind the player cards and status text */
+}
+:root[data-theme='hallows'] .title h1 {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+}
+
 body {
   min-height: 100dvh;
   padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
