@@ -359,6 +359,129 @@ body {
   transform: scale(0.96);
 }
 
+/* ---------- Number grids (Futoshiki, Skyscrapers) ---------- */
+
+.board-wrap.futoshiki,
+.board-wrap.skyscrapers {
+  width: min(100cqw, 100cqh - 120px, 540px);
+}
+.ng-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--n), minmax(0, 1fr));
+  aspect-ratio: 1;
+}
+.ng-cell {
+  position: relative;
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: var(--surface);
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  container-type: inline-size;
+}
+.ng-cell.given {
+  color: var(--ink);
+  cursor: default;
+}
+.ng-cell.line {
+  background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface));
+}
+.ng-cell.sel {
+  background: color-mix(in srgb, var(--star) 35%, var(--surface));
+}
+.ng-cell b {
+  font-size: 50cqi;
+  font-weight: 800;
+}
+.ng-cell.bad b {
+  color: var(--bad);
+}
+.ng-cell .notes {
+  position: absolute;
+  inset: 8%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: max(8px, 17cqi);
+  line-height: 1.15;
+  color: var(--text-muted);
+  text-align: center;
+  word-spacing: 2px;
+}
+.ng-grid.solved .ng-cell b {
+  animation: pop 0.4s ease;
+}
+/* Futoshiki: squares with gaps for the signs. */
+.ng-grid.futoshiki {
+  --gap: min(4.5cqw, 26px);
+  gap: var(--gap);
+  padding: 4px;
+}
+.futoshiki .ng-cell {
+  border-radius: 10px;
+  border: 2px solid var(--wall);
+  overflow: visible;
+}
+.futoshiki .sign {
+  position: absolute;
+  font-style: normal;
+  font-weight: 800;
+  font-size: max(16px, 42cqi);
+  line-height: 1;
+  color: var(--ink);
+  opacity: 0.75;
+  pointer-events: none;
+}
+.futoshiki .sign-r {
+  top: 50%;
+  right: calc(var(--gap) / -2 - 2px);
+  transform: translate(50%, -50%);
+}
+.futoshiki .sign-b {
+  left: 50%;
+  bottom: calc(var(--gap) / -2 - 2px);
+  transform: translate(-50%, 50%);
+}
+.futoshiki .sign.bad {
+  color: var(--bad);
+  opacity: 1;
+}
+/* Skyscrapers: clues around a boxed grid. */
+.sky-frame {
+  display: grid;
+  grid-template-columns: 2.2em minmax(0, 1fr) 2.2em;
+  grid-template-rows: 2.2em auto 2.2em;
+}
+.sky-row {
+  display: grid;
+  grid-template-columns: repeat(var(--n), 1fr);
+}
+.sky-col {
+  display: grid;
+  grid-template-rows: repeat(var(--n), 1fr);
+}
+.sky-clue {
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: clamp(0.9rem, 4.5cqw, 1.5rem);
+  color: var(--text-muted);
+}
+.sky-clue.bad {
+  color: var(--bad);
+}
+.ng-grid.skyscrapers {
+  border: 3px solid var(--wall);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.skyscrapers .ng-cell {
+  box-shadow: inset -1px -1px 0 var(--line);
+}
+
 /* ---------- Bridges ---------- */
 
 .board-wrap.bridges {

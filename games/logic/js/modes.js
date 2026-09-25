@@ -3,9 +3,13 @@
 import { starsMode } from './stars-view.js';
 import { calcMode } from './calc-view.js';
 import { bridgesMode } from './bridges-view.js';
+import { futoshikiMode } from './futoshiki-view.js';
+import { skyscrapersMode } from './skyscrapers-view.js';
 
 export const MODES = {
   stars: starsMode,
   calc: calcMode,
   bridges: bridgesMode,
+  futoshiki: futoshikiMode,
+  skyscrapers: skyscrapersMode,
 };
