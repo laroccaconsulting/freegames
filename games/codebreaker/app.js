@@ -10,9 +10,12 @@ import { showResults, note } from './core/results.js';
 import { icon, withIcon } from './core/icons.js';
 import { MODES, score, allCodes, consistent, nextGuess, solverGuesses, secretFrom } from './js/rules.js';
 import { mulberry32 } from './core/rng.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 
 const LAUNCH_DAY = '2026-09-25';
 const store = makeStore('codebreaker');
+const ach = makeAchievements('codebreaker', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, symbols: true });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -230,6 +233,20 @@ function finish() {
     stats.won++;
     stats.total += n;
     if (n <= game.par && !game.hints) stats.perfect++;
+  }
+
+  if (game.won) {
+    ach.unlock('first');
+    ach.add('cracked-50');
+    if (n <= game.par && !game.hints) ach.unlock('par');
+    if (spec.mode === 'hard') ach.unlock('hard');
+    if (n <= 3) ach.unlock('three');
+  }
+  if (spec.daily) {
+    ach.unlock('daily');
+    const streak = dailyStreak(store.get(`daily-${spec.mode}`, {}), today());
+    ach.at('streak-7', streak);
+    ach.at('streak-30', streak);
   }
   store.set('stats', stats);
   if (game.won) sfx.win();

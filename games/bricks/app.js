@@ -7,9 +7,12 @@ import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { icon } from './core/icons.js';
 import { Particles } from './core/fx.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { W, H, R, PADDLE_Y, PADDLE_H, newGame, launch, step } from './js/bricks.js';
 
 const store = makeStore('bricks');
+const ach = makeAchievements('bricks', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, effects: true });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -113,8 +116,10 @@ function handle(events) {
         particles.burst(k.x + k.w / 2, k.y + k.h / 2, COLORS()[k.color], 'confetti', { count: 14, speed: 180 });
         if (e.combo >= 3) floaters.push({ x: k.x + k.w / 2, y: k.y, text: `×${e.combo}`, life: 1 });
       }
+      if (e.combo >= 8) ach.unlock('combo-8');
     } else if (e.type === 'power') {
       sfx.power();
+      ach.unlock('power');
       toast({ wide: 'Wide paddle!', multi: 'Multi-ball!', slow: 'Slow motion!' }[e.kind], { duration: 1200 });
     } else if (e.type === 'lose') {
       sfx.lose();
@@ -127,12 +132,16 @@ function handle(events) {
     } else if (e.type === 'clear') {
       sfx.clear();
       phase = 'between';
+      ach.unlock('level-1');
+      ach.at('level-5', s.level);
+      ach.at('level-10', s.level);
       if (effects) for (let k = 0; k < 4; k++) particles.burst(W * (0.2 + k * 0.2), H * 0.4, null, 'confetti', { count: 30, speed: 320, palette: COLORS() });
       overlay(`Level ${s.level} cleared!`, 'Tap for the next level');
     }
   }
   if (s.over && phase !== 'over') {
     phase = 'over';
+    ach.at('score-5000', s.score);
     const best = store.get('best', 0);
     if (s.score > best) store.set('best', s.score);
     store.set('bestLevel', Math.max(store.get('bestLevel', 1), s.level));

@@ -7,11 +7,14 @@ import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash, shareText, hashSeed } from './core/golf.js';
 import { icon, withIcon, medal } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { generate, candidatesOf, nextStep, conflicts, TECHNIQUES, unitName, ROW, COL, BOX } from './js/sudoku.js';
 
 const LAUNCH_DAY = '2026-09-25';
 const LEVEL_NAMES = { easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert' };
 const store = makeStore('sudoku');
+const ach = makeAchievements('sudoku', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, mistakes: 'rules', highlight: true, big: false });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -257,6 +260,18 @@ function finish() {
   if (game.daily) {
     const log = store.get('daily', {});
     if (!log[game.daily]) store.set('daily', { ...log, [game.daily]: { time: t, hints: game.hints } });
+  }
+  ach.unlock('first');
+  ach.add('solved-50');
+  if (game.level === 'hard' || game.level === 'expert') ach.unlock('hard');
+  if (game.level === 'expert') ach.unlock('expert');
+  if (clean) ach.unlock('clean');
+  if (clean && game.level !== 'easy' && t < 600) ach.unlock('fast');
+  if (game.daily) {
+    ach.unlock('daily');
+    const streak = dailyStreak(store.get('daily', {}), dateKey());
+    ach.at('streak-7', streak);
+    ach.at('streak-30', streak);
   }
   const text = `Sudoku · ${titleOf(game)} (${LEVEL_NAMES[game.level]}) ${clean ? '💎' : '💡'}\nSolved in ${formatTime(t)}${game.hints ? ` with ${game.hints} hint${game.hints > 1 ? 's' : ''}` : ', no hints'}`;
   const url = location.origin + location.pathname + buildHash(game.daily ? { d: game.daily } : { l: game.level, n: game.n });

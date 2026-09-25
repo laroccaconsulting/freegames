@@ -8,11 +8,14 @@ import { registerServiceWorker } from './core/pwa.js';
 import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash, rating, overText, squares, hashSeed } from './core/golf.js';
 import { showResults, note } from './core/results.js';
 import { icon, withIcon } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import * as P from './js/pipes.js';
 
 const LAUNCH_DAY = '2026-09-25';
 const LABELS = { small: '5×5', medium: '7×7', large: '9×11', huge: '11×15' };
 const store = makeStore('pipes');
+const ach = makeAchievements('pipes', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -209,6 +212,18 @@ function finish() {
   if (spec.daily) {
     const log = store.get('daily', {});
     if (!log[spec.daily]) store.set('daily', { ...log, [spec.daily]: { taps: play.taps, par: puzzle.par, hints: play.hints } });
+  }
+
+  ach.unlock('first');
+  ach.add('solved-50');
+  if (!play.hints && play.taps <= puzzle.par) ach.unlock('par');
+  if (spec.size === 'large' || spec.size === 'huge') ach.unlock('large');
+  if (spec.size === 'huge') ach.unlock('huge');
+  if (spec.daily) {
+    ach.unlock('daily');
+    const streak = dailyStreak(store.get('daily', {}), today());
+    ach.at('streak-7', streak);
+    ach.at('streak-30', streak);
   }
   const stats = store.get('stats', {});
   const st = (stats[spec.size] ||= { solved: 0, perfect: 0 });

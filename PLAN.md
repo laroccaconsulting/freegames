@@ -220,6 +220,27 @@ node scripts/icons.mjs games/sudoku       # after editing icons/icon.svg
 node scripts/build-sw.mjs                 # before every deploy
 ```
 
+### Every game has
+
+The template (`node scripts/new-game.mjs`) starts with all of these, and
+`tests/achievements.test.js` and `tests/hub.test.js` check them for every game.
+
+- [ ] **Themes**: auto, light and dark, plus every seasonal look (today:
+      Hallows). Colours live in CSS variables with a
+      `:root[data-theme='<season>']` block (or a theme plug-in for canvas games).
+      Wired with `themeFor` / `onLookChange` / `offerHallows` so the games
+      list's "Theme for every game" switch applies.
+- [ ] **Achievements**: `achievements.js` (at least 5; plain data: id, title,
+      desc, optional goal and secret) and `makeAchievements('<slug>', …)` in
+      app.js with `unlock` / `add` / `at` calls. Ids never change: they're
+      save keys. The trophy button appears in the top bar by itself.
+- [ ] **On the games list**: a card in `site/index.html` and its icon in `site/`.
+- [ ] **Way back**: `addHubLink()`.
+- [ ] **Offline and installable**: `registerServiceWorker`, manifest, icons;
+      `node scripts/build-sw.mjs` run (this also refreshes `site/achievements.js`).
+- [ ] **Pure rules with tests** in `tests/`.
+- [ ] Daily puzzle with streak and share, where the game suits one.
+
 ### Release checklist (per game)
 
 - [ ] Works offline (DevTools → Network → Offline, reload)
@@ -449,6 +470,35 @@ book or film is used: no names, crests, house colours, lightning bolts or logos.
 - **Seasonal default:** with no choice anywhere, games show Hallows from
   1 September to 7 November (`isHallowsSeason`). Players who picked another
   theme in a game (and never used the hub switch) get a one-time toast.
+
+### Seasons (planned)
+
+Hallows is the first seasonal look; there will be one per season (winter,
+spring, summer). To keep that cheap, every game already keeps its colours in
+CSS variables and gets its theme id from `themeFor`. Adding a season means:
+generalise `core/hallows.js` into a seasons module (date ranges, scenery,
+the hub switch listing every season), add a `:root[data-theme='<season>']`
+block to `base.css` and to each game's `app.css` (or canvas theme plug-in),
+and add it to each game's theme picker. The "Every game has" checklist grows
+with it.
+
+## Achievements
+
+- `core/achievements.js`: `makeAchievements(slug, defs)` gives `unlock(id)`,
+  `add(id, n)` (counts toward `goal`), `at(id, value)` (best value toward
+  `goal`) and `open()`. Unlocks show one toast (several at once are grouped)
+  and fill a trophy button in the top bar, which lists the game's
+  achievements with progress bars and links to all of them.
+- Saved in localStorage under one key, `freegames:achievements`
+  (`{ slug: { done: { id: time }, count: { id: n } } }`), so the games list,
+  on the same site, can read every game's progress.
+- The games list: a "🏆 Achievements n/total" link and an `#achievements`
+  view (`site/trophies.js`) with the latest unlocks and every game's list.
+  Definitions come from `site/achievements.js`, generated from each game's
+  `achievements.js` by `scripts/build-sw.mjs` (so it works offline); a test
+  fails if it's out of date.
+- Typical set per game: first win or solve, harder levels, counts (10, 50),
+  the daily (finish, 7- and 30-day streaks), and one or two secret ones.
 
 ---
 

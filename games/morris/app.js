@@ -6,9 +6,12 @@ import { sounds, setSoundEnabled, audio, tone, noiseBurst } from './core/sound.j
 import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { icon, medal } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { COORDS, LINES, newGame, moves, play, choose, inMill, takeable } from './js/morris.js';
 
 const store = makeStore('morris');
+const ach = makeAchievements('morris', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, opponent: 'normal' });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -153,6 +156,15 @@ function undo() {
 function finish() {
   const s = game.state;
   const w = s.winner;
+  if (!friend() && w === 1) {
+    ach.unlock('first-win');
+    if (game.opponent === 'normal') ach.unlock('beat-normal');
+    if (game.opponent === 'hard') ach.unlock('beat-hard');
+    ach.add('wins-10');
+    ach.add('wins-50');
+  }
+  if (friend()) ach.unlock('friend');
+  if (!friend() && w === 1 && s.onBoard[1] + s.inHand[1] === 9) ach.unlock('clean');
   if (w === 1 || (friend() && w !== 3)) sfx.win();
   else sfx.lose();
   if (!friend()) {

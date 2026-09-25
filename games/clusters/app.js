@@ -9,6 +9,8 @@ import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash } fr
 import { showResults, note } from './core/results.js';
 import { icon, withIcon } from './core/icons.js';
 import { randomSeed } from './core/rng.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { newBoard, groupAt, pop, hasMoves, tilesLeft, points, target, CLEAR_BONUS } from './js/clusters.js';
 
 const LAUNCH_DAY = '2026-09-25';
@@ -18,6 +20,7 @@ const SIZES = {
   tricky: { cols: 10, rows: 12, colors: 5, name: 'Tricky', sub: '10×12, five colours' },
 };
 const store = makeStore('clusters');
+const ach = makeAchievements('clusters', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, symbols: false });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -103,6 +106,7 @@ function tap(i) {
     return;
   }
   const n = res.popped.length;
+  if (n >= 15) ach.unlock('big-group');
   game.history = [...game.history, { board: game.board, score: game.score }];
   game.board = res.board;
   game.score += res.score;
@@ -165,6 +169,18 @@ function finish() {
   if (game.mode === 'daily') {
     const log = store.get('daily', {});
     if (!log[game.date]) store.set('daily', { ...log, [game.date]: { score: game.score, left } });
+  }
+
+  ach.unlock('first');
+  ach.add('boards-25');
+  if (!left) ach.unlock('clear');
+  if (!left && game.size === 'tricky') ach.unlock('tricky');
+  if (game.target && game.score > game.target) ach.unlock('target');
+  if (game.mode === 'daily') {
+    ach.unlock('daily');
+    const streak = dailyStreak(store.get('daily', {}), dateKey());
+    ach.at('streak-7', streak);
+    ach.at('streak-30', streak);
   }
   save();
   paint();

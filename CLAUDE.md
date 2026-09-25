@@ -9,3 +9,4 @@
 - Never use trademarked game names (Tetris, Wordle, Scrabble, Yahtzee, Boggle, Uno…).
 - The utilities idea (QR, PDF tools, tuner, white noise…) belongs in a separate `freeutilities` repo. See the end of PLAN.md.
 - Add every new game to `site/index.html` with its icon in `site/` (`tests/hub.test.js` checks); the hub saves each game for offline.
+- Every game must meet "Every game has" in PLAN.md: themes (incl. seasonal looks), achievements (`achievements.js` + `makeAchievements`), hub card, offline. `tests/achievements.test.js` enforces it; new games from the template start compliant.

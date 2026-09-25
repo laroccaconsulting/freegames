@@ -7,6 +7,8 @@ import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { parseHash } from './core/golf.js';
 import { icon } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { newGame, applyMove, legalPawnMoves, wallError, moveError, shortestPath, isValidState, hashState } from './js/engine.js';
 import { chooseMove, routeChanges } from './js/bot.js';
 import { Board, COLORS, COLOR_NAMES } from './js/board.js';
@@ -14,6 +16,7 @@ import { ONLINE_SERVER } from './js/config.js';
 import { serverBase, createRoom, randomToken, Connection, BUSY } from './js/online.js';
 
 const store = makeStore('corridors');
+const ach = makeAchievements('corridors', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, steps: true });
 // The newer of the player's pick here and the look chosen on the games list
 // (core/hallows.js); with neither, the season's theme (Hallows in autumn).
@@ -185,6 +188,15 @@ function moved(move) {
 
 function finished() {
   const w = game.state.winner;
+  if (game.mode === 'bot' && w === game.human) {
+    ach.unlock('first-win');
+    if (game.level === 'medium') ach.unlock('beat-medium');
+    if (game.level === 'hard') ach.unlock('beat-hard');
+    ach.add('wins-10');
+    ach.add('wins-50');
+  }
+  if (game.mode === 'local') ach.unlock('friend');
+  if (game.mode === 'online') ach.unlock('online');
   const mine = game.mode === 'local' || w === (game.mode === 'bot' ? game.human : game.you);
   if (mine) sfx.win();
   else sfx.lose();

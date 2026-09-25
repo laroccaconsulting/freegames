@@ -1,3 +1,13 @@
+/* Colours as variables, so each theme only swaps values. Every theme the
+   core offers gets a block here: light (default), dark, and each seasonal
+   look (currently hallows). */
+:root {
+  --game-accent: var(--accent);
+}
+:root[data-theme='hallows'] {
+  --game-accent: #f0b03c;
+}
+
 body {
   display: flex;
   flex-direction: column;

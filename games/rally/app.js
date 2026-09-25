@@ -7,9 +7,12 @@ import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { icon } from './core/icons.js';
 import { Particles } from './core/fx.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { W, H, R, PADDLE_H, TOP_Y, BOTTOM_Y, newMatch, step, aiTarget, aiSpeed } from './js/rally.js';
 
 const store = makeStore('rally');
+const ach = makeAchievements('rally', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, effects: true, opponent: 'normal', to: 7 });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -114,6 +117,7 @@ function handle(events) {
       flash = { side: e.side, life: 1 };
       trail.length = 0;
       if (e.rally >= 12 && !s.winner) toast(`${e.rally}-hit rally!`, { duration: 1200 });
+      if (e.rally >= 20) ach.unlock('rally-20');
     } else if (e.type === 'win') finish(e.side);
   }
   hud();
@@ -121,6 +125,15 @@ function handle(events) {
 
 function finish(side) {
   phase = 'over';
+  if (!friend() && side === 'bottom') {
+    ach.unlock('first-win');
+    if (settings.get('opponent') === 'normal') ach.unlock('beat-normal');
+    if (settings.get('opponent') === 'hard') ach.unlock('beat-hard');
+    ach.add('wins-10');
+    ach.add('wins-50');
+  }
+  if (friend()) ach.unlock('friend');
+  if (!friend() && side === 'bottom' && s.score.top === 0) ach.unlock('shutout');
   const score = `${s.score[side]}–${s.score[side === 'top' ? 'bottom' : 'top']}`;
   const good = friend() || side === 'bottom';
   sfx.win(good);

@@ -8,9 +8,12 @@ import { registerServiceWorker } from './core/pwa.js';
 import { icon } from './core/icons.js';
 import { Particles } from './core/fx.js';
 import { randomSeed } from './core/rng.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { newGame, turn, step, DIRS } from './js/snake.js';
 
 const store = makeStore('snake');
+const ach = makeAchievements('snake', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, mode: 'classic', speed: 'normal', pad: false, effects: true });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -124,6 +127,13 @@ function gameOver(won = false) {
   if (isBest) store.set('best', { ...best, [key]: state.score });
   const games = store.get('games', 0) + 1;
   store.set('games', games);
+  ach.at('score-10', state.score);
+  ach.at('score-25', state.score);
+  ach.at('score-50', state.score);
+  if (settings.get('speed') === 'fast') ach.at('fast-20', state.score);
+  if (settings.get('mode') === 'wrap') ach.at('wrap-30', state.score);
+  ach.add('games-25');
+  if (won) ach.unlock('fill');
   showOverlay(won ? 'You filled the board!' : isBest && state.score > 0 ? `New best: ${state.score}!` : `Score ${state.score}`, 'Tap or press Space to play again');
   hud();
 }

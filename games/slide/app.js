@@ -8,6 +8,8 @@ import { registerServiceWorker } from './core/pwa.js';
 import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash, rating, overText, squares } from './core/golf.js';
 import { showResults, note } from './core/results.js';
 import { icon, withIcon } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import * as unblock from './js/unblock.js';
 import * as tiles from './js/tiles.js';
 import { Renderer } from './js/render.js';
@@ -16,6 +18,7 @@ const LAUNCH_DAY = '2026-09-25';
 const DAILY_PAR = 18;
 
 const store = makeStore('slide');
+const ach = makeAchievements('slide', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, home: true });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -380,6 +383,20 @@ async function win() {
     const log = dailyLog();
     if (!log[game.date]) store.set('daily', { ...log, [game.date]: { moves, par: game.par, hints: game.hints } });
   }
+
+  ach.unlock('first');
+  ach.add('solved-50');
+  if (r.tier >= 3) ach.unlock('perfect');
+  if (r.tier >= 4) ach.unlock('birdie');
+  ach.at('level-10', game.mode === 'level' ? p[trackOf(game)].level - 1 : 0);
+  ach.at('level-25', game.mode === 'level' ? p[trackOf(game)].level - 1 : 0);
+  if (game.mode === 'daily') {
+    ach.unlock('daily');
+    const streak = dailyStreak(dailyLog(), today());
+    ach.at('streak-7', streak);
+    ach.at('streak-30', streak);
+  }
+  if (game.kind === 'tiles' && game.n === 5) ach.unlock('tiles-5');
   store.set('progress', p);
   save();
   updateHud();

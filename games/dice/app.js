@@ -8,11 +8,14 @@ import { registerServiceWorker } from './core/pwa.js';
 import { dateKey, dailyNumber, dailySeed, shareText, parseHash, buildHash } from './core/golf.js';
 import { icon, withIcon, medal } from './core/icons.js';
 import { mulberry32, randomSeed } from './core/rng.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import * as Y from './js/yacht.js';
 import * as T from './js/tenk.js';
 
 const LAUNCH_DAY = '2026-09-25';
 const store = makeStore('dice');
+const ach = makeAchievements('dice', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, fast: false });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -172,6 +175,13 @@ function finishYacht() {
   const winners = game.players.filter((_, k) => totals[k] === top);
   sfx.win();
   const you = totals[0];
+  ach.unlock('yacht-game');
+  const mine = game.players[0].card;
+  if (mine.yacht === 50) ach.unlock('yacht');
+  if (Y.upperTotal(mine) >= Y.UPPER_TARGET) ach.unlock('bonus');
+  ach.at('yacht-250', totals[0]);
+  if (game.players.length > 1 && totals[0] === top && game.players.some((p) => p.kind === 'bot')) ach.unlock('yacht-beat');
+  if (game.daily) ach.unlock('daily');
   if (game.players.length === 1) {
     const best = store.get('best-yacht', 0);
     if (you > best) store.set('best-yacht', you);
@@ -325,6 +335,10 @@ function finishTenk() {
   if (game.players.some((p) => p.kind === 'bot')) {
     stats.played++;
     if (w.kind === 'you') stats.won++;
+    if (w.kind === 'you') {
+      ach.unlock('tenk-win');
+      ach.add('tenk-5');
+    }
     store.set('stats-tenk', stats);
   }
   setTimeout(() => {

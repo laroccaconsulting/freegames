@@ -8,6 +8,8 @@ import { registerServiceWorker } from './core/pwa.js';
 import { icon, medal } from './core/icons.js';
 import { randomSeed } from './core/rng.js';
 import { dateKey, dailyNumber, dailySeed, dailyStreak, shareText } from './core/golf.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { injectSprite } from './js/art.js';
 import { RANK_LABELS, isRed, cardName } from './js/cards.js';
 import * as P from './js/peaks.js';
@@ -16,6 +18,7 @@ const LAUNCH_DAY = '2026-09-25';
 const NAMES = { tripeaks: 'TriPeaks', pyramid: 'Pyramid', golf: 'Golf' };
 const BLURBS = { tripeaks: 'One up or one down, clear three peaks', pyramid: 'Pairs that add to 13', golf: 'Seven columns, as few cards left as you can' };
 const store = makeStore('peaks');
+const ach = makeAchievements('peaks', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -192,6 +195,13 @@ function after() {
 function finish(won) {
   game.over = true;
   save();
+  if (won && game.mode === 'tripeaks') ach.unlock('tripeaks');
+  if (won && game.mode === 'pyramid') ach.unlock('pyramid');
+  if (won && game.mode === 'golf') ach.unlock('golf-clear');
+  if (game.mode === 'golf' && P.left(game) <= game.par) ach.unlock('golf-par');
+  if (game.mode === 'tripeaks' && game.best >= 10) ach.unlock('run-10');
+  if (won) ach.add('wins-25');
+  if (game.daily) ach.unlock('daily');
   const stats = store.get('stats', {});
   const st = (stats[game.mode] ||= { played: 0, won: 0, best: 0 });
   st.played++;

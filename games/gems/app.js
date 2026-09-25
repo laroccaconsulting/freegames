@@ -8,6 +8,8 @@ import { registerServiceWorker } from './core/pwa.js';
 import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash, rating, overText, squares } from './core/golf.js';
 import { showResults, note } from './core/results.js';
 import { icon, withIcon } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { COLS, ROWS, trySwap, validSwaps, isCleared, gemsLeft, adjacent } from './js/rules.js';
 import { generate, levelSpec, levelSeed, DAILY_SPEC, LAUNCH_DAY } from './js/levels.js';
 import { solve } from './js/solver.js';
@@ -16,6 +18,7 @@ import { Board } from './js/render.js';
 import { sfx, setSoundTheme } from './js/sfx.js';
 
 const store = makeStore('gems');
+const ach = makeAchievements('gems', ACHIEVEMENTS);
 const settings = makeSettings(store, { skin: null, sound: true, vibrate: true, effects: true, speed: 'normal' });
 // The newer of the player's pick here and the look chosen on the games list
 // (core/hallows.js); with neither, the season's theme (Hallows in autumn).
@@ -229,6 +232,19 @@ async function win() {
   } else {
     const log = dailyLog();
     if (!log[game.date]) store.set('daily', { ...log, [game.date]: { moves, par: game.par, hints: game.hints } });
+  }
+
+  ach.unlock('first');
+  ach.add('solved-50');
+  if (r.tier >= 3) ach.unlock('perfect');
+  if (r.tier >= 4) ach.unlock('birdie');
+  ach.at('level-10', game.mode === 'level' ? p.level - 1 : 0);
+  ach.at('level-25', game.mode === 'level' ? p.level - 1 : 0);
+  if (game.mode === 'daily') {
+    ach.unlock('daily');
+    const streak = dailyStreak(dailyLog(), today());
+    ach.at('streak-7', streak);
+    ach.at('streak-30', streak);
   }
   store.set('progress', p);
   save();

@@ -7,6 +7,8 @@ import { sounds, setSoundEnabled } from './core/sound.js';
 import { addHubLink } from './core/hub.js';
 import { registerServiceWorker, isStandalone } from './core/pwa.js';
 import { randomSeed } from './core/rng.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { injectSprite } from './js/art.js';
 import { Board } from './js/board.js';
 import { celebrate } from './js/celebrate.js';
@@ -17,6 +19,7 @@ import {
 } from './js/engine.js';
 
 const store = makeStore('solitaire');
+const ach = makeAchievements('solitaire', ACHIEVEMENTS);
 const settings = makeSettings(store, {
   theme: null,
   felt: 'green',
@@ -112,6 +115,15 @@ function recordWin(g) {
     if (s.bestScore != null) records.push('High score');
     s.bestScore = g.score;
   }
+  if (g.variantId === 'klondike') ach.unlock('klondike');
+  if (g.variantId === 'klondike' && g.options.draw === 3) ach.unlock('draw-3');
+  if (g.variantId === 'spider') ach.unlock('spider');
+  if (g.variantId === 'spider' && g.options.suits === 4) ach.unlock('spider-4');
+  if (g.variantId === 'freecell') ach.unlock('freecell');
+  if (g.elapsed < 180) ach.unlock('fast');
+  if (s.streak >= 5) ach.unlock('streak-5');
+  ach.add('wins-100');
+
   saveStats(key, s);
   return { stats: s, records };
 }

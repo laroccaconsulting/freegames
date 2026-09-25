@@ -9,6 +9,8 @@ import { randomSeed } from './core/rng.js';
 import { dateKey, dailyNumber, dailyStreak, parseHash, buildHash, scoreRating, scoreSquares } from './core/golf.js';
 import { showResults, note } from './core/results.js';
 import { icon, withIcon } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { PIECES, pieceAt, emptyBoard, place, fitsAnywhere, sweep } from './js/rules.js';
 import { botScore, bestMove } from './js/bot.js';
 import { THEMES, themeById } from './js/themes.js';
@@ -19,6 +21,7 @@ const LAUNCH_DAY = '2026-09-24';
 const DAILY_PIECES = 90;
 
 const store = makeStore('blocks');
+const ach = makeAchievements('blocks', ACHIEVEMENTS);
 const settings = makeSettings(store, { skin: null, sound: true, vibrate: true, effects: true });
 // The newer of the player's pick here and the look chosen on the games list
 // (core/hallows.js); with neither, the season's theme (Hallows in autumn).
@@ -191,6 +194,10 @@ function play(slot, row, col) {
   sfx.place(piece.cells.length);
   if (result.lines) {
     sfx.clear(result.lines, result.streak - 1);
+    ach.unlock('first-line');
+    if (result.lines >= 2) ach.unlock('double');
+    if (result.lines >= 4) ach.unlock('quad');
+    if (result.streak >= 5) ach.unlock('streak-5');
     vibrate(result.lines > 1 ? [12, 30, 20] : 14);
     const call = result.lines < 2 ? '' : ['DOUBLE!', 'TRIPLE!', 'QUAD!'][result.lines - 2] || 'MEGA!';
     if (call) view.float(call, { big: true });
@@ -247,6 +254,13 @@ async function finish(complete) {
     const log = dailyLog();
     if (!log[game.date]) store.set('daily', { ...log, [game.date]: { score: game.score, target: game.target, complete } });
   }
+  if (game.mode === 'classic') {
+    ach.at('score-1000', game.score);
+    ach.at('score-5000', game.score);
+  }
+  if (game.mode === 'daily' && game.score > game.target) ach.unlock('beat-target');
+  if (game.mode === 'daily') ach.at('streak-7', dailyStreak(dailyLog(), today()));
+
   updateHud();
   const beat = game.mode === 'daily' ? game.score > game.target : game.score > prevBest && prevBest > 0;
   if (complete || beat) {

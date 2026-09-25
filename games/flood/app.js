@@ -8,11 +8,14 @@ import { registerServiceWorker } from './core/pwa.js';
 import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash, rating, overText, squares, hashSeed } from './core/golf.js';
 import { showResults, note } from './core/results.js';
 import { icon, withIcon } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { newBoard, solve, flood, region, done, levelSpec } from './js/flood.js';
 
 const LAUNCH_DAY = '2026-09-25';
 const DAILY = { n: 14, colors: 6 };
 const store = makeStore('flood');
+const ach = makeAchievements('flood', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, symbols: false });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -189,6 +192,18 @@ function win() {
   save();
   sfx.win();
   document.querySelector('.fl-grid')?.classList.add('won');
+  ach.unlock('first');
+  ach.add('solved-50');
+  if (!game.hints && moves <= game.par) ach.unlock('par');
+  if (!game.hints && moves < game.par) ach.unlock('birdie');
+  if (p.level >= 10) ach.unlock('level-10');
+  if (p.level >= 30) ach.unlock('level-30');
+  if (game.mode === 'daily') {
+    ach.unlock('daily');
+    const streak = dailyStreak(store.get('daily', {}), dateKey());
+    ach.at('streak-7', streak);
+    ach.at('streak-30', streak);
+  }
   const notes = [];
   if (game.mode === 'daily') {
     const s = dailyStreak(store.get('daily', {}), dateKey());

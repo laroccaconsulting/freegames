@@ -8,10 +8,13 @@ import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash, shareText, hashSeed } from './core/golf.js';
 import { icon, withIcon, medal } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { MODES } from './js/modes.js';
 
 const LAUNCH_DAY = '2026-09-25';
 const store = makeStore('logic');
+const ach = makeAchievements('logic', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, autoDots: true, showErrors: true });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -150,6 +153,14 @@ function finish() {
   }
   store.set('stats', stats);
   const clean = !play.hints;
+  ach.unlock({ stars: 'mode-stars', calc: 'mode-calc', bridges: 'mode-bridges', futoshiki: 'mode-futoshiki', skyscrapers: 'mode-skyscrapers', lightup: 'mode-lightup', tents: 'mode-tents' }[spec.mode]);
+  ach.add('solved-100');
+  if (Object.keys(MODES).every((m) => stats[m]?.solved)) ach.unlock('all-modes');
+  if (spec.size === 'large' && !play.hints) ach.unlock('large');
+  if (spec.daily) {
+    ach.unlock('daily');
+    ach.at('streak-7', dailyStreak(store.get(`daily-${spec.mode}`, {}), today()));
+  }
   const text = `Logic · ${titleOf(spec)} ${clean ? '💎' : '💡'}\nSolved in ${formatTime(play.time)}${play.hints ? ` with ${play.hints} hint${play.hints > 1 ? 's' : ''}` : ', no hints'}`;
   const url = location.origin + location.pathname + buildHash(spec.daily ? { m: spec.mode, d: spec.daily } : { m: spec.mode, s: spec.size, n: spec.n });
   setTimeout(() => {

@@ -9,10 +9,13 @@ import { icon } from './core/icons.js';
 import { Particles } from './core/fx.js';
 import { randomSeed } from './core/rng.js';
 import { dateKey, dailyNumber, dailySeed, dailyStreak, shareText } from './core/golf.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { W, H, GROUND, BIRD_X, R, GATE_W, newRun, step, medalFor } from './js/flap.js';
 
 const LAUNCH_DAY = '2026-09-25';
 const store = makeStore('flap');
+const ach = makeAchievements('flap', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, effects: true });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -134,6 +137,14 @@ function crashed() {
     const log = store.get('daily', {});
     const r = log[today()];
     store.set('daily', { ...log, [today()]: { best: Math.max(score, r?.best || 0), tries: (r?.tries || 0) + 1 } });
+  }
+  for (const id of ['bronze', 'silver', 'gold', 'platinum']) ach.at(id, score);
+  ach.add('flights-50');
+  if (mode === 'daily') {
+    ach.unlock('daily');
+    const streak = dailyStreak(store.get('daily', {}), today());
+    ach.at('streak-7', streak);
+    ach.at('streak-30', streak);
   }
   const m = medalFor(score);
   overlay(newBest && score ? `New best: ${score}!` : `${score} ${score === 1 ? 'gate' : 'gates'}`, m ? `${m.name} medal · tap to fly again` : 'Tap to fly again');

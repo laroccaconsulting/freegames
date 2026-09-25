@@ -712,3 +712,113 @@ dialog.closing::backdrop {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* ---------- Achievements (core/achievements.js) ---------- */
+
+.ach-btn {
+  appearance: none;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin: 0 auto 0 2px;
+  padding: 3px 4px;
+  min-width: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  flex: none;
+  opacity: 0.8;
+}
+.ach-btn:hover {
+  opacity: 1;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+.ach-btn:focus-visible {
+  outline: 2px solid var(--accent);
+}
+.ach-summary {
+  margin: 0 0 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.ach-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.ach-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  opacity: 0.72;
+}
+.ach-item.got {
+  opacity: 1;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+.ach-medal {
+  font-size: 1.4rem;
+  line-height: 1.2;
+  filter: grayscale(1);
+}
+.ach-item.got .ach-medal {
+  filter: none;
+}
+.ach-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.ach-text small {
+  color: var(--text-muted);
+}
+.ach-date {
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-style: normal;
+  font-weight: 700;
+}
+.ach-bar {
+  position: relative;
+  display: block;
+  height: 16px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+.ach-bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent);
+  opacity: 0.5;
+}
+.ach-bar em {
+  position: relative;
+  display: block;
+  text-align: center;
+  font-size: 0.7rem;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 16px;
+}
+.ach-all {
+  display: block;
+  margin-top: 14px;
+  text-align: center;
+  text-decoration: none;
+}

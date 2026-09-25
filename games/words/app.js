@@ -14,9 +14,12 @@ import * as ladder from './js/ladder.js';
 import * as wgrid from './js/grid.js';
 import * as wsearch from './js/search.js';
 import { rating, overText, squares } from './core/golf.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 
 const LAUNCH_DAY = '2026-09-25';
 const store = makeStore('words');
+const ach = makeAchievements('words', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, autoNext: true });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -96,9 +99,15 @@ const streakText = () => {
 };
 
 function markDaily(result) {
+  // Every finish passes through here, so it's where "one of each" is counted.
+  const kinds = new Set([...store.get('finished-kinds', []), spec.mode]);
+  store.set('finished-kinds', [...kinds]);
+  if (['codeword', 'wheel', 'ladder', 'grid', 'search'].every((k) => kinds.has(k))) ach.unlock('all-five');
   if (!spec.daily) return;
   const log = store.get(`daily-${spec.mode}`, {});
   if (!log[spec.daily]) store.set(`daily-${spec.mode}`, { ...log, [spec.daily]: result });
+  ach.unlock('daily');
+  ach.at('streak-7', dailyStreak(store.get(`daily-${spec.mode}`, {}), today()));
 }
 
 function tool(id, name, label, onClick) {
@@ -249,6 +258,9 @@ function finishCodeword() {
   selected = null;
   save();
   renderCodeword();
+  ach.unlock('codeword');
+  if (!play.hints && !play.checks) ach.unlock('codeword-clean');
+
   markDaily({ time: Math.round(play.time), hints: play.hints });
   sfx.win();
   document.querySelector('.cw-grid')?.classList.add('solved');
@@ -374,6 +386,8 @@ function finishWheel() {
   save();
   const lv = wheel.level(puzzle, play.found);
   const nine = play.found.some((w) => w.length === 9);
+  if (nine) ach.unlock('nine');
+  if (lv.tier >= 4) ach.unlock('wheel-genius');
   markDaily({ n: lv.n, total: puzzle.common.length, nine });
   if (lv.tier >= 3) sfx.win();
   const text = `Words · ${titleOf(spec)} ${['🌱', '👍', '🌟', '💎', '🧠'][lv.tier]}\n${lv.label}: ${lv.n} of ${puzzle.common.length} words${nine ? ' · found the nine ⭐' : ''}`;
@@ -475,6 +489,7 @@ function finishLadder() {
   save();
   const n = play.steps.length;
   markDaily({ n, par: puzzle.par, hints: play.hints });
+  if (!play.hints && n <= puzzle.par) ach.unlock('ladder-par');
   sfx.win();
   const r0 = rating(n, puzzle.par);
   const r = play.hints ? { ...r0, label: 'Climbed with help', emoji: '💡', icon: 'bulb', tier: Math.min(r0.tier, 1) } : r0;
@@ -567,6 +582,7 @@ function gridSubmit() {
   } else {
     play.found = [...play.found, word];
     sfx.good(word.length + 1);
+    if (word.length >= 7) ach.unlock('grid-long');
     toast(`${word} +${wgrid.points(word)}`, { duration: 1200 });
     save();
   }
@@ -756,6 +772,7 @@ function finishSearch() {
   clearInterval(clock);
   markDaily({ time: Math.round(play.time), hints: play.hints });
   const clean = !play.hints;
+  ach.unlock('search');
   const text = `Words · ${titleOf(spec)} ${clean ? '💎' : '✅'}\nAll ${puzzle.words.length} words in ${formatTime(play.time)}${play.hints ? ` · 💡${play.hints}` : ''}`;
   setTimeout(() => results({ title: 'All found!', medalIcon: clean ? 'diamond' : 'check', lines: [`Time: ${formatTime(play.time)}`, play.hints ? `Hints: ${play.hints}` : 'No hints'], text }), 700);
 }

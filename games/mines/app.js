@@ -8,10 +8,13 @@ import { registerServiceWorker } from './core/pwa.js';
 import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash, shareText } from './core/golf.js';
 import { icon, withIcon, medal } from './core/icons.js';
 import { randomSeed } from './core/rng.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { SIZES, neighbours, counts, reveal, deduce, generate } from './js/mines.js';
 
 const LAUNCH_DAY = '2026-09-25';
 const store = makeStore('mines');
+const ach = makeAchievements('mines', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, chord: true, longPress: true });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -252,6 +255,19 @@ function win() {
   const clean = !game.hints && !game.undos;
   const isBest = clean && (!best[game.size] || t < best[game.size]);
   if (isBest) store.set('best', { ...best, [game.size]: t });
+
+  ach.unlock('first');
+  ach.add('cleared-25');
+  if (game.size !== 'beginner') ach.unlock('intermediate');
+  if (game.size === 'expert') ach.unlock('expert');
+  if (clean) ach.unlock('clean');
+  if (game.size === 'beginner' && t < 60) ach.unlock('beginner-60');
+  if (game.daily) {
+    ach.unlock('daily');
+    const streak = dailyStreak(store.get('daily', {}), dateKey());
+    ach.at('streak-7', streak);
+    ach.at('streak-30', streak);
+  }
   countGame(true);
   if (game.daily) {
     const log = store.get('daily', {});

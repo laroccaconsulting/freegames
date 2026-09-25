@@ -7,11 +7,14 @@ import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash, shareText, hashSeed } from './core/golf.js';
 import { icon, withIcon, medal } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import * as N from './js/nonogram.js';
 
 const LAUNCH_DAY = '2026-09-25';
 const LABELS = { small: '5×5', medium: '10×10', large: '15×15' };
 const store = makeStore('nonograms');
+const ach = makeAchievements('nonograms', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, autoX: true, showErrors: false });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -323,6 +326,18 @@ function finish() {
   if (spec.daily) {
     const log = store.get('daily', {});
     if (!log[spec.daily]) store.set('daily', { ...log, [spec.daily]: { time: Math.round(play.time), hints: play.hints } });
+  }
+
+  ach.unlock('first');
+  ach.add('solved-50');
+  if (spec.size === 'large') ach.unlock('large');
+  if (!play.hints && spec.size !== 'small') ach.unlock('clean');
+  if (spec.size === 'medium' && play.time < 300) ach.unlock('fast');
+  if (spec.daily) {
+    ach.unlock('daily');
+    const streak = dailyStreak(store.get('daily', {}), today());
+    ach.at('streak-7', streak);
+    ach.at('streak-30', streak);
   }
   const stats = store.get('stats', {});
   const s = (stats[spec.size] ||= { solved: 0, best: null });
