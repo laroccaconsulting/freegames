@@ -747,6 +747,11 @@ export default {
       "desc": "Solve a Tents puzzle."
     },
     {
+      "id": "mode-kakuro",
+      "title": "Sum total",
+      "desc": "Solve a Kakuro."
+    },
+    {
       "id": "all-modes",
       "title": "Polymath",
       "desc": "Solve one of every kind of puzzle."

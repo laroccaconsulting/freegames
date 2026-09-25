@@ -630,6 +630,50 @@ body {
   }
 }
 
+/* ---------- Kakuro ---------- */
+
+.board-wrap.kakuro {
+  width: min(100cqw, 100cqh - 120px, 560px);
+}
+.ng-grid.kakuro {
+  border: 3px solid var(--wall);
+  border-radius: 8px;
+  overflow: hidden;
+  gap: 1px;
+  background: var(--wall);
+}
+.kakuro .ng-cell {
+  box-shadow: none;
+}
+.ng-block {
+  position: relative;
+  background: color-mix(in srgb, var(--wall) 88%, var(--surface));
+  container-type: inline-size;
+}
+.ng-block.clue {
+  background:
+    linear-gradient(to top right, transparent calc(50% - 0.8px), rgba(255, 255, 255, 0.35) 50%, transparent calc(50% + 0.8px)),
+    color-mix(in srgb, var(--wall) 88%, var(--surface));
+}
+.kk-sum {
+  position: absolute;
+  font-weight: 800;
+  font-size: max(9px, 30cqi);
+  line-height: 1;
+  color: #fff;
+}
+.kk-sum.across {
+  top: 8%;
+  right: 10%;
+}
+.kk-sum.down {
+  bottom: 8%;
+  left: 10%;
+}
+.kk-sum.bad {
+  color: var(--bad);
+}
+
 /* ---------- Bridges ---------- */
 
 .board-wrap.bridges {

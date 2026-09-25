@@ -153,7 +153,7 @@ function finish() {
   }
   store.set('stats', stats);
   const clean = !play.hints;
-  ach.unlock({ stars: 'mode-stars', calc: 'mode-calc', bridges: 'mode-bridges', futoshiki: 'mode-futoshiki', skyscrapers: 'mode-skyscrapers', lightup: 'mode-lightup', tents: 'mode-tents' }[spec.mode]);
+  ach.unlock({ stars: 'mode-stars', calc: 'mode-calc', bridges: 'mode-bridges', futoshiki: 'mode-futoshiki', skyscrapers: 'mode-skyscrapers', lightup: 'mode-lightup', tents: 'mode-tents', kakuro: 'mode-kakuro' }[spec.mode]);
   ach.add('solved-100');
   if (Object.keys(MODES).every((m) => stats[m]?.solved)) ach.unlock('all-modes');
   if (spec.size === 'large' && !play.hints) ach.unlock('large');
