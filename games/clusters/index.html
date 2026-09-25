@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Clusters — pop the groups, free, no ads</title>
+    <meta name="description" content="Pop groups of matching tiles: big groups score big, and clearing the board earns a bonus. Daily board, share your score. Free, no ads, works offline." />
+    <meta name="theme-color" content="#f4f1ea" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Clusters" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="core/base.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <button class="title-btn" id="mode-btn" aria-label="Choose board">
+          <span class="title-main" id="title">Clusters</span>
+          <small class="title-sub" id="subtitle"></small>
+        </button>
+        <div class="score" aria-live="off">
+          <div class="chip" id="score-chip"><small>Score</small><b id="score">0</b></div>
+          <div class="chip"><small>Target</small><b id="target">–</b></div>
+        </div>
+      </header>
+
+      <main class="stage" id="stage" aria-label="Board"></main>
+
+      <nav class="toolbar" aria-label="Game controls">
+        <button class="tool" id="restart-btn">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.6" /><path d="M4 4v4h4" /></svg>
+          <span>Restart</span>
+        </button>
+        <button class="tool" id="undo-btn">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 14L4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
+          <span>Undo</span>
+        </button>
+        <button class="tool" id="menu-btn">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          <span>Menu</span>
+        </button>
+      </nav>
+    </div>
+    <p class="visually-hidden" id="announce" aria-live="polite"></p>
+    <noscript><p style="padding: 24px">Clusters needs JavaScript to run.</p></noscript>
+  </body>
+</html>
