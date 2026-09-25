@@ -86,7 +86,7 @@ Themes are plug-ins (see `games/sort/js/themes.js`).
 | Game | Scope | Notes |
 |---|---|---|
 | **Solitaire** | Klondike (draw 1/3), Spider (1/2/4 suits), FreeCell | ✅ Built first — `games/solitaire/`. Card engine is reused by later card games |
-| **Sudoku** | Generator with unique-solution check, 4 difficulties, pencil marks, daily puzzle | No puzzle files to ship; generate on device |
+| **Sudoku** | ✅ Built — `games/sudoku/`. Unique-solution generator; four levels graded by the hardest human technique needed (singles → pairs/pointing → hidden pairs, triples, X-Wing → beyond); hints name and explain the technique; notes, large print, print stylesheet, daily | No puzzle files to ship; generate on device (in a worker) |
 | **Mahjong Solitaire** | Several layouts, shuffle, hint, solvable-deal generation | Tiles drawn as SVG; generate deals backwards so every deal is winnable |
 
 ### Wave 2 — Quick wins (subdomains)
