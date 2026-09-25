@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Snake — free, no ads, works offline</title>
+    <meta name="description" content="Classic Snake with smooth swipe controls, three speeds, wrap-around and a no-lose Zen mode. Free, no ads, works offline." />
+    <meta name="theme-color" content="#f4f1ea" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Snake" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="core/base.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <button class="title-btn" id="mode-btn" aria-label="Settings">
+          <span class="title-main">Snake</span>
+          <small class="title-sub" id="subtitle"></small>
+        </button>
+        <div class="score">
+          <div class="chip"><small>Score</small><b id="score">0</b></div>
+          <div class="chip"><small>Best</small><b id="best">0</b></div>
+        </div>
+      </header>
+      <main class="stage" id="stage" aria-label="Play area. Swipe or use the arrow keys to steer.">
+        <canvas id="canvas"></canvas>
+        <div class="overlay" id="overlay"><b id="overlay-title"></b><small id="overlay-sub"></small></div>
+      </main>
+      <div class="pad" id="pad" hidden>
+        <button data-dir="up" aria-label="Up">▲</button>
+        <button data-dir="left" aria-label="Left">◀</button>
+        <button data-dir="right" aria-label="Right">▶</button>
+        <button data-dir="down" aria-label="Down">▼</button>
+      </div>
+      <nav class="toolbar" aria-label="Game controls">
+        <button class="tool" id="menu-btn"><span>Settings</span></button>
+      </nav>
+    </div>
+    <noscript><p style="padding: 24px">Snake needs JavaScript to run.</p></noscript>
+  </body>
+</html>
