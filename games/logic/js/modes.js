@@ -7,6 +7,7 @@ import { futoshikiMode } from './futoshiki-view.js';
 import { skyscrapersMode } from './skyscrapers-view.js';
 import { lightupMode } from './lightup-view.js';
 import { tentsMode } from './tents-view.js';
+import { kakuroMode } from './kakuro-view.js';
 
 export const MODES = {
   stars: starsMode,
@@ -16,4 +17,5 @@ export const MODES = {
   skyscrapers: skyscrapersMode,
   lightup: lightupMode,
   tents: tentsMode,
+  kakuro: kakuroMode,
 };

@@ -8,6 +8,7 @@ export default [
   { id: 'mode-skyscrapers', title: 'Skyline', desc: 'Solve a Skyscrapers puzzle.' },
   { id: 'mode-lightup', title: 'Lights on', desc: 'Solve a Light Up.' },
   { id: 'mode-tents', title: 'Happy camper', desc: 'Solve a Tents puzzle.' },
+  { id: 'mode-kakuro', title: 'Sum total', desc: 'Solve a Kakuro.' },
   { id: 'all-modes', title: 'Polymath', desc: 'Solve one of every kind of puzzle.' },
   { id: 'large', title: 'Big thinker', desc: 'Solve a puzzle at the largest size without hints.' },
   { id: 'solved-100', title: 'Logician', desc: 'Solve 100 puzzles.', goal: 100 },
