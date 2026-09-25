@@ -140,7 +140,8 @@ Collection (MIT) is a good reference for generators and rules.
 
 ### Board, dice and arcade (vs. the computer, no content)
 
-- **Reversi** (not "Othello"), Checkers, Mancala, Nine Men's Morris, 9×9 Go
+- **Reversi** (not "Othello") ✅ Built — `games/reversi/`: three levels (Hard searches ~1 s, solves the endgame), hints that explain corners and mobility, pass and play
+- Checkers, Mancala, Nine Men's Morris, 9×9 Go
 - **Code Breaker** (not "Mastermind") and **Fleet** (not "Battleship"), both with a daily
 - Dice: **Yacht** (the public-domain ancestor) and **Ten Thousand**
 - Quick arcade: Snake, a Breakout-style game, two-player Pong on one phone, SameGame, Flood

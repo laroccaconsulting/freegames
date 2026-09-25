@@ -1,0 +1,399 @@
+/* Reversi: a felt board in a wooden frame, stone discs (or bright ones). */
+
+:root {
+  --plate: #b98a5a;
+  --plate-edge: #8e6238;
+  --plate-shine: rgba(255, 240, 210, 0.35);
+  --hole: #efe2c8;
+  --foot: #7a5230;
+  --p1: #2b2a2e;
+  --p1-edge: #0f0f12;
+  --p1-shine: #6b6a70;
+  --p2: #f4efe4;
+  --p2-edge: #c9bfa9;
+  --p2-shine: #ffffff;
+  --win: #ffcf3d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --plate: #5a4029;
+    --plate-edge: #3a2817;
+    --plate-shine: rgba(255, 220, 170, 0.18);
+    --hole: #1d1a17;
+    --foot: #2d1f13;
+  }
+}
+:root[data-theme='dark'] {
+  --plate: #5a4029;
+  --plate-edge: #3a2817;
+  --plate-shine: rgba(255, 220, 170, 0.18);
+  --hole: #1d1a17;
+  --foot: #2d1f13;
+}
+body[data-discs='bright'] {
+  --p1: #ec5a3c;
+  --p1-edge: #a93520;
+  --p1-shine: #ff9c84;
+  --p2: #f5c02e;
+  --p2-edge: #b98700;
+  --p2-shine: #ffe7a1;
+  --win: #ffffff;
+}
+/* Hallows: a plum board in candlelight, pumpkin and moonstone discs. */
+:root[data-theme='hallows'] {
+  --plate: #3a2a4f;
+  --plate-edge: #1c1330;
+  --plate-shine: rgba(232, 176, 74, 0.2);
+  --hole: #140e24;
+  --foot: #1c1330;
+  --win: #ffe29a;
+}
+body[data-discs='hallows'] {
+  --p1: #f08a24;
+  --p1-edge: #a4520a;
+  --p1-shine: #ffc27a;
+  --p2: #cdd6ef;
+  --p2-edge: #8791b3;
+  --p2-shine: #ffffff;
+}
+:root[data-theme='hallows'] .hw-candle {
+  display: none;
+}
+:root[data-theme='hallows'] .title h1 {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+}
+
+body {
+  min-height: 100dvh;
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+}
+#announce {
+  margin: 0;
+  top: 0;
+}
+.app {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+  min-height: 480px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+/* ---------- Top bar ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px 4px;
+  flex-wrap: wrap;
+}
+.title h1 {
+  font-size: 1.3rem;
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.title small {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+.players {
+  display: flex;
+  gap: 6px;
+}
+.player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 8px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: box-shadow 0.2s ease;
+}
+.player.turn {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.player-disc,
+.result-disc {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.player-disc.p1,
+.result-disc.p1 {
+  background: radial-gradient(circle at 36% 30%, var(--p1-shine), var(--p1) 55%, var(--p1-edge));
+}
+.player-disc.p2,
+.result-disc.p2 {
+  background: radial-gradient(circle at 36% 30%, var(--p2-shine), var(--p2) 55%, var(--p2-edge));
+}
+.result-disc.draw {
+  background: linear-gradient(90deg, var(--p1) 50%, var(--p2) 50%);
+}
+.player-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.player-text b {
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+.player-text small {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.status {
+  margin: 4px 16px 0;
+  min-height: 2.8em;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-wrap: balance;
+}
+
+/* ---------- Board ---------- */
+
+.stage {
+  flex: 1 1 0;
+  display: grid;
+  place-items: center;
+  padding: 4px 12px;
+  min-height: 260px;
+  container-type: size;
+}
+.board-wrap {
+  width: min(100cqw, 100cqh, 600px);
+  aspect-ratio: 1;
+}
+.rv-board {
+  --felt: #2f7a55;
+  --felt-edge: #1f5a3d;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 2px;
+  padding: 10px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--plate) 85%, #fff), var(--plate) 40%, var(--plate-edge));
+  box-shadow: 0 16px 30px -14px rgba(30, 15, 0, 0.5);
+}
+:root[data-theme='hallows'] .rv-board {
+  --felt: #2a2140;
+  --felt-edge: #1c1330;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-theme='hallows']) .rv-board {
+    --felt: #245c41;
+    --felt-edge: #173d2b;
+  }
+}
+.rv-cell {
+  position: relative;
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: radial-gradient(circle at 50% 40%, var(--felt), var(--felt-edge));
+  border-radius: 4px;
+  cursor: default;
+  perspective: 300px;
+}
+.board-wrap.my-turn .rv-cell.legal {
+  cursor: pointer;
+}
+.rv-cell.legal::after {
+  content: '';
+  position: absolute;
+  inset: 38%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+}
+.rv-cell.hint::before {
+  content: '';
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  border: 3px dashed var(--win);
+  animation: spin 3s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.rv-cell:focus-visible {
+  outline: 3px solid var(--accent);
+  z-index: 1;
+}
+.rv-disc {
+  position: absolute;
+  inset: 9%;
+  border-radius: 50%;
+  transform-style: preserve-3d;
+}
+.rv-disc.p1 {
+  background: radial-gradient(circle at 36% 30%, var(--p1-shine), var(--p1) 55%, var(--p1-edge));
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.45);
+}
+.rv-disc.p2 {
+  background: radial-gradient(circle at 36% 30%, var(--p2-shine), var(--p2) 55%, var(--p2-edge));
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.45);
+}
+.rv-disc.flip {
+  animation: flip 0.45s ease;
+}
+.rv-disc.drop {
+  animation: drop 0.25s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.rv-cell.last .rv-disc::after {
+  content: '';
+  position: absolute;
+  inset: 40%;
+  border-radius: 50%;
+  background: var(--win);
+  opacity: 0.9;
+}
+@keyframes flip {
+  0% {
+    transform: rotateY(0) scale(1);
+  }
+  50% {
+    transform: rotateY(90deg) scale(1.15);
+  }
+  100% {
+    transform: rotateY(0) scale(1);
+  }
+}
+@keyframes drop {
+  from {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rv-disc.flip,
+  .rv-disc.drop,
+  .rv-cell.hint::before {
+    animation: none;
+  }
+}
+
+/* ---------- Toolbar ---------- */
+
+.toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 8px 12px;
+}
+.tool {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 54px;
+  min-height: 52px;
+  padding: 6px 6px;
+  border-radius: 14px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tool svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tool:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+.tool:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+.tool:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ---------- Dialogs ---------- */
+
+.setup .field[hidden] {
+  display: none;
+}
+.small {
+  font-size: 0.85rem;
+}
+.rules ul {
+  padding-left: 1.2em;
+}
+.rules li {
+  margin: 6px 0;
+}
+.result {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.result .result-disc {
+  width: 56px;
+  height: 56px;
+}
+
+/* Landscape phones: players and controls beside the board. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .app {
+    max-width: none;
+    display: grid;
+    grid-template-columns: minmax(200px, 1fr) auto;
+    grid-template-rows: min-content 1fr min-content;
+    column-gap: 12px;
+    min-height: 0;
+  }
+  .topbar {
+    grid-column: 1;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .players {
+    flex-direction: column;
+  }
+  .status {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .toolbar {
+    grid-column: 1;
+    grid-row: 3;
+    flex-wrap: wrap;
+  }
+  .stage {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    container-type: normal;
+    min-height: 0;
+  }
+  .board-wrap {
+    width: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 16px);
+  }
+}

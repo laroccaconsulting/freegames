@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="felt" cx="50%" cy="40%" r="70%"><stop offset="0" stop-color="#3a9068" /><stop offset="1" stop-color="#1f5a3d" /></radialGradient>
+    <radialGradient id="dark" cx="36%" cy="30%" r="75%"><stop offset="0" stop-color="#77767c" /><stop offset="0.5" stop-color="#2b2a2e" /><stop offset="1" stop-color="#0f0f12" /></radialGradient>
+    <radialGradient id="light" cx="36%" cy="30%" r="75%"><stop offset="0" stop-color="#fff" /><stop offset="0.55" stop-color="#f4efe4" /><stop offset="1" stop-color="#c9bfa9" /></radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="#8e6238" />
+  <rect x="40" y="40" width="432" height="432" rx="26" fill="url(#felt)" />
+  <g stroke="#1a4a33" stroke-width="6"><path d="M256 40v432M40 256h432M148 40v432M364 40v432M40 148h432M40 364h432" /></g>
+  <circle cx="202" cy="202" r="46" fill="url(#dark)" /><circle cx="310" cy="310" r="46" fill="url(#dark)" />
+  <circle cx="310" cy="202" r="46" fill="url(#light)" /><circle cx="202" cy="310" r="46" fill="url(#light)" />
+  <circle cx="310" cy="94" r="46" fill="url(#dark)" />
+</svg>
