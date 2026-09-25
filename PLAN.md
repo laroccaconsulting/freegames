@@ -156,7 +156,7 @@ Collection (MIT) is a good reference for generators and rules.
 | **Chess vs. computer** | Low priority: lichess already does this free and well. Stockfish is GPL |
 | **Jigsaw** | Public-domain art from Met / Rijksmuseum / Art Institute of Chicago open access |
 | **Backgammon** | ✅ Built — `games/backgammon/`. Computer at three levels, pass-and-play, hits, doubles, bear-off, gammon/backgammon scoring |
-| **Hearts, Spades, Dominoes, Checkers** | Offline vs. AI; reuse the solitaire card engine |
+| **Hearts** ✅, Spades, Dominoes, Checkers ✅ | Hearts built — `games/hearts/`: vs three computer players, passing rotation, first-trick and broken-hearts rules, shooting the moon, game to 100. Spades and Dominoes still to do |
 | **Nonograms** | ✅ Built — `games/nonograms/`: blobby seeded pictures kept only when line-by-line solving finishes them (so unique, no guessing); 5×5, 10×10, 15×15 and a daily 10×10; drag to fill or cross, finished lines cross themselves, hints name the deciding line. Never call it "Picross" (a trademark) |
 | **Dice poker** (Yahtzee-style) | Must *not* be called Yahtzee |
 

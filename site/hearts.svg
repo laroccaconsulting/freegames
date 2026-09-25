@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#1d6b45" />
+  <g transform="rotate(-14 256 300)"><rect x="96" y="110" width="200" height="280" rx="18" fill="#fffdf8" stroke="rgba(0,0,0,.25)" stroke-width="4" />
+  <text x="120" y="176" font-family="system-ui, sans-serif" font-weight="800" font-size="60" fill="#1c1c22">Q</text>
+  <path d="M196 200c-18 26-58 40-58 70 0 16 13 27 29 27 11 0 19-5 23-12-1 12-7 20-15 28h42c-8-8-14-16-15-28 4 7 12 12 23 12 16 0 29-11 29-27 0-30-40-44-58-70z" fill="#1c1c22" /></g>
+  <g transform="rotate(12 256 300)"><rect x="220" y="120" width="200" height="280" rx="18" fill="#fffdf8" stroke="rgba(0,0,0,.25)" stroke-width="4" />
+  <path d="M320 350c-42-32-70-56-70-88 0-22 17-38 38-38 14 0 26 7 32 19 6-12 18-19 32-19 21 0 38 16 38 38 0 32-28 56-70 88z" fill="#c62d3a" /></g>
+</svg>
