@@ -1,0 +1,315 @@
+/* Nine Men's Morris: a wooden board, light and dark stones. */
+
+:root {
+  --p1: #f7f2e6;
+  --p1-edge: #9a8f78;
+  --p2: #2b2530;
+  --p2-edge: #000;
+  --wood: #d9b27c;
+  --wood-line: #5a3d1e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --wood: #7a5a36;
+    --wood-line: #2a1a0a;
+  }
+}
+:root[data-theme='dark'] {
+  --wood: #7a5a36;
+  --wood-line: #2a1a0a;
+}
+:root[data-theme='hallows'] {
+  --p1: #ffe29a;
+  --p1-edge: #b07a1a;
+  --p2: #8a4fd0;
+  --p2-edge: #2a1540;
+  --wood: #2d1d48;
+  --wood-line: #f0b03c;
+}
+:root[data-theme='hallows'] .hw-candle {
+  display: none;
+}
+body {
+  min-height: 100dvh;
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+}
+#announce {
+  margin: 0;
+  top: 0;
+}
+.app {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+  min-height: 520px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px 6px;
+}
+.title-btn {
+  appearance: none;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 12px;
+  color: var(--text);
+  min-width: 0;
+}
+.title-btn:hover {
+  background: var(--accent-soft);
+}
+.title-main {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.title-main::after {
+  content: ' ▾';
+  font-size: 0.7em;
+  color: var(--text-muted);
+}
+.title-sub {
+  display: block;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+.score {
+  display: flex;
+  gap: 8px;
+}
+.chip {
+  min-width: 64px;
+  text-align: center;
+  padding: 6px 12px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.chip small {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.chip b {
+  display: block;
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stage {
+  flex: 1 1 0;
+  min-height: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 4px 12px 8px;
+  container-type: size;
+}
+.overlay {
+  position: absolute;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 14px 20px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  pointer-events: none;
+}
+.overlay[hidden] {
+  display: none;
+}
+.overlay b {
+  font-size: 1.3rem;
+}
+.overlay small {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.small {
+  font-size: 0.85rem;
+}
+.toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px 10px;
+}
+.tool {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 64px;
+  min-height: 50px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tool:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+.tool:disabled {
+  opacity: 0.38;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+}
+.score {
+  gap: 6px;
+}
+.chip-you small {
+  color: var(--accent);
+}
+
+.chip small i {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: -0.05em;
+}
+.chip.p1 small i {
+  background: var(--p1);
+  box-shadow: 0 0 0 1.5px var(--p1-edge);
+}
+.chip.p2 small i {
+  background: var(--p2);
+  box-shadow: 0 0 0 1.5px var(--p2-edge);
+}
+.chip.turn {
+  border-color: currentColor;
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.chip.turn {
+  color: var(--accent);
+}
+.chip.turn b {
+  color: var(--text);
+}
+.status {
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  min-height: 1.4em;
+  margin: 0 16px;
+}
+.board {
+  width: min(100cqw, 100cqh - 50px, 560px);
+  height: auto;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.board .wood {
+  fill: var(--wood);
+}
+.board .lines {
+  stroke: var(--wood-line);
+  stroke-width: 1.2;
+  fill: none;
+  opacity: 0.85;
+}
+.board .pt {
+  fill: var(--wood-line);
+}
+.board .hit {
+  fill: transparent;
+  cursor: pointer;
+}
+.board .stone {
+  stroke-width: 0.9;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  pointer-events: none;
+}
+.board .stone.p1 {
+  fill: var(--p1);
+  stroke: var(--p1-edge);
+}
+.board .stone.p2 {
+  fill: var(--p2);
+  stroke: var(--p2-edge);
+}
+.board .stone.sel {
+  stroke: var(--accent);
+  stroke-width: 1.8;
+}
+.board .stone.last {
+  stroke: var(--accent);
+  stroke-width: 1.3;
+}
+.board .stone.takeable {
+  stroke: #e5483b;
+  stroke-width: 1.8;
+  animation: throb 0.9s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.board .stone.mill {
+  filter: drop-shadow(0 0 1.5px var(--accent));
+}
+.board .target {
+  fill: var(--accent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+@keyframes throb {
+  50% {
+    transform: scale(0.85);
+  }
+}
+.hand {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  min-height: 14px;
+}
+.hand i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.hand.p1 i {
+  background: var(--p1);
+  box-shadow: 0 0 0 1.5px var(--p1-edge);
+}
+.hand.p2 i {
+  background: var(--p2);
+  box-shadow: 0 0 0 1.5px var(--p2-edge);
+}
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .board .stone.takeable {
+    animation: none;
+  }
+}
