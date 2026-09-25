@@ -58,3 +58,28 @@ test('calcudoku: repeats and missed targets are conflicts', () => {
   assert.ok(C.isSolved(p, p.solution));
   assert.equal(C.label({ op: '+', target: 7 }), '7+');
 });
+
+import * as B from '../games/logic/js/bridges.js';
+
+test('bridges: the answer fits every island, is connected, and is the only one', () => {
+  for (const size of Object.keys(B.SIZES)) {
+    for (const seed of [1, 2, 3]) {
+      const p = B.generate(seed * 29, size);
+      assert.deepEqual(p, B.generate(seed * 29, size), 'deterministic');
+      assert.equal(p.islands.length, B.SIZES[size].islands);
+      assert.ok(B.isSolved(p, p.solution));
+      assert.equal(B.solve(p).count, 1, 'unique');
+      for (const s of p.islands) assert.ok(s.n >= 1 && s.n <= 8);
+    }
+  }
+});
+
+test('bridges: crossing, totals and connection', () => {
+  const islands = [{ r: 0, c: 1 }, { r: 2, c: 1 }, { r: 1, c: 0 }, { r: 1, c: 2 }];
+  assert.ok(B.crosses(islands, [0, 1], [2, 3]));
+  assert.ok(!B.crosses(islands, [0, 1], [0, 1]));
+  const p = { w: 3, h: 3, islands: islands.map((s) => ({ ...s, n: 1 })), edges: [[0, 1], [2, 3]], solution: [1, 1] };
+  assert.deepEqual(B.totals(p, [1, 0]), [1, 1, 0, 0]);
+  assert.ok(!B.connected(4, p.edges, [1, 1]));
+  assert.ok(!B.isSolved(p, [1, 1]), 'crossing and not connected');
+});
