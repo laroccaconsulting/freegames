@@ -7,6 +7,7 @@ Each game is a static web app you can install to your home screen.
 |---|---|---|
 | Solitaire (Klondike, Spider, FreeCell) | [`games/solitaire`](games/solitaire) | https://laroccaconsulting.github.io/freegames/solitaire/ |
 | Corridors (wall-race board game) | [`games/corridors`](games/corridors) | https://laroccaconsulting.github.io/freegames/corridors/ |
+| Pulse (one-tap rhythm platformer) | [`games/pulse`](games/pulse) | https://laroccaconsulting.github.io/freegames/pulse/ |
 
 See [PLAN.md](PLAN.md) for the roadmap, principles and architecture.
 
