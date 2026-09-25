@@ -1,6 +1,7 @@
 import { makeStore } from './core/storage.js';
 import { makeSettings } from './core/settings.js';
-import { applyTheme, openDialog, toggle, el, toast } from './core/ui.js';
+import { themeFor, onLookChange } from './core/hallows.js';
+import { applyTheme, openDialog, toggle, el, toast, offerHallows } from './core/ui.js';
 import { setSoundEnabled } from './core/sound.js';
 import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
@@ -15,7 +16,14 @@ import { Board } from './js/render.js';
 import { sfx, setSoundTheme } from './js/sfx.js';
 
 const store = makeStore('trio');
-const settings = makeSettings(store, { skin: 'jewels', sound: true, vibrate: true, effects: true });
+const settings = makeSettings(store, { skin: null, sound: true, vibrate: true, effects: true });
+// The newer of the player's pick here and the look chosen on the games list
+// (core/hallows.js); with neither, the season's theme (Hallows in autumn).
+const skinId = () => themeFor(settings.get('skin'), settings.get('skinAt'), 'jewels');
+const pickSkin = (id) => {
+  settings.set('skinAt', Date.now());
+  settings.set('skin', id);
+};
 const $ = (id) => document.getElementById(id);
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -32,10 +40,10 @@ $('canvas').board = board; // reachable from browser tests
 // ---------- Settings ----------
 
 function applySettings() {
-  const theme = themeById(settings.get('skin'));
+  const theme = themeById(skinId());
   document.body.dataset.skin = theme.id;
-  applyTheme(theme.dark ? 'dark' : 'light');
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.dark ? '#0d0724' : '#f3fbe6');
+  applyTheme(theme.id === 'hallows' ? 'hallows' : theme.dark ? 'dark' : 'light');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.id === 'hallows' ? '#120c22' : theme.dark ? '#0d0724' : '#f3fbe6');
   setSoundEnabled(settings.get('sound'));
   setSoundTheme(theme);
   board.setTheme(theme);
@@ -45,6 +53,8 @@ function applySettings() {
 settings.onChange(applySettings);
 reducedMotion.addEventListener?.('change', applySettings);
 applySettings();
+offerHallows(store, skinId(), () => pickSkin('hallows'));
+onLookChange(applySettings);
 
 const announce = (text) => ($('announce').textContent = text);
 const vibrate = (pattern) => {
@@ -393,7 +403,7 @@ function openMenu() {
 }
 
 function openThemes() {
-  const current = settings.get('skin');
+  const current = skinId();
   const sample = (t) => el('span', { class: 'dots' }, [0, 1, 2, 3, 4, 5].map((k) => el('i', { style: `background:${iconColor(t, k)}` })));
   openDialog({
     title: 'Themes',
@@ -401,7 +411,7 @@ function openThemes() {
       el('div', { class: 'theme-grid', role: 'radiogroup' },
         THEMES.map((t) =>
           el('label', { class: 'theme-card' },
-            el('input', { type: 'radio', name: 'skin', value: t.id, checked: t.id === current, onchange: () => settings.set('skin', t.id), 'aria-label': t.name }),
+            el('input', { type: 'radio', name: 'skin', value: t.id, checked: t.id === current, onchange: () => pickSkin(t.id), 'aria-label': t.name }),
             el('span', { class: `face ${t.dark ? 'dark' : 'light'}`, style: `background:${t.preview}` }, el('b', {}, t.name), sample(t))))),
       el('p', { class: 'muted' }, 'Every theme has its own tiles, sounds and effects.')),
   });

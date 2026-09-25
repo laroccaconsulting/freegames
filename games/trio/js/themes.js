@@ -8,7 +8,7 @@ import { drawJewel } from '../core/jewels.js';
 //                    { kind: 'emoji', set: [...] } using the system emoji font
 //   tile             { face, face2, edge, side, radius } tile colours
 //   additive         particles glow ('lighter' blending)
-//   particles        'sparks' | 'stars' | 'confetti' | 'petals'
+//   particles        'sparks' | 'stars' | 'confetti' | 'petals' | 'leaves'
 //   sound            { wave, root, scale } chime notes (semitones above root)
 //   preview          CSS background for the theme picker card
 
@@ -69,6 +69,24 @@ export const THEMES = [
     particles: 'petals',
     sound: { wave: 'sine', root: 440, scale: [0, 2, 5, 7, 9, 12, 14, 17, 19] },
     preview: 'radial-gradient(circle at 70% 30%, #7ce0a466, transparent 55%), linear-gradient(#0b2a24, #123d2f)',
+  },
+  {
+    id: 'hallows',
+    name: 'Hallows',
+    dark: true,
+    icons: {
+      kind: 'shapes',
+      shapes: [
+        ['hat', '#7b4dff'], ['pumpkin', '#ff7a1a'], ['bat', '#3a3150'], ['potion', '#2fc46b'],
+        ['moon', '#c7d2ff'], ['star', '#ffd84a'], ['orb', '#29c9ff'], ['leaf', '#c0392b'],
+        ['owl', '#8b5a2b'], ['cauldron', '#1c5d99'], ['candle', '#f4efe0'], ['key', '#e0457b'],
+      ],
+    },
+    tile: { face: '#f8efd9', face2: '#e8d4ab', edge: 'rgba(255,248,230,0.95)', side: '#6b4a2b', radius: 0.18 },
+    additive: true,
+    particles: 'leaves',
+    sound: { wave: 'triangle', root: 440, scale: [0, 3, 7, 10, 12, 15, 19, 22, 24] },
+    preview: 'radial-gradient(circle at 78% 22%, #fff3c4 0 7%, #ffd98a55 9%, transparent 26%), radial-gradient(ellipse at 50% 120%, #ff8a1f66, transparent 55%), linear-gradient(#0b0718, #23133b)',
   },
   {
     id: 'calm',

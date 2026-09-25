@@ -1,6 +1,7 @@
 import { makeStore } from './core/storage.js';
 import { makeSettings } from './core/settings.js';
-import { applyTheme, watchSystemTheme, openDialog, segmented, toggle, el, toast } from './core/ui.js';
+import { themeFor, onLookChange } from './core/hallows.js';
+import { applyTheme, watchSystemTheme, offerHallows, openDialog, segmented, toggle, el, toast } from './core/ui.js';
 import { sounds, setSoundEnabled, audio, noiseBurst, tone } from './core/sound.js';
 import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
@@ -13,14 +14,23 @@ import { ONLINE_SERVER } from './js/config.js';
 import { serverBase, createRoom, randomToken, Connection, BUSY } from './js/online.js';
 
 const store = makeStore('corridors');
-const settings = makeSettings(store, { theme: 'auto', sound: true, steps: true });
+const settings = makeSettings(store, { theme: null, sound: true, steps: true });
+// The newer of the player's pick here and the look chosen on the games list
+// (core/hallows.js); with neither, the season's theme (Hallows in autumn).
+const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
+const pickTheme = (id) => {
+  settings.set('themeAt', Date.now());
+  settings.set('theme', id);
+};
 const $ = (id) => document.getElementById(id);
 
-applyTheme(settings.get('theme'));
-watchSystemTheme(() => settings.get('theme'));
+applyTheme(themeId());
+watchSystemTheme(() => themeId());
 setSoundEnabled(settings.get('sound'));
+offerHallows(store, themeId(), () => pickTheme('hallows'));
+onLookChange(() => applyTheme(themeId()));
 settings.onChange((key, value) => {
-  if (key === 'theme') applyTheme(value);
+  if (key === 'theme' || key === 'themeAt') applyTheme(themeId());
   if (key === 'sound') setSoundEnabled(value);
   render();
 });
@@ -694,7 +704,7 @@ function settingsDialog() {
     body: el(
       'div',
       {},
-      el('div', { class: 'field' }, el('span', { class: 'field-label' }, 'Theme'), segmented('theme', [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']], settings.get('theme'), (v) => settings.set('theme', v))),
+      el('div', { class: 'field' }, el('span', { class: 'field-label' }, 'Theme'), segmented('theme', [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark'], ['hallows', 'Hallows']], themeId(), pickTheme)),
       toggle('Sounds', settings.get('sound'), (v) => settings.set('sound', v)),
       toggle('Show steps to go', settings.get('steps'), (v) => settings.set('steps', v), 'Each player’s shortest route to their goal'),
     ),

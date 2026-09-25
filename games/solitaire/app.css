@@ -702,3 +702,53 @@ body {
   color: var(--accent);
   margin: 0 0 12px;
 }
+
+/* ---------- Hallows: the autumn night theme ---------- */
+/* The table is the night sky from core/hallows.js; cards get parchment faces
+   and a midnight back with a crescent moon among the stars. */
+
+:root[data-theme='hallows'] {
+  --card-face: #f6ead0;
+  --card-red: #b3262f;
+  --card-black: #1d1528;
+}
+:root[data-theme='hallows'] body {
+  --chrome-bg: #120c22;
+}
+:root[data-theme='hallows'] .app {
+  background: radial-gradient(ellipse at 50% 40%, rgba(255, 214, 140, 0.07), transparent 65%);
+}
+:root[data-theme='hallows'] .app::before {
+  display: none;
+}
+:root[data-theme='hallows'] .card-face {
+  background: linear-gradient(160deg, #fffaf0, var(--card-face) 55%, #e9d6ae);
+}
+:root[data-theme='hallows'] .card-back {
+  background-color: #241640;
+  background-image:
+    radial-gradient(circle at 57% 45%, #241640 0 17%, transparent 17.5%),
+    radial-gradient(circle at 50% 50%, #f3c768 0 20%, transparent 20.5%),
+    radial-gradient(circle at 50% 50%, rgba(243, 199, 104, 0.25) 0 27%, transparent 45%),
+    radial-gradient(circle, #ffe7a8 0 0.8px, transparent 1.3px),
+    radial-gradient(circle, rgba(255, 231, 168, 0.6) 0 0.6px, transparent 1px),
+    linear-gradient(160deg, #3a2466, #150c28);
+  background-size: auto, auto, auto, 11px 13px, 7px 9px, auto;
+  background-position: center, center, center, 2px 3px, 5px 1px, center;
+  box-shadow:
+    inset 0 0 0 calc(var(--cw) * 0.045) #1a102e,
+    inset 0 0 0 calc(var(--cw) * 0.06) #c99a45,
+    0 0 0 0.5px rgba(0, 0, 0, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+}
+:root[data-theme='hallows'] .hw-candle {
+  display: none; /* they would poke out from under the cards */
+}
+:root[data-theme='hallows'] .hw-moon {
+  top: auto;
+  bottom: 34vh;
+  right: 12vw;
+}
+:root[data-theme='hallows'] .game-switch {
+  font-family: var(--font-display);
+}

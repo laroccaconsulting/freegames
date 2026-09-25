@@ -24,6 +24,16 @@ const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), pa
 const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 const rgb = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
 const shade = (c, k) => c.map((v) => Math.max(0, Math.min(255, Math.round(v * k))));
+// Hallows (autumn): each colour section of a level gets a night palette
+// instead, in order: [background, ground, line].
+const HALLOWS = [
+  ['#2a1648', '#150a28', '#ffe3a8'],
+  ['#6a2410', '#361006', '#ffd08a'],
+  ['#163a2e', '#0a2018', '#e9ffd0'],
+  ['#4a0f24', '#260612', '#ffd6e0'],
+  ['#141b4a', '#0a0d2a', '#dfe3ff'],
+];
+
 const hash = (i, j) => {
   let h = Math.imul(i * 374761393 + j * 668265263, 1274126177);
   h ^= h >>> 13;
@@ -67,9 +77,7 @@ export class View {
     this.lv = lv;
     this.particles = [];
     this.trail = [];
-    const colors = [...(lv.colors || [])].sort((a, b) => a.x - b.x);
-    if (!colors.length || colors[0].x > 0) colors.unshift({ x: -1e9, bg: '#1f47d6', ground: '#1233a8', line: '#dfe8ff' });
-    this.colors = colors.map((c) => ({ x: c.x, bg: hex(c.bg), ground: hex(c.ground), line: hex(c.line || '#ffffff') }));
+    this.setColors();
     // Cache solid and spike outlines per chunk of columns, in world units.
     const solid = new Set(lv.objects.filter((o) => o.t === 'block').map((o) => `${o.x},${o.y}`));
     this.chunks = new Map();
@@ -104,6 +112,23 @@ export class View {
       }
     }
     this.dynamic = lv.objects.filter((o) => !SOLIDS.has(o.t) && o.t !== 'spike' && o.t !== 'mini');
+  }
+
+  // The level's colour sections, or the Hallows night palettes in their place.
+  setColors() {
+    if (!this.lv) return;
+    const colors = [...(this.lv.colors || [])].sort((a, b) => a.x - b.x);
+    if (!colors.length || colors[0].x > 0) colors.unshift({ x: -1e9, bg: '#1f47d6', ground: '#1233a8', line: '#dfe8ff' });
+    this.colors = colors.map((c, i) => {
+      const [bg, ground, line] = this.hallows ? HALLOWS[i % HALLOWS.length] : [c.bg, c.ground, c.line || '#ffffff'];
+      return { x: c.x, bg: hex(bg), ground: hex(ground), line: hex(line) };
+    });
+  }
+
+  setHallows(on) {
+    if (this.hallows === on) return;
+    this.hallows = on;
+    this.setColors();
   }
 
   setSkin(skin) {
@@ -233,6 +258,10 @@ export class View {
     g.addColorStop(1, rgb(bottom));
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
+    if (this.hallows) {
+      this.drawNight(pal, camX, camY, pulse);
+      return;
+    }
     // Big faint squares drifting slowly behind everything.
     const size = 3.4 * unit;
     const px = camX * unit * 0.12;
@@ -247,6 +276,81 @@ export class View {
         const x = i * size - px;
         const y = j * size - py;
         ctx.fillRect(x + 3, y + 3, size - 6, size - 6);
+      }
+    }
+  }
+
+  // Hallows backdrop: stars, a harvest moon, and pines and castles with lit
+  // windows scrolling slowly along the horizon.
+  drawNight(pal, camX, camY, pulse) {
+    const { ctx, W, H, unit } = this;
+    const star = unit * 1.7;
+    const sx = camX * unit * 0.03;
+    for (let i = Math.floor(sx / star) - 1; i < (sx + W) / star + 1; i++) {
+      for (let j = 0; j < H / star; j++) {
+        const a = hash(i, j + 91);
+        if (a < 0.72) continue;
+        ctx.fillStyle = `rgba(255,246,220,${0.25 + (a - 0.72) * 2.2})`;
+        ctx.beginPath();
+        ctx.arc(i * star - sx + hash(j, i) * star, j * star + hash(i + 7, j) * star, 0.6 + (a - 0.72) * 5, 0, TAU);
+        ctx.fill();
+      }
+    }
+    const mr = unit * 1.25;
+    const mx = W * 0.8;
+    const my = Math.min(H * 0.2, unit * 2.6);
+    const halo = ctx.createRadialGradient(mx, my, mr * 0.8, mx, my, mr * 4);
+    halo.addColorStop(0, `rgba(255,220,150,${0.2 + pulse * 0.08})`);
+    halo.addColorStop(1, 'rgba(255,220,150,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(mx - mr * 4, my - mr * 4, mr * 8, mr * 8);
+    const mg = ctx.createRadialGradient(mx - mr * 0.3, my - mr * 0.3, mr * 0.1, mx, my, mr);
+    mg.addColorStop(0, '#fffbea');
+    mg.addColorStop(1, '#e3c982');
+    ctx.fillStyle = mg;
+    ctx.beginPath();
+    ctx.arc(mx, my, mr, 0, TAU);
+    ctx.fill();
+
+    // The horizon: one tile of skyline every 40 far-units, at 15% scroll speed.
+    const u = unit * 0.5;
+    const base = H + camY * unit * 0.5 - unit * 0.6;
+    const tile = 40 * u;
+    const off = camX * unit * 0.15;
+    const dark = rgb(shade(pal.bg, 0.4));
+    for (let k = Math.floor(off / tile) - 1; k <= (off + W) / tile; k++) {
+      const x0 = k * tile - off;
+      ctx.fillStyle = dark;
+      ctx.beginPath();
+      for (let n = 0; n < 16; n++) {
+        const px = x0 + (n / 16) * tile + hash(k, n) * u;
+        if (hash(k, n + 40) < 0.3) continue;
+        const h = (2 + hash(n, k) * 2.5) * u;
+        ctx.moveTo(px - 0.7 * u, base);
+        ctx.lineTo(px, base - h);
+        ctx.lineTo(px + 0.7 * u, base);
+      }
+      ctx.fill();
+      if (hash(k, 99) < 0.45) continue;
+      // A castle: towers with pointed roofs and a few lit windows.
+      const cx = x0 + (14 + hash(k, 3) * 12) * u;
+      const towers = [[-4, 3, 1.4], [-2.2, 5, 2], [0, 6.5, 3.2], [2.6, 8, 1.6], [4.4, 4.5, 1.8], [6.2, 3, 1.2]];
+      ctx.beginPath();
+      ctx.rect(cx - 4 * u, base - 2.2 * u, 11 * u, 2.2 * u);
+      for (const [dx, h, w] of towers) {
+        const tx = cx + dx * u;
+        ctx.rect(tx - (w / 2) * u, base - h * u, w * u, h * u);
+        ctx.moveTo(tx - (w / 2 + 0.25) * u, base - h * u);
+        ctx.lineTo(tx, base - (h + w * 1.3) * u);
+        ctx.lineTo(tx + (w / 2 + 0.25) * u, base - h * u);
+      }
+      ctx.fill();
+      ctx.fillStyle = `rgba(255,214,120,${0.75 + pulse * 0.25})`;
+      for (const [dx, h] of towers) {
+        for (let f = 1.5; f < h - 0.5; f += 1.8) {
+          if (hash(k * 7 + dx * 3, f * 5) < 0.4) continue;
+          ctx.fillRect(cx + dx * u - 0.15 * u, base - f * u - 0.5 * u, 0.3 * u, 0.5 * u);
+        }
       }
     }
   }
