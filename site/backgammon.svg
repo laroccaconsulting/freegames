@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a5a35" />
+      <stop offset="1" stop-color="#5a3a20" />
+    </linearGradient>
+    <radialGradient id="light" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#fff" /><stop offset="0.3" stop-color="#f4ecd8" /><stop offset="1" stop-color="#b7a482" /></radialGradient>
+    <radialGradient id="dark" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#4a4038" /><stop offset="0.3" stop-color="#2b2118" /><stop offset="1" stop-color="#000" /></radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)" />
+  <!-- four points, two light two dark, with checkers stacked in -->
+  <g>
+    <polygon points="40,460 140,460 90,270" fill="#e8d3ab" />
+    <polygon points="140,460 240,460 190,270" fill="#b97a4a" />
+    <polygon points="272,460 372,460 322,270" fill="#e8d3ab" />
+    <polygon points="372,460 472,460 422,270" fill="#b97a4a" />
+  </g>
+  <g>
+    <circle cx="90" cy="428" r="34" fill="url(#light)" stroke="#b7a482" stroke-width="3" />
+    <circle cx="90" cy="368" r="34" fill="url(#light)" stroke="#b7a482" stroke-width="3" />
+    <circle cx="190" cy="428" r="34" fill="url(#dark)" stroke="#000" stroke-width="3" />
+    <circle cx="322" cy="428" r="34" fill="url(#dark)" stroke="#000" stroke-width="3" />
+    <circle cx="322" cy="368" r="34" fill="url(#dark)" stroke="#000" stroke-width="3" />
+    <circle cx="322" cy="308" r="34" fill="url(#dark)" stroke="#000" stroke-width="3" />
+    <circle cx="422" cy="428" r="34" fill="url(#light)" stroke="#b7a482" stroke-width="3" />
+  </g>
+  <!-- a pair of dice, mid-roll -->
+  <g transform="translate(150 100) rotate(-14)">
+    <rect x="-40" y="-40" width="80" height="80" rx="16" fill="#fbf7ee" stroke="#00000022" stroke-width="3" />
+    <circle cx="-18" cy="-18" r="8" fill="#2b2118" /><circle cx="18" cy="18" r="8" fill="#2b2118" />
+  </g>
+  <g transform="translate(258 76) rotate(11)">
+    <rect x="-40" y="-40" width="80" height="80" rx="16" fill="#fbf7ee" stroke="#00000022" stroke-width="3" />
+    <circle cx="-18" cy="-18" r="8" fill="#2b2118" /><circle cx="18" cy="-18" r="8" fill="#2b2118" /><circle cx="0" cy="0" r="8" fill="#2b2118" /><circle cx="-18" cy="18" r="8" fill="#2b2118" /><circle cx="18" cy="18" r="8" fill="#2b2118" />
+  </g>
+</svg>

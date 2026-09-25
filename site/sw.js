@@ -1,9 +1,10 @@
 // Offline support for the hub page only. Each game has its own service
 // worker for its own folder, so requests outside FILES are left alone.
 // VERSION and FILES are rewritten by scripts/build-sw.mjs.
-const VERSION = 'd3db52f6b5ef';
+const VERSION = '2eb03ead6812';
 const FILES = [
   './',
+  './backgammon.svg',
   './blocks.svg',
   './corridors.svg',
   './gems.svg',
