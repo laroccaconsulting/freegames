@@ -1,0 +1,312 @@
+/* Mahjong: ivory tiles on a jade table. */
+
+:root {
+  --table: #2f7a55;
+  --table-edge: #1f5a3d;
+  --tile: #fbf7ea;
+  --tile-side: #d9cfb3;
+  --tile-deep: #a8997a;
+  --sel: #ffcf3d;
+  --hint: #3fb7e8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --table: #1f4a36;
+    --table-edge: #133024;
+  }
+}
+:root[data-theme='dark'] {
+  --table: #1f4a36;
+  --table-edge: #133024;
+}
+:root[data-theme='hallows'] {
+  --table: #2a2140;
+  --table-edge: #140e24;
+  --tile: #f4e8cc;
+  --tile-side: #c7b28a;
+  --tile-deep: #7a6440;
+  --sel: #f08a24;
+}
+:root[data-theme='hallows'] .hw-candle {
+  display: none;
+}
+:root[data-theme='hallows'] .title-main {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+}
+body {
+  min-height: 100dvh;
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+}
+#announce {
+  margin: 0;
+  top: 0;
+}
+.app {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+  min-height: 520px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px 6px;
+}
+.title-btn {
+  appearance: none;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 12px;
+  color: var(--text);
+  min-width: 0;
+}
+.title-btn:hover {
+  background: var(--accent-soft);
+}
+.title-main {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.title-main::after {
+  content: ' ▾';
+  font-size: 0.7em;
+  color: var(--text-muted);
+}
+.title-sub {
+  display: block;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+.score {
+  display: flex;
+  gap: 8px;
+}
+.chip {
+  min-width: 64px;
+  text-align: center;
+  padding: 6px 12px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.chip small {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.chip b {
+  display: block;
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stage {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 10px 8px;
+  margin: 0 8px;
+  border-radius: 20px;
+  background: radial-gradient(ellipse at 50% 40%, var(--table), var(--table-edge));
+  box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+.board {
+  position: relative;
+}
+.tile {
+  --d: calc(var(--u) * 0.25);
+  position: absolute;
+  left: calc(var(--x) * var(--u) + (var(--zmax) - var(--z)) * var(--d));
+  top: calc(var(--y) * var(--u) * 1.3 + (var(--zmax) - var(--z)) * var(--d));
+  width: calc(var(--u) * 2);
+  height: calc(var(--u) * 2.6);
+  appearance: none;
+  border: 0;
+  padding: 0;
+  border-radius: calc(var(--u) * 0.28);
+  background: linear-gradient(150deg, #fff, var(--tile) 45%);
+  box-shadow: calc(var(--d) * 0.5) calc(var(--d) * 0.5) 0 var(--tile-side), var(--d) var(--d) 0 var(--tile-deep), calc(var(--d) * 1.4) calc(var(--d) * 1.6) calc(var(--d) * 2) rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 0.12s ease, opacity 0.25s ease, filter 0.2s ease;
+}
+.tile[hidden] {
+  display: none;
+}
+.tile-face {
+  position: absolute;
+  inset: 5%;
+  display: block;
+}
+.tile-face svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.tile.blocked .tile-face {
+  filter: saturate(0.55) brightness(0.9);
+}
+.tile.blocked {
+  background: linear-gradient(150deg, #efe9d8, #ddd3bb 60%);
+  cursor: default;
+}
+.tile.sel {
+  transform: translate(calc(var(--d) * -0.6), calc(var(--d) * -0.8));
+  background: linear-gradient(150deg, #fff, color-mix(in srgb, var(--sel) 45%, var(--tile)));
+  box-shadow: 0 0 0 3px var(--sel), var(--d) var(--d) 0 var(--tile-deep), 0 8px 18px rgba(0, 0, 0, 0.4);
+}
+.tile.hint {
+  box-shadow: 0 0 0 3px var(--hint), var(--d) var(--d) 0 var(--tile-deep);
+  animation: glow 1s ease-in-out infinite;
+}
+.tile.gone {
+  opacity: 0;
+  transform: scale(1.15) translateY(-10%);
+  pointer-events: none;
+}
+.tile.nope {
+  animation: nope 0.25s ease;
+}
+@keyframes glow {
+  50% {
+    filter: brightness(1.12);
+  }
+}
+@keyframes nope {
+  25% {
+    translate: -3px 0;
+  }
+  75% {
+    translate: 3px 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .tile.hint,
+  .tile.nope {
+    transition: none;
+    animation: none;
+  }
+}
+.results .stamp {
+  opacity: 1;
+  transform: none;
+}
+/* ---------- Toolbar and menus ---------- */
+
+.toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px 10px;
+}
+.tool {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 64px;
+  min-height: 50px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tool:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+.tool:disabled {
+  opacity: 0.38;
+}
+.menu-list {
+  display: grid;
+  gap: 10px;
+}
+.menu-card {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.menu-card .menu-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.menu-card b {
+  display: block;
+  font-size: 1.05rem;
+}
+.menu-card small {
+  color: var(--text-muted);
+}
+.menu-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.menu-row .btn {
+  flex: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .row.reveal .pegs .peg {
+    animation: none;
+  }
+}
+/* Landscape phones: every pixel of height goes to the table. */
+@media (max-height: 560px) {
+  .app {
+    min-height: 0;
+  }
+  .topbar {
+    padding: 4px 14px 2px;
+  }
+  .title-sub {
+    display: none;
+  }
+  .chip {
+    padding: 2px 10px;
+  }
+  .chip b {
+    font-size: 1rem;
+  }
+  .toolbar {
+    padding: 2px 8px 4px;
+  }
+  .tool {
+    min-height: 40px;
+    flex-direction: row;
+  }
+}
