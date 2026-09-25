@@ -1,0 +1,440 @@
+/* Dice: ivory dice on a green felt tray. */
+
+:root {
+  --felt: #2f7a55;
+  --felt-edge: #1f5a3d;
+  --die: #fffdf7;
+  --die-edge: #d9d2c0;
+  --pip: #1d1b16;
+  --held: #ffcf3d;
+  --good: #1f7a4d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --felt: #245c41;
+    --felt-edge: #173d2b;
+    --good: #3fb77a;
+  }
+}
+:root[data-theme='dark'] {
+  --felt: #245c41;
+  --felt-edge: #173d2b;
+  --good: #3fb77a;
+}
+:root[data-theme='hallows'] {
+  --felt: #2a2140;
+  --felt-edge: #1c1330;
+  --die: #f4e8cc;
+  --die-edge: #b8a78a;
+  --pip: #3a1f0a;
+  --held: #f08a24;
+  --good: #e8b04a;
+}
+:root[data-theme='hallows'] .hw-candle {
+  display: none;
+}
+:root[data-theme='hallows'] .title-main {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+}
+body {
+  min-height: 100dvh;
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+}
+#announce {
+  margin: 0;
+  top: 0;
+}
+.app {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+  min-height: 520px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px 6px;
+}
+.title-btn {
+  appearance: none;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 12px;
+  color: var(--text);
+  min-width: 0;
+}
+.title-btn:hover {
+  background: var(--accent-soft);
+}
+.title-main {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.title-main::after {
+  content: ' ▾';
+  font-size: 0.7em;
+  color: var(--text-muted);
+}
+.title-sub {
+  display: block;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+.score {
+  display: flex;
+  gap: 8px;
+}
+.chip {
+  min-width: 64px;
+  text-align: center;
+  padding: 6px 12px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.chip small {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.chip b {
+  display: block;
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stage {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 14px 12px;
+}
+.players {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
+.player {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.player.turn {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.player.target {
+  border-style: dashed;
+}
+.player small {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.player .progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: calc(var(--p) * 100%);
+  background: var(--accent);
+}
+.dice-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  width: min(100%, 520px);
+  border-radius: 20px;
+  background: radial-gradient(circle at 50% 30%, var(--felt), var(--felt-edge));
+  box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.dice-row.six {
+  flex-wrap: wrap;
+}
+.die {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  width: min(15vw, 64px);
+  aspect-ratio: 1;
+  border-radius: 18%;
+  background: linear-gradient(145deg, #fff, var(--die) 50%, var(--die-edge));
+  box-shadow: 0 5px 0 var(--die-edge), 0 8px 14px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.die:disabled {
+  cursor: default;
+}
+.die.blank {
+  opacity: 0.35;
+}
+.die.held {
+  transform: translateY(-6px);
+  box-shadow: 0 0 0 4px var(--held), 0 5px 0 var(--die-edge), 0 12px 18px rgba(0, 0, 0, 0.35);
+}
+.die.used {
+  width: 30px;
+  box-shadow: 0 2px 0 var(--die-edge);
+  cursor: default;
+}
+.die.rolling .face {
+  animation: tumble 0.42s ease;
+}
+@keyframes tumble {
+  0% {
+    transform: rotate(0) scale(1);
+    opacity: 1;
+  }
+  40% {
+    transform: rotate(160deg) scale(0.8);
+    opacity: 0.3;
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 1;
+  }
+}
+.face {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  width: 100%;
+  height: 100%;
+  padding: 16%;
+}
+.face i {
+  display: block;
+  margin: 12%;
+  border-radius: 50%;
+}
+.face i.pip {
+  background: radial-gradient(circle at 40% 35%, #555, var(--pip) 60%);
+}
+.roll-btn {
+  min-width: 220px;
+}
+.card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: min(100%, 560px);
+}
+.card-col {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+.box,
+.bonus {
+  appearance: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+}
+.box b,
+.bonus b {
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+.box:disabled {
+  cursor: default;
+}
+.box:not(.used) b {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.box.good:not(.used) {
+  border-color: var(--good);
+}
+.box.good:not(.used) b {
+  color: var(--good);
+  font-weight: 800;
+}
+.box.used {
+  background: var(--surface-2);
+}
+.box.used span {
+  color: var(--text-muted);
+}
+.bonus {
+  background: transparent;
+  border-style: dashed;
+  cursor: default;
+}
+.tenk-msg {
+  margin: 0;
+  min-height: 1.4em;
+  font-weight: 700;
+  text-align: center;
+}
+.tenk-msg.bust {
+  color: var(--danger);
+}
+.tenk-actions {
+  display: flex;
+  gap: 10px;
+}
+.tenk-actions .btn {
+  min-width: 140px;
+}
+.aside {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+}
+.aside small {
+  width: 100%;
+  text-align: center;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.scoring {
+  text-align: center;
+  max-width: 420px;
+}
+.small {
+  font-size: 0.8rem;
+}
+.results .stamp {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .die.rolling .face {
+    animation: none;
+  }
+}
+/* ---------- Toolbar and menus ---------- */
+
+.toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px 10px;
+}
+.tool {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 64px;
+  min-height: 50px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tool:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+.tool:disabled {
+  opacity: 0.38;
+}
+.menu-list {
+  display: grid;
+  gap: 10px;
+}
+.menu-card {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.menu-card .menu-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.menu-card b {
+  display: block;
+  font-size: 1.05rem;
+}
+.menu-card small {
+  color: var(--text-muted);
+}
+.menu-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.menu-row .btn {
+  flex: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .row.reveal .pegs .peg {
+    animation: none;
+  }
+}
+.dice-row.six {
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 14px 10px;
+}
+.dice-row.six .die {
+  width: min(12.5vw, 58px);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
