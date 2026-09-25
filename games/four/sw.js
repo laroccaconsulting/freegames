@@ -1,6 +1,6 @@
 // Offline support: every file is cached on install and served cache-first.
 // VERSION and FILES are rewritten by scripts/build-sw.mjs; run it before deploying.
-const VERSION = 'b3fe9f0a946f';
+const VERSION = '17129eb34298';
 const FILES = [
   './',
   './app.css',
