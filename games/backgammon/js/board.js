@@ -11,10 +11,11 @@ const NS = 'http://www.w3.org/2000/svg';
 const P = 90; // column pitch
 const BAR = 72; // bar width
 const OFF = 66; // off-tray width
-const RH = 320; // row height (edge to centre line)
+const RH = 380; // row height (edge to centre line) — tall enough that a full
+// stack of 5 checkers doesn't crowd into the centre line or into each other
 const PAD = 22;
 const R = P * 0.42; // checker radius
-const SPACING = R * 1.7;
+const SPACING = R * 1.85; // centre-to-centre gap between stacked checkers
 const MAX_SHOWN = 5;
 
 const W = 12 * P + BAR + OFF;
