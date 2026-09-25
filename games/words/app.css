@@ -445,6 +445,107 @@ body {
   font-weight: 500;
 }
 
+/* ---------- Word Search ---------- */
+
+.ws {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+}
+.ws-board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--n), minmax(0, 1fr));
+  width: min(100cqw, 100cqh - 130px, 560px);
+  aspect-ratio: 1;
+  flex: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.35);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+  container-type: inline-size;
+}
+.ws-cell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: calc(100cqi / var(--n) * 0.5);
+  pointer-events: none;
+}
+.ws-cell.on {
+  color: var(--accent);
+}
+.ws-cell.hinted::after {
+  content: '';
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  animation: ws-ping 0.8s ease-out 3;
+}
+@keyframes ws-ping {
+  from {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.ws-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.ws-lines line {
+  stroke-width: 0.78;
+  stroke-linecap: round;
+}
+.ws-lines .found {
+  stroke: hsl(var(--h) 75% 60% / 0.38);
+}
+.ws-lines .live {
+  stroke: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.ws-words {
+  width: min(100%, 560px);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.ws-words .word {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.8rem;
+}
+.ws-words .word.got {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  background: hsl(var(--h) 75% 60% / 0.25);
+  opacity: 0.75;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ws-cell.hinted::after {
+    animation: none;
+  }
+}
+
 /* ---------- Toolbar and menus ---------- */
 
 .toolbar {

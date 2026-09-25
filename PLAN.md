@@ -97,7 +97,7 @@ Themes are plug-ins (see `games/sort/js/themes.js`).
 | **Trio** (triple tile match) | ✅ Built — `games/trio/`. X-ray through the stack, every board winnable, par = lowest tray peak |
 | **Blocks** (block puzzle) | ✅ Built — `games/blocks/`. Next hand always visible, daily 90 pieces vs a bot, Zen with no game over |
 | **Minesweeper** | ✅ Built — `games/mines/`. Every board solvable by logic from the start square (solver checked against real mines), hints that explain the rule used, daily board, one take-back after a mine |
-| **Word Search** | Custom word lists shared by link, printable |
+| **Word Search** | ✅ Built (in Words): daily and numbered 10×10 searches of common base words in eight directions, each word hidden exactly once, filler checked against the blocklist; drag or tap both ends. Still to do: custom word lists shared by link, printable |
 | **Gems** (match-3 puzzle mode) | ✅ Built — `games/gems/`. Fixed boards, no refills, clear the board in par swaps |
 | **Dots and Boxes** | Strong AI that teaches the chain rule; pass-and-play |
 | **Corridors** (wall-race board game) | ✅ Built — `games/corridors/`. Computer at three levels, pass-and-play for 2 or 4, optional online rooms by link |
