@@ -1420,6 +1420,50 @@ export default {
       "desc": "Solve a level 20 or later without the extra tube."
     }
   ],
+  "spades": [
+    {
+      "id": "first-win",
+      "title": "First win",
+      "desc": "Win a game of Spades with your partner."
+    },
+    {
+      "id": "made-bid",
+      "title": "Contract kept",
+      "desc": "Make your team’s bid in a hand."
+    },
+    {
+      "id": "nil",
+      "title": "Nil and void",
+      "desc": "Bid nil and take no tricks."
+    },
+    {
+      "id": "big-bid",
+      "title": "Bold bid",
+      "desc": "Bid 6 or more yourself and make it."
+    },
+    {
+      "id": "set",
+      "title": "Set them",
+      "desc": "Stop the other team making their bid."
+    },
+    {
+      "id": "no-bags",
+      "title": "Tidy",
+      "desc": "Win a game without a bag penalty."
+    },
+    {
+      "id": "wins-10",
+      "title": "Partners in crime",
+      "desc": "Win 10 games.",
+      "goal": 10
+    },
+    {
+      "id": "hands-100",
+      "title": "Card table regular",
+      "desc": "Play 100 hands.",
+      "goal": 100
+    }
+  ],
   "sudoku": [
     {
       "id": "first",
