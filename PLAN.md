@@ -99,7 +99,7 @@ Themes are plug-ins (see `games/sort/js/themes.js`).
 | **Minesweeper** | ✅ Built — `games/mines/`. Every board solvable by logic from the start square (solver checked against real mines), hints that explain the rule used, daily board, one take-back after a mine |
 | **Word Search** | ✅ Built (in Words): daily and numbered 10×10 searches of common base words in eight directions, each word hidden exactly once, filler checked against the blocklist; drag or tap both ends. Still to do: custom word lists shared by link, printable |
 | **Gems** (match-3 puzzle mode) | ✅ Built — `games/gems/`. Fixed boards, no refills, clear the board in par swaps |
-| **Dots and Boxes** | Strong AI that teaches the chain rule; pass-and-play |
+| **Dots and Boxes** | ✅ Built — `games/boxes/`: 3×3 to 6×6, computer at three levels (Hard plays the double-dealing handout to keep control of chains), pass-and-play, undo. Still to do: a lesson on the chain rule |
 | **Corridors** (wall-race board game) | ✅ Built — `games/corridors/`. Computer at three levels, pass-and-play for 2 or 4, optional online rooms by link |
 | **Number Link** | Generated boards with a unique solution, daily |
 | **Four in a Row** | ✅ Built — `games/four/`. Strong computer (three levels) whose hints explain why; pass and play; optional threat overlay |
