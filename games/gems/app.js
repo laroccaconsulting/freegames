@@ -2,6 +2,7 @@ import { makeStore } from './core/storage.js';
 import { makeSettings } from './core/settings.js';
 import { applyTheme, openDialog, toggle, segmented, el, toast } from './core/ui.js';
 import { setSoundEnabled } from './core/sound.js';
+import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash, rating, overText, squares } from './core/golf.js';
 import { showResults, note } from './core/results.js';
@@ -409,6 +410,8 @@ document.addEventListener('keydown', (e) => {
   e.preventDefault();
 });
 const at0 = () => Math.max(0, game.grid.findIndex((v) => v >= 0));
+
+addHubLink();
 
 registerServiceWorker({
   onUpdateReady: () => toast('A new version is ready', { action: { label: 'Reload', onClick: () => location.reload() } }),

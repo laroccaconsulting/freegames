@@ -2,6 +2,7 @@ import { makeStore } from './core/storage.js';
 import { makeSettings } from './core/settings.js';
 import { applyTheme, watchSystemTheme, openDialog, segmented, toggle, el, toast } from './core/ui.js';
 import { sounds, setSoundEnabled } from './core/sound.js';
+import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 
 const store = makeStore('{{SLUG}}');
@@ -39,6 +40,8 @@ document.getElementById('settings-btn').addEventListener('click', () => {
     ),
   });
 });
+
+addHubLink();
 
 registerServiceWorker({
   onUpdateReady: () => toast('A new version is ready', { action: { label: 'Reload', onClick: () => location.reload() } }),
