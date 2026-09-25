@@ -1,0 +1,13 @@
+{
+  "name": "corridors-server",
+  "private": true,
+  "type": "module",
+  "description": "Optional online play for Corridors: a Cloudflare Worker + Durable Object. The games never need it.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}

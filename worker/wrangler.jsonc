@@ -1,0 +1,24 @@
+// Corridors online server. See README.md in this folder.
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "corridors",
+  "main": "src/index.js",
+  "compatibility_date": "2026-01-01",
+  // Serves the game itself too, so it can be played from the Worker's own URL.
+  // Only /api/* runs the Worker; everything else is plain static files.
+  "assets": {
+    "directory": "../games/corridors",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "CORRIDORS_ROOM", "class_name": "CorridorsRoom" }]
+  },
+  // SQLite-backed Durable Objects are the ones available on the free plan.
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["CorridorsRoom"] }],
+  "vars": {
+    // "*" or a comma-separated list, e.g. "https://laroccaconsulting.github.io"
+    "ALLOWED_ORIGINS": "*"
+  },
+  "observability": { "enabled": false }
+}
