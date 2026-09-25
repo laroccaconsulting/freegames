@@ -1,7 +1,7 @@
 // Offline support for the hub page only. Each game has its own service
 // worker for its own folder, so requests outside FILES are left alone.
 // VERSION and FILES are rewritten by scripts/build-sw.mjs.
-const VERSION = '5807b893f18a';
+const VERSION = '4b35770a9c15';
 const FILES = [
   './',
   './arcade.js',

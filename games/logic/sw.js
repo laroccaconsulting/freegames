@@ -1,6 +1,6 @@
 // Offline support: every file is cached on install and served cache-first.
 // VERSION and FILES are rewritten by scripts/build-sw.mjs; run it before deploying.
-const VERSION = 'e6f48afa5774';
+const VERSION = 'ee7798db8203';
 const FILES = [
   './',
   './app.css',
@@ -32,6 +32,8 @@ const FILES = [
   './js/futoshiki-view.js',
   './js/futoshiki.js',
   './js/latin.js',
+  './js/lightup-view.js',
+  './js/lightup.js',
   './js/modes.js',
   './js/number-view.js',
   './js/sfx.js',
@@ -39,6 +41,8 @@ const FILES = [
   './js/skyscrapers.js',
   './js/stars-view.js',
   './js/stars.js',
+  './js/tents-view.js',
+  './js/tents.js',
   './manifest.webmanifest'
 ];
 
