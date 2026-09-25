@@ -95,6 +95,7 @@ function startLocal({ mode, level = 'medium' }) {
   render();
   announce(`New game. ${statusText()}`);
   maybeBot();
+  maybeAutoPlay();
 }
 
 function save() {
@@ -120,9 +121,10 @@ function afterChange() {
   if (turnOver(game.state)) {
     // Cancelled the same way as a bot turn (undo, new game) if it hasn't fired yet.
     const job = botJob;
-    setTimeout(() => job === botJob && passTurn(), 550);
+    setTimeout(() => job === botJob && passTurn(), 420);
   } else {
     maybeBot();
+    maybeAutoPlay();
   }
 }
 
@@ -160,7 +162,7 @@ async function maybeBot() {
   const job = ++botJob;
   thinking = true;
   render();
-  await delay(400);
+  await delay(260);
   if (job !== botJob) return;
   if (needsRoll(game.state)) {
     push();
@@ -168,7 +170,7 @@ async function maybeBot() {
     sfx.roll();
     save();
     render();
-    await delay(550);
+    await delay(380);
     if (job !== botJob) return;
   }
   const steps = game.state.winner == null ? choosePlay(game.state, game.level) : [];
@@ -182,7 +184,7 @@ async function maybeBot() {
     save();
     render();
     if (game.state.winner != null) break;
-    await delay(500);
+    await delay(360);
   }
   if (job !== botJob) return;
   thinking = false;
@@ -197,8 +199,23 @@ async function maybeBot() {
   maybeBot();
 }
 
+// A quality-of-life speed-up: with no real decision to make (one checker can
+// move, one way to move it), play it automatically instead of waiting for a
+// tap. Chains through doubles or a forced tail end the same way.
+function maybeAutoPlay() {
+  if (!game || game.state.winner != null) return;
+  if (game.mode === 'bot' && game.state.turn !== game.human) return; // the bot plays its own turn
+  if (needsRoll(game.state)) return;
+  const steps = legalSteps(game.state);
+  if (steps.length !== 1) return;
+  const job = botJob;
+  setTimeout(() => job === botJob && commitStep(steps[0]), 280);
+}
+
 // ---------- Input ----------
 
+// Selecting a checker that has exactly one legal destination moves it right
+// away — no need to make the player confirm a move there's no choice about.
 function tapZone(zone) {
   if (!canAct() || needsRoll(game.state)) return;
   const s = game.state;
@@ -220,19 +237,30 @@ function tapZone(zone) {
         return;
       }
     }
-    if (from != null && steps.some((st) => st.from === from)) {
-      selected = from;
-      render();
-      return;
+    if (from != null) {
+      const fromSteps = steps.filter((st) => st.from === from);
+      if (fromSteps.length === 1) {
+        commitStep(fromSteps[0]);
+        return;
+      }
+      if (fromSteps.length > 1) {
+        selected = from;
+        render();
+        return;
+      }
     }
     sfx.invalid();
     selected = null;
     render();
     return;
   }
-  if (from != null && steps.some((st) => st.from === from)) {
-    selected = from;
-    render();
+  if (from != null) {
+    const fromSteps = steps.filter((st) => st.from === from);
+    if (fromSteps.length === 1) commitStep(fromSteps[0]);
+    else if (fromSteps.length > 1) {
+      selected = from;
+      render();
+    }
   }
 }
 
@@ -427,7 +455,7 @@ function rulesDialog(first = false) {
         'ul',
         {},
         el('li', {}, el('b', {}, 'Roll'), ' — tap the dice at the start of your turn.'),
-        el('li', {}, el('b', {}, 'Move'), ' — tap a glowing checker, then tap where to move it. Doubles play four times.'),
+        el('li', {}, el('b', {}, 'Move'), ' — tap a glowing checker, then where to move it. If there’s only one way to play it, it just moves — no second tap. Doubles play four times.'),
         el('li', {}, 'Land on a lone enemy checker to hit it onto the bar; it must re-enter before moving anything else.'),
         el('li', {}, 'Two or more of your checkers on a point block it — your opponent can’t land there.'),
         el('li', {}, 'Once every checker of yours is home, bear them off. Win by a single game, a gammon (they bore off none) or a backgammon (…and still have one on the bar or in your home).'),
@@ -474,6 +502,7 @@ function resume() {
     game = saved;
     render();
     maybeBot();
+    maybeAutoPlay();
     return;
   }
   startLocal({ mode: 'bot', level: 'medium' });
