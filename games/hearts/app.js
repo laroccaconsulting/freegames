@@ -7,12 +7,15 @@ import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { icon, medal } from './core/icons.js';
 import { randomSeed } from './core/rng.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { injectSprite } from './js/art.js';
 import { RANK_LABELS, isRed, cardName } from './js/cards.js';
 import * as H from './js/hearts.js';
 
 const NAMES = ['You', 'Wren', 'Otto', 'Iris'];
 const store = makeStore('hearts');
+const ach = makeAchievements('hearts', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, speed: 'normal' });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -123,6 +126,14 @@ function doPass() {
 
 function roundOver() {
   const over = s.phase === 'over';
+  ach.add('hands-100');
+  if (s.moon === 0) ach.unlock('moon');
+  if (s.moon == null && s.taken[0] === 0) ach.unlock('clean-hand');
+  if (over && H.winners(s).includes(0)) {
+    ach.unlock('first-win');
+    ach.add('wins-10');
+    if (s.scores[0] <= 30) ach.unlock('under-30');
+  }
   const rows = [0, 1, 2, 3].map((k) => [NAMES[k], s.moon != null ? (k === s.moon ? 0 : 26) : s.taken[k], s.scores[k]]);
   const low = Math.min(...s.scores);
   const table = el('table', { class: 'score-table' }, el('tr', {}, el('th', {}, ''), el('th', {}, 'This hand'), el('th', {}, 'Total')), ...rows.map(([n, h, t]) => el('tr', { class: t === low ? 'lead' : '' }, el('td', {}, n), el('td', {}, `+${h}`), el('td', {}, t))));
@@ -215,7 +226,7 @@ function render() {
   const passBtn = el('button', { class: 'btn btn-primary', onclick: doPass, disabled: selected.length !== 3 }, `Pass ${s.passDir}`);
   passBtn.hidden = s.phase !== 'pass';
   table.replaceChildren(el('div', { class: 'north' }, seat(2)), el('div', { class: 'middle' }, seat(1, true), pit, seat(3, true)), el('div', { class: 'status-line' }, status), el('div', {}, hand, el('div', { class: 'pass-row' }, passBtn)));
-  $('subtitle').textContent = `Hand ${s.round + 1} · first to ${H.GAME_TO} ends it`;
+  $('subtitle').textContent = `Hand ${s.round + 1} · to ${H.GAME_TO}`;
   $('chips').replaceChildren(el('div', { class: 'chip' }, el('small', {}, 'You'), el('b', {}, s.scores[0])), el('div', { class: 'chip' }, el('small', {}, 'Hand'), el('b', {}, `+${s.taken[0]}`)));
   $('last-btn').disabled = !s.lastTrick;
 }

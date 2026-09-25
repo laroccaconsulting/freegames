@@ -3,10 +3,23 @@
 // Run before every deploy so installed copies pick up the new files.
 import { readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { join, relative } from 'node:path';
-import { ROOT, appDirs, listFiles } from './lib.mjs';
+import { join, relative, basename } from 'node:path';
+import { existsSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import { ROOT, appDirs, listFiles, achievementsModule } from './lib.mjs';
 
 const SKIP = /(^|\/)(sw\.js|README\.md|.*\.test\.js)$/;
+
+// The games list shows every game's achievements, so gather each game's
+// achievements.js into one file there (before hashing the hub's files).
+const catalogue = {};
+for (const dir of await appDirs()) {
+  const slug = basename(dir);
+  if (slug === 'template' || !existsSync(join(dir, 'achievements.js'))) continue;
+  catalogue[slug] = (await import(pathToFileURL(join(dir, 'achievements.js')).href)).default;
+}
+await writeFile(join(ROOT, 'site', 'achievements.js'), achievementsModule(catalogue));
+console.log(`site/achievements.js: ${Object.keys(catalogue).length} games`);
 
 // The hub page (site/) is installable too and gets its own worker.
 for (const dir of [...(await appDirs()), join(ROOT, 'site')]) {

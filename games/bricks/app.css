@@ -212,3 +212,6 @@ body {
 .score {
   gap: 6px;
 }
+.title .title-main::after {
+  content: none;
+}

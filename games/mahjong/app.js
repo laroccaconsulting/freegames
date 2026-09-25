@@ -8,11 +8,14 @@ import { registerServiceWorker } from './core/pwa.js';
 import { dateKey, dailyNumber, dailySeed, dailyStreak, shareText, parseHash, buildHash } from './core/golf.js';
 import { icon, withIcon, medal } from './core/icons.js';
 import { randomSeed } from './core/rng.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { LAYOUTS, geometry, isFree, deal, reshuffle, moves, matches } from './js/mahjong.js';
 import { faceSvg, faceName } from './js/faces.js';
 
 const LAUNCH_DAY = '2026-09-25';
 const store = makeStore('mahjong');
+const ach = makeAchievements('mahjong', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, showFree: true, layout: 'pyramid' });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -168,6 +171,19 @@ function win() {
   const best = store.get('best', {});
   const isBest = clean && (!best[game.layout] || t < best[game.layout]);
   if (isBest) store.set('best', { ...best, [game.layout]: t });
+
+  ach.unlock('first');
+  ach.add('cleared-25');
+  if (game.layout === 'turtle') ach.unlock('turtle');
+  if (game.layout === 'pyramid') ach.unlock('pyramid');
+  if (game.layout === 'turtle' && clean) ach.unlock('clean');
+  if (game.layout === 'turtle' && t < 480) ach.unlock('fast');
+  if (game.daily) {
+    ach.unlock('daily');
+    const streak = dailyStreak(store.get('daily', {}), dateKey());
+    ach.at('streak-7', streak);
+    ach.at('streak-30', streak);
+  }
   const stats = store.get('stats', {});
   stats[game.layout] = (stats[game.layout] || 0) + 1;
   store.set('stats', stats);

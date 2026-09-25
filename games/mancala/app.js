@@ -7,9 +7,12 @@ import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { icon } from './core/icons.js';
 import { mulberry32, randomSeed } from './core/rng.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { STORE, pitsOf, newGame, legalMoves, play, replay, chooseMove, analyse, explain } from './js/engine.js';
 
 const store = makeStore('mancala');
+const ach = makeAchievements('mancala', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, fast: false });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -168,6 +171,15 @@ function showHint() {
 function finished() {
   const w = state.winner;
   const won = game.mode === 'bot' && w === game.human;
+  if (won) {
+    ach.unlock('first-win');
+    if (game.level === 'medium') ach.unlock('beat-medium');
+    if (game.level === 'hard') ach.unlock('beat-hard');
+    ach.add('wins-10');
+    ach.add('wins-50');
+  }
+  if (game.mode === 'local') ach.unlock('friend');
+  if (won && state.pits[STORE[game.human]] >= 30) ach.unlock('big-store');
   if (w === -1 || game.mode === 'local' || won) setTimeout(sfx.win, 300);
   if (game.mode === 'bot') {
     const stats = store.get('stats', {});

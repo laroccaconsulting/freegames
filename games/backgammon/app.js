@@ -6,11 +6,14 @@ import { sounds, setSoundEnabled, audio, noiseBurst, tone } from './core/sound.j
 import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { icon } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { newGame, roll, endTurn, needsRoll, applyStep, legalSteps, turnOver, pipCount, isValidState, count, CHECKERS } from './js/engine.js';
 import { choosePlay, LEVELS } from './js/bot.js';
 import { Board } from './js/board.js';
 
 const store = makeStore('backgammon');
+const ach = makeAchievements('backgammon', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -300,6 +303,16 @@ function undo() {
 function finished() {
   const w = game.state.winner;
   const mine = game.mode === 'local' || w === game.human;
+  if (game.mode === 'bot' && w === game.human) {
+    ach.unlock('first-win');
+    if (game.level === 'medium') ach.unlock('beat-medium');
+    if (game.level === 'hard') ach.unlock('beat-hard');
+    ach.add('wins-10');
+    ach.add('wins-50');
+  }
+  if (game.mode === 'local') ach.unlock('friend');
+  if (mine && game.state.result >= 2) ach.unlock('gammon');
+  if (mine && game.state.result === 3) ach.unlock('backgammon');
   if (mine) sfx.win();
   else sfx.lose();
   if (game.mode === 'bot') {

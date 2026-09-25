@@ -6,10 +6,13 @@ import { sounds, setSoundEnabled, audio, noiseBurst, tone } from './core/sound.j
 import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { icon } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { DARK, LIGHT, newGame, legalMoves, applyMove, replay, sameMove, count, squareName } from './js/engine.js';
 import { chooseMove, analyse, explain } from './js/bot.js';
 
 const store = makeStore('checkers');
+const ach = makeAchievements('checkers', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, discs: 'stones', showMoves: true });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -173,6 +176,16 @@ function undo() {
 function finished() {
   const w = state.winner;
   const won = game.mode === 'bot' && w === game.human;
+  if (won) {
+    ach.unlock('first-win');
+    if (game.level === 'medium') ach.unlock('beat-medium');
+    if (game.level === 'hard') ach.unlock('beat-hard');
+    ach.add('wins-10');
+    ach.add('wins-50');
+  }
+  if (game.mode === 'local') ach.unlock('friend');
+  if (won && (store.get('stats', {})[game.level]?.streak || 0) >= 2) ach.unlock('streak-3');
+  if (won && count(state.cells, game.human) === 12) ach.unlock('flawless');
   if (w === 0 || game.mode === 'local' || won) setTimeout(sfx.win, 300);
   else setTimeout(sfx.lose, 300);
   if (game.mode === 'bot') {

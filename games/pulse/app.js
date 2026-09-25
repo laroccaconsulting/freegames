@@ -9,6 +9,8 @@ import { randomSeed } from './core/rng.js';
 import { dateKey, dailyNumber, dailyStreak, parseHash, buildHash, shareText } from './core/golf.js';
 import { showResults, note } from './core/results.js';
 import { icon } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { TICK, initState, cloneState, step, percent } from './js/engine.js';
 import { LEVELS, DIFFICULTIES, buildLevel, generate } from './js/levels.js';
 import { solve, fair, holdAt } from './js/bot.js';
@@ -22,6 +24,7 @@ const DICE = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke
 const DIFF_COLORS = { 1: '#5dff8f', 2: '#3ae8ff', 3: '#ffd23a', 4: '#ff7a3a', 5: '#ff4fd8' };
 
 const store = makeStore('pulse');
+const ach = makeAchievements('pulse', ACHIEVEMENTS);
 const settings = makeSettings(store, {
   music: true,
   sound: true,
@@ -426,6 +429,18 @@ function onWin() {
     }
     if (game.entry.kind === 'random') addTotals({ generated: 1 });
   }
+  ach.at('jumps-1000', totals().jumps);
+  if (game.practice) ach.unlock('practice');
+  else {
+    ach.unlock('first-level');
+    if (rec.doneIn <= 1) ach.unlock('first-try');
+    if (game.lv.coins && rec.coins.length >= game.lv.coins) ach.unlock('all-coins');
+    if (game.entry.kind === 'daily') ach.unlock('daily');
+    if (game.entry.kind === 'random') ach.add('endless-10');
+    const all = { ...progress(), [game.lv.id]: rec };
+    if (LEVELS.every((def) => all[def.id]?.done)) ach.unlock('all-levels');
+  }
+
   saveRecord(game.lv.id, rec);
 }
 

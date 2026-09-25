@@ -118,6 +118,11 @@ export function init() {
   renderRecent();
   addEventListener('pageshow', (e) => e.persisted && renderRecent());
 
+  // Achievements: the link's count and the #achievements view.
+  import('./trophies.js')
+    .then((m) => m.initTrophies(games.map((g) => ({ slug: g.slug, name: g.name, icon: g.a.querySelector('img')?.getAttribute('src') }))))
+    .catch(() => document.getElementById('trophy-link')?.remove());
+
   saveForOffline(games);
 }
 

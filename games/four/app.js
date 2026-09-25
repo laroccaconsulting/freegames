@@ -6,11 +6,14 @@ import { sounds, setSoundEnabled, audio, noiseBurst, tone } from './core/sound.j
 import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { icon } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { SIZES, newGame, applyMove, replay, isLegal, dropRow, threats } from './js/engine.js';
 import { chooseMove, analyse, explain } from './js/bot.js';
 import { Board } from './js/board.js';
 
 const store = makeStore('four');
+const ach = makeAchievements('four', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, discs: 'stones', threats: false });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -164,6 +167,16 @@ function undo() {
 function finished() {
   const w = state.winner;
   const won = game.mode === 'local' ? w !== 0 : w === game.human;
+  if (game.mode === 'bot' && w === game.human) {
+    ach.unlock('first-win');
+    if (game.level === 'medium') ach.unlock('beat-medium');
+    if (game.level === 'hard') ach.unlock('beat-hard');
+    ach.add('wins-10');
+    ach.add('wins-50');
+  }
+  if (game.mode === 'local') ach.unlock('friend');
+  if (game.mode === 'bot' && w === game.human && (store.get('stats', {})[game.level]?.streak || 0) >= 2) ach.unlock('streak-3');
+  if (game.mode === 'bot' && w === game.human && state.cells.filter((c) => c === game.human).length <= 10) ach.unlock('quick');
   if (w === 0) sfx.draw();
   else if (won) setTimeout(sfx.win, 250);
   else setTimeout(sfx.lose, 250);

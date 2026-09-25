@@ -8,9 +8,12 @@ import { registerServiceWorker } from './core/pwa.js';
 import { icon } from './core/icons.js';
 import { Particles } from './core/fx.js';
 import { randomSeed, mulberry32 } from './core/rng.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { W, H, SHIP_R, newGame, step } from './js/drift.js';
 
 const store = makeStore('drift');
+const ach = makeAchievements('drift', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, effects: true, autofire: true });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -105,11 +108,17 @@ function handle(events) {
     } else if (e.type === 'wave') {
       sfx.wave();
       toast(`Wave ${e.wave}`, { duration: 1200 });
+      ach.unlock('wave-2');
+      ach.at('wave-5', e.wave);
+      ach.at('wave-10', e.wave);
     } else if (e.type === 'extra') {
       sfx.extra();
       toast('Extra ship!', { duration: 1200 });
+      ach.unlock('extra');
     } else if (e.type === 'over') {
       phase = 'over';
+      ach.at('score-10000', s.score);
+      ach.at('score-50000', s.score);
       const best = store.get('best', 0);
       if (s.score > best) store.set('best', s.score);
       store.set('bestWave', Math.max(store.get('bestWave', 1), s.wave));

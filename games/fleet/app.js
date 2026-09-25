@@ -9,10 +9,13 @@ import { dateKey, dailyNumber, dailySeed, dailyStreak, parseHash, buildHash, rat
 import { showResults, note } from './core/results.js';
 import { icon, withIcon } from './core/icons.js';
 import { mulberry32, randomSeed } from './core/rng.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { SIZE, SHIPS, SHIP_NAMES, cellsOf, randomFleet, fire, allSunk, afloat, aim, heat, parFor } from './js/fleet.js';
 
 const LAUNCH_DAY = '2026-09-25';
 const store = makeStore('fleet');
+const ach = makeAchievements('fleet', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -183,6 +186,11 @@ function hint() {
 
 function finish(won) {
   if (game.mode === 'battle') {
+    if (won) {
+      ach.unlock('first-win');
+      ach.add('wins-10');
+      if (game.level === 'hard') ach.unlock('beat-hard');
+    }
     const stats = store.get('stats', {});
     const s = (stats[game.level] ||= { played: 0, won: 0, best: 0 });
     s.played++;
@@ -202,6 +210,16 @@ function finish(won) {
       }).then((v) => v === 'again' && newBattle(game.level));
     }, 900);
     return;
+  }
+
+  ach.unlock('solo');
+  ach.add('seas-25');
+  if (!game.hints && n <= game.par) ach.unlock('par');
+  if (game.daily) {
+    ach.unlock('daily');
+    const streak = dailyStreak(store.get('daily', {}), dateKey());
+    ach.at('streak-7', streak);
+    ach.at('streak-30', streak);
   }
   const n = shotsTaken(game.myShots);
   if (game.daily) {

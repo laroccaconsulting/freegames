@@ -6,9 +6,12 @@ import { sounds, setSoundEnabled, audio, tone } from './core/sound.js';
 import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { icon, medal } from './core/icons.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { newGame, play, choose, over, winner, ends, lineCount } from './js/boxes.js';
 
 const store = makeStore('boxes');
+const ach = makeAchievements('boxes', ACHIEVEMENTS);
 const settings = makeSettings(store, { theme: null, sound: true, opponent: 'normal', size: 4 });
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'auto');
 const pickTheme = (id) => {
@@ -120,6 +123,16 @@ function undo() {
 function finish() {
   const s = game.state;
   const w = winner(s);
+  if (!friend() && w === 1) {
+    ach.unlock('first-win');
+    if (game.opponent === 'normal') ach.unlock('beat-normal');
+    if (game.opponent === 'hard') ach.unlock('beat-hard');
+    ach.add('wins-10');
+    ach.add('wins-50');
+  }
+  if (friend()) ach.unlock('friend');
+  if (!friend() && w === 1 && s.w === 6) ach.unlock('big-board');
+  if (!friend() && w === 1 && s.score[2] === 0) ach.unlock('shutout');
   const good = friend() || w === 1;
   if (w === 1 || friend()) sfx.win();
   else sfx.lose();
