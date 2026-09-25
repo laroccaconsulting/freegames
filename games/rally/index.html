@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Rally — paddle tennis, free, no ads, works offline</title>
+    <meta name="description" content="Paddle tennis for one phone: play the computer at three levels or a friend across the table. Free, no ads, works offline." />
+    <meta name="theme-color" content="#f4f1ea" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Rally" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="core/base.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <button class="title-btn" id="mode-btn" aria-label="Choose opponent">
+          <span class="title-main">Rally</span>
+          <small class="title-sub" id="subtitle"></small>
+        </button>
+        <div class="score" aria-live="polite">
+          <div class="chip"><small id="top-label">CPU</small><b id="top-score">0</b></div>
+          <div class="chip chip-you"><small id="bottom-label">You</small><b id="bottom-score">0</b></div>
+        </div>
+      </header>
+      <main class="stage" id="stage" aria-label="Court. Drag to move your paddle.">
+        <canvas id="canvas"></canvas>
+        <div class="overlay" id="overlay"><b id="overlay-title"></b><small id="overlay-sub"></small></div>
+      </main>
+      <nav class="toolbar" aria-label="Game controls">
+        <button class="tool" id="new-btn"><span>New match</span></button>
+        <button class="tool" id="menu-btn"><span>Menu</span></button>
+      </nav>
+    </div>
+    <noscript><p style="padding: 24px">Rally needs JavaScript to run.</p></noscript>
+  </body>
+</html>
