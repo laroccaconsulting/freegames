@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs><radialGradient id="m" cx="35%" cy="35%" r="70%"><stop offset="0" stop-color="#999" /><stop offset="0.6" stop-color="#151515" /></radialGradient></defs>
+  <rect width="512" height="512" fill="#a9b1ba" />
+  <g>
+    <rect x="32" y="32" width="148" height="148" fill="#efe9dc" /><rect x="182" y="32" width="148" height="148" fill="#efe9dc" /><rect x="332" y="32" width="148" height="148" fill="#d8dde3" />
+    <rect x="32" y="182" width="148" height="148" fill="#efe9dc" /><rect x="182" y="182" width="148" height="148" fill="#efe9dc" /><rect x="332" y="182" width="148" height="148" fill="#d8dde3" />
+    <rect x="32" y="332" width="148" height="148" fill="#d8dde3" /><rect x="182" y="332" width="148" height="148" fill="#efe9dc" /><rect x="332" y="332" width="148" height="148" fill="#d8dde3" />
+  </g>
+  <g font-family="Helvetica, Arial, sans-serif" font-weight="900" font-size="110" text-anchor="middle">
+    <text x="256" y="146" fill="#1f5fbf">1</text><text x="256" y="296" fill="#2e8540">2</text><text x="106" y="296" fill="#1f5fbf">1</text><text x="256" y="446" fill="#c9302c">3</text>
+  </g>
+  <path d="M362 212 l0 96 M362 212 l84 30 l-84 30" stroke="#333" stroke-width="10" fill="#d23c2e" stroke-linejoin="round" />
+  <circle cx="406" cy="406" r="46" fill="url(#m)" />
+  <path d="M406 346v24M406 442v24M346 406h24M442 406h24" stroke="#151515" stroke-width="12" stroke-linecap="round" />
+</svg>

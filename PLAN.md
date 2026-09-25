@@ -96,7 +96,7 @@ Themes are plug-ins (see `games/sort/js/themes.js`).
 | **Pour** (water sort) | ✅ Built — `games/sort/`. First puzzle-golf game: solver par, daily, share links, 4 themes |
 | **Trio** (triple tile match) | ✅ Built — `games/trio/`. X-ray through the stack, every board winnable, par = lowest tray peak |
 | **Blocks** (block puzzle) | ✅ Built — `games/blocks/`. Next hand always visible, daily 90 pieces vs a bot, Zen with no game over |
-| **Minesweeper** | No-guess boards by default, plus "why is this safe?" |
+| **Minesweeper** | ✅ Built — `games/mines/`. Every board solvable by logic from the start square (solver checked against real mines), hints that explain the rule used, daily board, one take-back after a mine |
 | **Word Search** | Custom word lists shared by link, printable |
 | **Gems** (match-3 puzzle mode) | ✅ Built — `games/gems/`. Fixed boards, no refills, clear the board in par swaps |
 | **Dots and Boxes** | Strong AI that teaches the chain rule; pass-and-play |
