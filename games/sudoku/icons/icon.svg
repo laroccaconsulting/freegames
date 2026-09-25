@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#1f5fbf" />
+  <rect x="56" y="56" width="400" height="400" rx="18" fill="#fffdf7" />
+  <g stroke="#2b2822" stroke-width="10"><path d="M189 56v400M322 56v400M56 189h400M56 322h400" /></g>
+  <g stroke="rgba(30,27,22,0.2)" stroke-width="4"><path d="M100 56v400M145 56v400M233 56v400M278 56v400M367 56v400M412 56v400M56 100h400M56 145h400M56 233h400M56 278h400M56 367h400M56 412h400" /></g>
+  <rect x="56" y="56" width="400" height="400" rx="18" fill="none" stroke="#2b2822" stroke-width="14" />
+  <g font-family="Helvetica, Arial, sans-serif" font-weight="800" font-size="40" text-anchor="middle" fill="#1d1b16">
+    <text x="78" y="93">5</text><text x="167" y="93">3</text><text x="256" y="182">7</text><text x="345" y="138">9</text><text x="123" y="271">6</text><text x="389" y="271">1</text><text x="211" y="360">8</text><text x="300" y="449">4</text><text x="434" y="405">2</text>
+  </g>
+  <rect x="233" y="233" width="45" height="45" fill="#ffe08a" />
+  <text x="256" y="271" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="40" text-anchor="middle" fill="#1f5fbf">5</text>
+</svg>
