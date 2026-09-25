@@ -482,6 +482,154 @@ body {
   box-shadow: inset -1px -1px 0 var(--line);
 }
 
+/* ---------- Light Up ---------- */
+
+.lu-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--n), minmax(0, 1fr));
+  aspect-ratio: 1;
+  border: 3px solid var(--wall);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--wall);
+  gap: 1px;
+}
+.lu-cell {
+  position: relative;
+  appearance: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  display: grid;
+  place-items: center;
+  container-type: inline-size;
+}
+.lu-cell.white {
+  background: var(--surface);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.lu-cell.white.lit {
+  background: color-mix(in srgb, var(--star) 28%, var(--surface));
+}
+.lu-cell.black {
+  background: var(--wall);
+  color: #fff;
+}
+.lu-cell.black b {
+  font-size: 50cqi;
+  font-weight: 800;
+}
+.lu-cell.black.met b {
+  opacity: 0.45;
+}
+.lu-cell.black.bad b {
+  color: var(--bad);
+}
+.lu-cell.bulb::after {
+  content: '';
+  width: 56%;
+  height: 56%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #fffbe0, var(--star) 60%, color-mix(in srgb, var(--star) 70%, #000));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--star) 70%, transparent);
+  animation: pop 0.2s ease;
+}
+.lu-cell.bulb.bad::after {
+  background: var(--bad);
+  box-shadow: none;
+}
+.lu-cell.dot::after {
+  content: '';
+  width: 16%;
+  height: 16%;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+.lu-cell:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+/* ---------- Tents ---------- */
+
+.board-wrap.tents {
+  width: min(100cqw, 100cqh - 30px, 600px);
+}
+.sky-frame.tents {
+  grid-template-columns: 2.2em minmax(0, 1fr);
+  grid-template-rows: 2.2em auto;
+}
+.sky-clue.met {
+  opacity: 0.4;
+}
+.tt-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--n), minmax(0, 1fr));
+  aspect-ratio: 1;
+  border: 3px solid var(--wall);
+  border-radius: 8px;
+  overflow: hidden;
+  background: color-mix(in srgb, #7cc26b 16%, var(--surface));
+}
+.tt-cell {
+  position: relative;
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: inset -1px -1px 0 var(--line);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.tt-cell.tree {
+  cursor: default;
+}
+.tt-cell.tree::after {
+  content: '';
+  width: 70%;
+  height: 76%;
+  background:
+    linear-gradient(#7a5230, #7a5230) 50% 100% / 14% 28% no-repeat,
+    radial-gradient(circle at 50% 38%, #3f9b4a 0 58%, transparent 60%);
+  border-radius: 4px;
+}
+.tt-cell.tent::after {
+  content: '';
+  width: 64%;
+  height: 56%;
+  background: linear-gradient(to right, #e3853a 50%, #c96a26 50%);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  animation: pop 0.2s ease;
+}
+.tt-cell.tent.bad::after {
+  background: var(--bad);
+}
+.tt-cell.grass {
+  background: color-mix(in srgb, #7cc26b 40%, var(--surface));
+}
+.tt-cell.grass::after {
+  content: '';
+  width: 14%;
+  height: 14%;
+  border-radius: 50%;
+  background: #3f8f3a;
+  opacity: 0.6;
+}
+.tt-cell:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lu-cell.bulb::after,
+  .tt-cell.tent::after {
+    animation: none;
+  }
+}
+
 /* ---------- Bridges ---------- */
 
 .board-wrap.bridges {

@@ -5,6 +5,8 @@ import { calcMode } from './calc-view.js';
 import { bridgesMode } from './bridges-view.js';
 import { futoshikiMode } from './futoshiki-view.js';
 import { skyscrapersMode } from './skyscrapers-view.js';
+import { lightupMode } from './lightup-view.js';
+import { tentsMode } from './tents-view.js';
 
 export const MODES = {
   stars: starsMode,
@@ -12,4 +14,6 @@ export const MODES = {
   bridges: bridgesMode,
   futoshiki: futoshikiMode,
   skyscrapers: skyscrapersMode,
+  lightup: lightupMode,
+  tents: tentsMode,
 };
