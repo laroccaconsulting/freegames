@@ -102,6 +102,7 @@ Themes are plug-ins (see `games/sort/js/themes.js`).
 | **Dots and Boxes** | Strong AI that teaches the chain rule; pass-and-play |
 | **Corridors** (wall-race board game) | ✅ Built — `games/corridors/`. Computer at three levels, pass-and-play for 2 or 4, optional online rooms by link |
 | **Number Link** | Generated boards with a unique solution, daily |
+| **Pulse** (one-tap rhythm platformer) | ✅ Built — `games/pulse/`. Five hand-made levels, daily and endless generated levels, practice mode; a bot proves every level beatable without frame-perfect timing |
 | ~~2048~~ | Dropped: too many clean clones already, so nothing to stand out on |
 
 ### Wave 3 — Bigger builds
@@ -118,7 +119,7 @@ Themes are plug-ins (see `games/sort/js/themes.js`).
 
 - **Trademarked names or trade dress**: Tetris (very aggressive enforcement,
   including look-alikes), Wordle, Scrabble, Boggle, Yahtzee, Candy Crush, Uno,
-  Bejeweled, Two Dots, Flow Free, Block Blast, 1010!, Zen Match, Blokus,
+  Bejeweled, Two Dots, Flow Free, Block Blast, 1010!, Zen Match, Blokus, Geometry Dash,
   KenKen (use "Calcudoku"), LinkedIn's Queens (the generic name is "Star Battle").
   Build the genre under a generic name.
 - **Anything needing a server**: online multiplayer, global leaderboards, cloud sync.
@@ -284,6 +285,42 @@ node scripts/build-sw.mjs                 # before every deploy
 ### Ideas for later
 
 - Bot seats in online rooms; move timers via DO alarms; a lobby of open rooms; replays
+
+## Pulse — feature list (v1)
+
+- The one-tap rhythm platformer under a generic name. Tap to jump, hold to keep jumping;
+  cube, ship (hold to fly), ball (tap to flip) and wave (hold to zig, release to zag)
+- Spikes, blocks, slabs, jump pads and orbs (yellow, pink, blue gravity), mode, gravity
+  and speed portals, three coins per hand-made level
+- Pure, deterministic physics at a fixed 240 Hz tick (`js/engine.js`), shared by the
+  game, the bot and the tests
+- A depth-first bot (`js/bot.js`) proves every level beatable, and *fair*: it finds a
+  run where every press and release still works when made a little early or late
+  (copies of the player with the mistimed input must survive too), so no jump needs
+  frame-perfect timing. Hand-made levels give every input a 50 ms window (tested,
+  with every coin); generated levels at least 33 ms
+- Input is timestamped and applied at the tick it happened, not at the next frame,
+  so timing is the same at 30, 60 or 120 fps
+- Levels are built from chunks (`js/chunks.js`): five hand-made levels (Easy → Insane),
+  a daily level (same for everyone, share line + challenge link with your attempts),
+  and endless generated levels at four difficulties, shareable by link. Generated
+  levels are re-rolled until the bot proves them fair (in a Web Worker; which
+  re-roll worked is remembered)
+- Practice mode: checkpoints drop by themselves (only once you have survived past
+  them) or by hand; calm practice music; optional hitboxes
+- "Watch a run": the bot plays the level for you, so you can see how it is done
+- Music synthesized per level from a seed (tempo, key, chords, patterns) with Web
+  Audio; the background, ground and orbs pulse on the beat
+- Attempt counter in the level, progress bar with best, death explosion and restart,
+  level-complete fireworks, colour changes between sections, parallax background
+- Icon kit: six faces and twelve colours, drawn in code (our own designs, not the
+  original's trade dress)
+
+### Ideas for later
+
+- A level editor with levels shared by link (the builder format is already compact)
+- Slopes, saws, dash orbs, mini/mirror portals, a UFO mode
+- Beat-synced level layouts (obstacles placed on the music's beats)
 
 ---
 
