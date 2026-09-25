@@ -1,7 +1,7 @@
 // Offline support for the hub page only. Each game has its own service
 // worker for its own folder, so requests outside FILES are left alone.
 // VERSION and FILES are rewritten by scripts/build-sw.mjs.
-const VERSION = '7e4ac7b4778f';
+const VERSION = '1a9501db69f9';
 const FILES = [
   './',
   './arcade.js',
@@ -22,7 +22,8 @@ const FILES = [
   './pulse.svg',
   './slide.svg',
   './solitaire.svg',
-  './trio.svg'
+  './trio.svg',
+  './words.svg'
 ];
 
 const PREFIX = `freegames-hub:${self.registration.scope}:`;
