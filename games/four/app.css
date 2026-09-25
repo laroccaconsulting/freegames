@@ -1,0 +1,423 @@
+/* Four in a Row: a wooden board with stone discs (or bright ones). */
+
+:root {
+  --plate: #b98a5a;
+  --plate-edge: #8e6238;
+  --plate-shine: rgba(255, 240, 210, 0.35);
+  --hole: #efe2c8;
+  --foot: #7a5230;
+  --p1: #2b2a2e;
+  --p1-edge: #0f0f12;
+  --p1-shine: #6b6a70;
+  --p2: #f4efe4;
+  --p2-edge: #c9bfa9;
+  --p2-shine: #ffffff;
+  --win: #ffcf3d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --plate: #5a4029;
+    --plate-edge: #3a2817;
+    --plate-shine: rgba(255, 220, 170, 0.18);
+    --hole: #1d1a17;
+    --foot: #2d1f13;
+  }
+}
+:root[data-theme='dark'] {
+  --plate: #5a4029;
+  --plate-edge: #3a2817;
+  --plate-shine: rgba(255, 220, 170, 0.18);
+  --hole: #1d1a17;
+  --foot: #2d1f13;
+}
+body[data-discs='bright'] {
+  --p1: #ec5a3c;
+  --p1-edge: #a93520;
+  --p1-shine: #ff9c84;
+  --p2: #f5c02e;
+  --p2-edge: #b98700;
+  --p2-shine: #ffe7a1;
+  --win: #ffffff;
+}
+/* Hallows: a plum board in candlelight, pumpkin and moonstone discs. */
+:root[data-theme='hallows'] {
+  --plate: #3a2a4f;
+  --plate-edge: #1c1330;
+  --plate-shine: rgba(232, 176, 74, 0.2);
+  --hole: #140e24;
+  --foot: #1c1330;
+  --win: #ffe29a;
+}
+body[data-discs='hallows'] {
+  --p1: #f08a24;
+  --p1-edge: #a4520a;
+  --p1-shine: #ffc27a;
+  --p2: #cdd6ef;
+  --p2-edge: #8791b3;
+  --p2-shine: #ffffff;
+}
+:root[data-theme='hallows'] .hw-candle {
+  display: none;
+}
+:root[data-theme='hallows'] .title h1 {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+}
+
+body {
+  min-height: 100dvh;
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+}
+#announce {
+  margin: 0;
+  top: 0;
+}
+.app {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+  min-height: 480px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+/* ---------- Top bar ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px 4px;
+  flex-wrap: wrap;
+}
+.title h1 {
+  font-size: 1.3rem;
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.title small {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+.players {
+  display: flex;
+  gap: 6px;
+}
+.player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 8px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: box-shadow 0.2s ease;
+}
+.player.turn {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.player-disc,
+.result-disc {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.player-disc.p1,
+.result-disc.p1 {
+  background: radial-gradient(circle at 36% 30%, var(--p1-shine), var(--p1) 55%, var(--p1-edge));
+}
+.player-disc.p2,
+.result-disc.p2 {
+  background: radial-gradient(circle at 36% 30%, var(--p2-shine), var(--p2) 55%, var(--p2-edge));
+}
+.result-disc.draw {
+  background: linear-gradient(90deg, var(--p1) 50%, var(--p2) 50%);
+}
+.player-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.player-text b {
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+.player-text small {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.status {
+  margin: 4px 16px 0;
+  min-height: 2.8em;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-wrap: balance;
+}
+
+/* ---------- Board ---------- */
+
+.stage {
+  flex: 1 1 0;
+  display: grid;
+  place-items: center;
+  padding: 4px 12px;
+  min-height: 260px;
+  container-type: size;
+}
+.board-wrap {
+  width: min(100cqw, 720px);
+  height: 100cqh;
+}
+.board {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.board.can-play {
+  cursor: pointer;
+}
+.board-back {
+  fill: var(--hole);
+}
+.plate {
+  fill: var(--plate);
+  filter: drop-shadow(0 14px 18px rgba(30, 15, 0, 0.3));
+}
+.rim {
+  fill: none;
+  stroke: var(--plate-edge);
+  stroke-width: 5;
+}
+.foot {
+  fill: var(--foot);
+}
+.col-target {
+  fill: transparent;
+}
+
+.disc {
+  stroke-width: 3;
+}
+.disc.p1 {
+  fill: var(--p1);
+  stroke: var(--p1-edge);
+}
+.disc.p2 {
+  fill: var(--p2);
+  stroke: var(--p2-edge);
+}
+.disc-ring {
+  fill: none;
+  stroke-width: 3;
+  opacity: 0.55;
+}
+.disc-ring.p1 {
+  stroke: var(--p1-shine);
+}
+.disc-ring.p2 {
+  stroke: var(--p2-edge);
+}
+.disc-dot {
+  fill: var(--win);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.disc-g.last .disc-dot {
+  opacity: 0.9;
+}
+.disc.ghost {
+  opacity: 0.6;
+  pointer-events: none;
+  transition: cx 0.12s ease;
+}
+.disc-g.win .disc {
+  stroke: var(--win);
+  stroke-width: 7;
+}
+.disc-g.win .disc-in {
+  animation: pulse 0.9s ease-in-out 0.5s infinite;
+}
+@keyframes pulse {
+  50% {
+    transform: scale(1.08);
+  }
+}
+.win-line line {
+  stroke: var(--win);
+  stroke-width: 12;
+  stroke-linecap: round;
+  opacity: 0.85;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw-line 0.6s ease-out 0.35s forwards;
+  filter: drop-shadow(0 0 6px var(--win));
+}
+@keyframes draw-line {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.threat {
+  fill: none;
+  stroke-width: 6;
+  stroke-dasharray: 8 7;
+  pointer-events: none;
+}
+.threat.p1 {
+  stroke: var(--p1);
+}
+.threat.p2 {
+  stroke: var(--p2-edge);
+}
+.hint-col {
+  fill: var(--win);
+  opacity: 0.35;
+  animation: breathe 1.4s ease-in-out infinite;
+}
+.hint-arrow {
+  fill: var(--accent);
+}
+.focus-col {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 5;
+  stroke-dasharray: 12 8;
+  pointer-events: none;
+}
+@keyframes breathe {
+  50% {
+    opacity: 0.12;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disc-g.win .disc-in,
+  .hint-col {
+    animation: none;
+  }
+  .win-line line {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ---------- Toolbar ---------- */
+
+.toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 8px 12px;
+}
+.tool {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 54px;
+  min-height: 52px;
+  padding: 6px 6px;
+  border-radius: 14px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tool svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tool:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+.tool:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+.tool:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ---------- Dialogs ---------- */
+
+.setup .field[hidden] {
+  display: none;
+}
+.small {
+  font-size: 0.85rem;
+}
+.rules ul {
+  padding-left: 1.2em;
+}
+.rules li {
+  margin: 6px 0;
+}
+.result {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.result .result-disc {
+  width: 56px;
+  height: 56px;
+}
+
+/* Landscape phones: players and controls beside the board. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .app {
+    max-width: none;
+    display: grid;
+    grid-template-columns: minmax(200px, 1fr) auto;
+    grid-template-rows: min-content 1fr min-content;
+    column-gap: 12px;
+    min-height: 0;
+  }
+  .topbar {
+    grid-column: 1;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .players {
+    flex-direction: column;
+  }
+  .status {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .toolbar {
+    grid-column: 1;
+    grid-row: 3;
+    flex-wrap: wrap;
+  }
+  .stage {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    container-type: normal;
+    min-height: 0;
+  }
+  .board-wrap {
+    width: calc((100dvh - var(--safe-top) - var(--safe-bottom) - 16px) * 1.1);
+    height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 16px);
+  }
+}
