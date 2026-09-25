@@ -1,0 +1,216 @@
+/* Flap: a bright sky, green pillars and a round little bird. */
+
+:root {
+  --sky-top: #7fc8f8;
+  --sky-bottom: #d8f0ff;
+  --hill: #9bd58a;
+  --hill-far: #bfe6b0;
+  --pillar: #4caf50;
+  --pillar-edge: #2e7d32;
+  --ground: #e2c07a;
+  --ground-top: #7bc86c;
+  --bird: #ffcc33;
+  --wing: #f5a623;
+  --cloud: rgba(255, 255, 255, 0.85);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --sky-top: #0e1a3a;
+    --sky-bottom: #2b3f73;
+    --hill: #1f4a3a;
+    --hill-far: #2a5a4a;
+    --pillar: #3a8f5a;
+    --pillar-edge: #1f5e38;
+    --ground: #5a4a2e;
+    --ground-top: #2f6b3a;
+    --cloud: rgba(255, 255, 255, 0.12);
+  }
+}
+:root[data-theme='dark'] {
+  --sky-top: #0e1a3a;
+  --sky-bottom: #2b3f73;
+  --hill: #1f4a3a;
+  --hill-far: #2a5a4a;
+  --pillar: #3a8f5a;
+  --pillar-edge: #1f5e38;
+  --ground: #5a4a2e;
+  --ground-top: #2f6b3a;
+  --cloud: rgba(255, 255, 255, 0.12);
+}
+:root[data-theme='hallows'] {
+  --sky-top: #140e24;
+  --sky-bottom: #3a2250;
+  --hill: #22163a;
+  --hill-far: #2d1d48;
+  --pillar: #7a5634;
+  --pillar-edge: #3e2a18;
+  --ground: #2a1f18;
+  --ground-top: #3d2a1c;
+  --bird: #2a2233;
+  --wing: #3d3248;
+  --cloud: rgba(255, 226, 154, 0.08);
+}
+:root[data-theme='hallows'] .hw-candle {
+  display: none;
+}
+body {
+  min-height: 100dvh;
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+}
+#announce {
+  margin: 0;
+  top: 0;
+}
+.app {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+  min-height: 520px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px 6px;
+}
+.title-btn {
+  appearance: none;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 12px;
+  color: var(--text);
+  min-width: 0;
+}
+.title-btn:hover {
+  background: var(--accent-soft);
+}
+.title-main {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.title-main::after {
+  content: ' ▾';
+  font-size: 0.7em;
+  color: var(--text-muted);
+}
+.title-sub {
+  display: block;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+.score {
+  display: flex;
+  gap: 8px;
+}
+.chip {
+  min-width: 64px;
+  text-align: center;
+  padding: 6px 12px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.chip small {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.chip b {
+  display: block;
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stage {
+  flex: 1 1 0;
+  min-height: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 8px 12px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#canvas {
+  border-radius: 14px;
+  box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.45);
+}
+.overlay {
+  position: absolute;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 14px 20px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  pointer-events: none;
+}
+.overlay[hidden] {
+  display: none;
+}
+.overlay b {
+  font-size: 1.3rem;
+}
+.overlay small {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.small {
+  font-size: 0.85rem;
+}
+.toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px 10px;
+}
+.tool {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 64px;
+  min-height: 50px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tool:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+.tool:disabled {
+  opacity: 0.38;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+}
+.score {
+  gap: 6px;
+}
+.tool.on {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
