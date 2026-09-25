@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Drift — blast the rocks, free, no ads</title>
+    <meta name="description" content="Steer a little ship through a field of drifting rocks and shoot them to pieces. Hold a finger to fly, it fires by itself. Free, no ads, works offline." />
+    <meta name="theme-color" content="#f4f1ea" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Drift" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="core/base.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="title"><span class="title-main">Drift</span><small class="title-sub" id="best"></small></div>
+        <div class="score">
+          <div class="chip"><small>Score</small><b id="score">0</b></div>
+          <div class="chip"><small>Wave</small><b id="wave">1</b></div>
+          <div class="chip lives"><small>Ships</small><b id="lives"></b></div>
+        </div>
+      </header>
+      <main class="stage" id="stage" aria-label="Space. Hold a finger where you want to fly; the ship fires by itself.">
+        <canvas id="canvas"></canvas>
+        <div class="overlay" id="overlay"><b id="overlay-title"></b><small id="overlay-sub"></small></div>
+      </main>
+      <nav class="toolbar" aria-label="Game controls">
+        <button class="tool" id="menu-btn"><span>Menu</span></button>
+      </nav>
+    </div>
+    <noscript><p style="padding: 24px">Drift needs JavaScript to run.</p></noscript>
+  </body>
+</html>
