@@ -1,0 +1,412 @@
+/* Peaks: cards on green felt, laid out in peaks, a pyramid or columns. */
+
+:root {
+  --felt: #1d6b45;
+  --felt-shade: 0;
+  --card-red: #c62d3a;
+  --card-black: #1c1c22;
+  --card-face: #fffdf8;
+  --back: #2a4f9a;
+  --hint: #ffd54a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --felt-shade: 0.35;
+  }
+}
+:root[data-theme='dark'] {
+  --felt-shade: 0.35;
+}
+body {
+  --chrome-bg: var(--felt);
+  background: var(--felt);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.app {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  color: #fff;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(255, 255, 255, 0.14), transparent 65%),
+    radial-gradient(ellipse at 50% 120%, rgba(0, 0, 0, 0.35), transparent 60%),
+    linear-gradient(rgba(0, 0, 0, var(--felt-shade)), rgba(0, 0, 0, var(--felt-shade))),
+    var(--felt);
+}
+
+/* ---------- Top bar ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: calc(var(--safe-top) + 6px) calc(var(--safe-right) + 10px) 4px calc(var(--safe-left) + 10px);
+}
+.title-btn {
+  appearance: none;
+  border: 0;
+  background: rgba(0, 0, 0, 0.18);
+  color: #fff;
+  border-radius: 999px;
+  padding: 6px 14px;
+  text-align: left;
+  cursor: pointer;
+  min-height: 40px;
+  min-width: 0;
+  line-height: 1.1;
+}
+.title-main {
+  display: block;
+  font-weight: 800;
+  font-size: 1rem;
+}
+.title-main::after {
+  content: ' ▾';
+  opacity: 0.7;
+  font-size: 0.8em;
+}
+.title-sub {
+  display: block;
+  font-size: 0.72rem;
+  opacity: 0.8;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.score {
+  display: flex;
+  gap: 4px;
+}
+.chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 52px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  line-height: 1.15;
+  background: rgba(0, 0, 0, 0.18);
+}
+.chip small {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.75;
+  font-weight: 700;
+}
+.chip b {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+.chip.hot b {
+  color: var(--hint);
+}
+
+/* ---------- Table ---------- */
+
+.table {
+  position: relative;
+  min-height: 0;
+  touch-action: manipulation;
+  --cw: 50px;
+  --ch: 70px;
+  --radius: calc(var(--cw) * 0.085);
+}
+.slot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--cw);
+  height: var(--ch);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.14);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.16);
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 800;
+  font-size: calc(var(--cw) * 0.32);
+}
+.slot.stock {
+  cursor: pointer;
+}
+.count {
+  position: absolute;
+  bottom: -1.4em;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 700;
+  opacity: 0.75;
+}
+.card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--cw);
+  height: var(--ch);
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.25, 1), opacity 0.28s ease;
+  perspective: 800px;
+}
+.table.no-anim .card,
+.table.no-anim .card-inner {
+  transition: none !important;
+}
+.card.free {
+  cursor: pointer;
+}
+.card.gone {
+  opacity: 0;
+  pointer-events: none;
+}
+.card-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.34s ease;
+  border-radius: var(--radius);
+}
+.card:not(.up) .card-inner {
+  transform: rotateY(180deg);
+}
+.card-face,
+.card-back {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+}
+.card-face {
+  background: linear-gradient(160deg, #ffffff, var(--card-face) 60%, #f3efe4);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.28),
+    0 1px 3px rgba(0, 0, 0, 0.35);
+  color: var(--card-black);
+}
+.card.red .card-face {
+  color: var(--card-red);
+}
+.card-back {
+  transform: rotateY(180deg);
+  background-color: var(--back);
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.22) 0 14%, transparent 15%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.13) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.13) 0 1px, transparent 1px 6px),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.18), rgba(0, 0, 0, 0.25));
+  box-shadow:
+    inset 0 0 0 calc(var(--cw) * 0.045) #fbf8f0,
+    inset 0 0 0 calc(var(--cw) * 0.06) rgba(0, 0, 0, 0.15),
+    0 0 0 0.5px rgba(0, 0, 0, 0.35),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.card.dim .card-face {
+  filter: brightness(0.78);
+}
+.card.sel .card-face,
+.card.hinted .card-face {
+  box-shadow:
+    0 0 0 3px var(--hint),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.card.sel {
+  z-index: 60 !important;
+}
+.card svg {
+  fill: currentColor;
+  display: block;
+}
+.idx {
+  position: absolute;
+  top: 3%;
+  left: 7%;
+  right: 6%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  line-height: 0.95;
+}
+.idx .r {
+  font-weight: 800;
+  font-size: calc(var(--cw) * 0.36);
+  letter-spacing: -0.04em;
+}
+.idx .r.ten {
+  letter-spacing: -0.12em;
+}
+.idx .s {
+  width: calc(var(--cw) * 0.29);
+  height: calc(var(--cw) * 0.29);
+  margin-top: calc(var(--cw) * 0.03);
+}
+.card-face > .center {
+  position: absolute;
+  left: 50%;
+  bottom: 9%;
+  width: calc(var(--cw) * 0.56);
+  height: calc(var(--cw) * 0.56);
+  transform: translateX(-50%);
+}
+.card.court .card-face > .center {
+  width: calc(var(--cw) * 0.62);
+  height: calc(var(--cw) * 0.62);
+}
+.card.nope {
+  animation: nope 0.3s ease;
+}
+@keyframes nope {
+  25% {
+    translate: -4px 0;
+  }
+  75% {
+    translate: 4px 0;
+  }
+}
+.floater {
+  position: absolute;
+  pointer-events: none;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--hint);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%);
+  animation: rise 0.9s ease-out forwards;
+  z-index: 100;
+}
+@keyframes rise {
+  to {
+    transform: translate(-50%, -180%);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card-inner {
+    transition: none;
+  }
+  .card.nope,
+  .floater {
+    animation: none;
+  }
+  .floater {
+    display: none;
+  }
+}
+
+/* ---------- Toolbar ---------- */
+
+.toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 8px calc(var(--safe-bottom) + 8px);
+}
+.tool {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 64px;
+  min-height: 50px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tool:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.15);
+}
+.tool:disabled {
+  opacity: 0.38;
+}
+
+/* ---------- Menus ---------- */
+
+.menu-list {
+  display: grid;
+  gap: 10px;
+}
+.menu-card {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.menu-card .menu-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.menu-card b {
+  display: block;
+}
+.menu-card small {
+  color: var(--text-muted);
+}
+.menu-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.menu-row .btn {
+  flex: 1;
+  white-space: nowrap;
+}
+.mode-block {
+  display: grid;
+  gap: 6px;
+}
+.mode-block .btn {
+  justify-self: start;
+}
+
+/* ---------- Hallows ---------- */
+
+:root[data-theme='hallows'] {
+  --card-face: #f6ead0;
+  --card-red: #b3262f;
+  --card-black: #1d1528;
+  --back: #241640;
+}
+:root[data-theme='hallows'] body {
+  --chrome-bg: #120c22;
+}
+:root[data-theme='hallows'] .app {
+  background: radial-gradient(ellipse at 50% 40%, rgba(255, 214, 140, 0.07), transparent 65%);
+}
+:root[data-theme='hallows'] .card-face {
+  background: linear-gradient(160deg, #fffaf0, var(--card-face) 55%, #e9d6ae);
+}
+:root[data-theme='hallows'] .hw-candle {
+  display: none;
+}
+:root[data-theme='hallows'] .hw-moon {
+  top: auto;
+  bottom: 30vh;
+  right: 10vw;
+}
