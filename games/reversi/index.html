@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Reversi — free, no ads, works offline</title>
+    <meta name="description" content="Outflank and flip your opponent’s discs. Play a strong computer with hints that explain themselves, or pass and play. Free forever, no ads, no tracking." />
+    <meta name="theme-color" content="#f4f1ea" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Reversi" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta property="og:title" content="Reversi — no ads" />
+    <meta property="og:description" content="Corners, edges and mobility: a classic strategy game with a computer that teaches." />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="core/base.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="title">
+          <h1>Reversi</h1>
+          <small id="subtitle"></small>
+        </div>
+        <div class="players" id="players" aria-label="Players"></div>
+      </header>
+
+      <p class="status" id="status" aria-live="off"></p>
+
+      <main class="stage">
+        <div class="board-wrap" id="board" aria-label="Board"></div>
+      </main>
+
+      <nav class="toolbar" aria-label="Game controls">
+        <button class="tool" id="new-btn">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M12 8v8M8 12h8" /></svg>
+          <span>New</span>
+        </button>
+        <button class="tool" id="undo-btn">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 14L4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
+          <span>Undo</span>
+        </button>
+        <button class="tool" id="hint-btn"><span>Hint</span></button>
+        <button class="tool" id="stats-btn"><span>Stats</span></button>
+        <button class="tool" id="rules-btn"><span>Rules</span></button>
+        <button class="tool" id="settings-btn"><span>Settings</span></button>
+      </nav>
+    </div>
+    <p class="visually-hidden" id="announce" aria-live="polite"></p>
+    <noscript><p style="padding: 24px">Reversi needs JavaScript to run.</p></noscript>
+  </body>
+</html>
