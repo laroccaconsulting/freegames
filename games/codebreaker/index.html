@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Code Breaker — crack the colour code, free, no ads</title>
+    <meta name="description" content="Crack the hidden colour code in as few guesses as par. A new daily code, hints that narrow it down, shapes for colour-blind play. Free, no ads, works offline." />
+    <meta name="theme-color" content="#f4f1ea" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Code Breaker" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="core/base.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <button class="title-btn" id="mode-btn" aria-label="Choose code">
+          <span class="title-main" id="title">Code Breaker</span>
+          <small class="title-sub" id="subtitle"></small>
+        </button>
+        <div class="score">
+          <div class="chip"><small>Guesses</small><b id="moves">0</b></div>
+          <div class="chip"><small>Par</small><b id="par">–</b></div>
+        </div>
+      </header>
+      <div class="secret" id="secret" aria-label="Secret code"></div>
+      <main class="stage" id="stage" aria-label="Guesses"></main>
+      <nav class="toolbar" aria-label="Game controls">
+        <button class="tool" id="hint-btn"><span>Hint</span></button>
+        <button class="tool" id="new-btn"><span>New</span></button>
+        <button class="tool" id="menu-btn"><span>Menu</span></button>
+      </nav>
+    </div>
+    <p class="visually-hidden" id="announce" aria-live="polite"></p>
+    <noscript><p style="padding: 24px">Code Breaker needs JavaScript to run.</p></noscript>
+  </body>
+</html>

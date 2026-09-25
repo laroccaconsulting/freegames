@@ -142,7 +142,7 @@ Collection (MIT) is a good reference for generators and rules.
 
 - **Reversi** (not "Othello") ✅ Built — `games/reversi/`: three levels (Hard searches ~1 s, solves the endgame), hints that explain corners and mobility, pass and play
 - Checkers, Mancala, Nine Men's Morris, 9×9 Go
-- **Code Breaker** (not "Mastermind") and **Fleet** (not "Battleship"), both with a daily
+- **Code Breaker** (not "Mastermind") ✅ Built — `games/codebreaker/`: classic 4×6 and hard 5×8, par from a minimax solver, daily, shapes on every colour. **Fleet** (not "Battleship"), both with a daily
 - Dice: **Yacht** (the public-domain ancestor) and **Ten Thousand**
 - Quick arcade: Snake, a Breakout-style game, two-player Pong on one phone, SameGame, Flood
 
