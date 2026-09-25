@@ -4,6 +4,21 @@
 // hosted on its own domain, shows nothing.
 
 const KEY = 'freegames:hub';
+const RECENT = 'freegames:recent';
+
+// Remembers when each game was last opened, for the games list's
+// "Jump back in" row. Keyed by the game's folder name.
+function markPlayed() {
+  const slug = location.pathname.replace(/index\.html$/, '').split('/').filter(Boolean).pop();
+  if (!slug) return;
+  try {
+    const recent = JSON.parse(localStorage.getItem(RECENT)) || {};
+    recent[slug] = Date.now();
+    localStorage.setItem(RECENT, JSON.stringify(recent));
+  } catch {
+    /* private mode: nothing to remember */
+  }
+}
 
 function hubUrl() {
   const parent = new URL('../', location.href).href;
@@ -16,6 +31,7 @@ function hubUrl() {
 }
 
 export function addHubLink() {
+  markPlayed();
   const href = hubUrl();
   const bar = document.querySelector('.topbar');
   if (!href || !bar || bar.querySelector('.hub-link')) return;
