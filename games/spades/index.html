@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Spades — the partnership card game, free, no ads</title>
+    <meta name="description" content="Play Spades with a computer partner against two computer players. Bid your tricks, go nil, and mind the bags. Free, no ads, works offline." />
+    <meta name="theme-color" content="#1f4f7a" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Spades" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="core/base.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <button class="title-btn" id="mode-btn" aria-label="Menu">
+          <span class="title-main">Spades</span>
+          <small class="title-sub" id="subtitle"></small>
+        </button>
+        <div class="score" id="chips"></div>
+      </header>
+      <main class="table" id="table" aria-label="Card table"></main>
+      <nav class="toolbar" aria-label="Game controls">
+        <button class="tool" id="scores-btn"><span>Scores</span></button>
+        <button class="tool" id="last-btn"><span>Last trick</span></button>
+        <button class="tool" id="new-btn"><span>New game</span></button>
+        <button class="tool" id="menu-btn">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          <span>Menu</span>
+        </button>
+      </nav>
+    </div>
+    <p class="visually-hidden" id="announce" aria-live="polite"></p>
+    <noscript><p style="padding: 24px">Spades needs JavaScript to run.</p></noscript>
+  </body>
+</html>
