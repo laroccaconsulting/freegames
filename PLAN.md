@@ -266,7 +266,7 @@ node scripts/build-sw.mjs                 # before every deploy
 
 - "Winnable deals only" for Klondike (needs a solver running in a Web Worker)
 - Daily deal with a streak
-- More variants: Pyramid, TriPeaks, Golf, Yukon, Forty Thieves
+- More variants: Pyramid ✅, TriPeaks ✅ and Golf ✅ (built as the separate **Peaks** app, `games/peaks/`: tap-to-play layouts, solver-checked winnable deals, Golf par from a search), Yukon, Forty Thieves
 - Manifest screenshots for a richer Android install sheet
 
 ## Pour — feature list (v1)
