@@ -110,6 +110,15 @@
     </main>
     <script>
       if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+        // The page is served from the offline cache, so when a newer version
+        // takes over (e.g. a new game was added), reload once to show it.
+        const hadController = !!navigator.serviceWorker.controller;
+        let reloaded = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!hadController || reloaded) return;
+          reloaded = true;
+          location.reload();
+        });
         addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
       }
     </script>
