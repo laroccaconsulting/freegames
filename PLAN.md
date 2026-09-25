@@ -118,8 +118,8 @@ a seed (daily + share line, like the puzzle-golf games).
 | **Words** app | ✅ Built — `games/words/`: Codeword and Word Wheel share one word list (ENABLE + a public-domain common-words list, built by `scripts/build-words.mjs`, offensive words filtered) |
 | **Codeword** (cipher crossword) | ✅ Built (in Words). Criss-cross grid of common words; the solver adds given letters until only one solution fits the full word list | A real crossword grid where every letter is a number. No clues at all. Solver proves a unique solution; a few letters given to start |
 | **Word Wheel** | ✅ Built (in Words): nine letters, one in the middle; targets from common words, rarer words count as bonus. Was: seven letters, make words; one word uses all seven. Not "Spelling Bee" |
-| **Word Grid** | Find words in a 4×4 letter grid against the clock (or not). Not "Boggle" |
-| **Word Ladder** | Change one letter at a time; a solver sets par |
+| **Word Grid** | ✅ Built (in Words): trace words through a 4×4 grid (drag or tap), grids with 25+ common words, points by length. Not "Boggle" |
+| **Word Ladder** | ✅ Built (in Words): par is the shortest ladder through the whole word list (BFS); hints give the next word on a shortest path |
 | **Fill-in** (criss-cross) | Given the word list, fit every word into the grid |
 | **Mini crossword** (5×5) | Needs clues, so later: a one-time clue bank of ~5–10k common words that we own, drafted from Open English WordNet definitions (CC BY 4.0) and edited by hand. The generator fills a new grid each day from the fixed bank |
 

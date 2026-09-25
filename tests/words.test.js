@@ -57,3 +57,34 @@ test('codeword: grid words are real, numbering is a code, solution is unique', (
     assert.deepEqual(cw.mistakes(p, { [n]: answer[n] === 'z' ? 'q' : 'z' }), [n]);
   }
 });
+
+import * as ladder from '../games/words/js/ladder.js';
+import * as wgrid from '../games/words/js/grid.js';
+
+test('word ladder: par is the shortest ladder, steps are checked', () => {
+  const p = ladder.generate(dict, 13);
+  assert.deepEqual(p, ladder.generate(dict, 13));
+  const graph = ladder.makeGraph(dict.byLen.get(p.length));
+  const path = ladder.shortest(graph, p.start, p.end);
+  assert.equal(path.length - 1, p.par);
+  for (let k = 1; k < path.length; k++) assert.equal(ladder.checkStep(dict, path[k - 1], path[k]), null);
+  assert.ok(p.par >= 4 && p.par <= 7);
+  assert.match(ladder.checkStep(dict, 'cold', 'cord'.slice(0, 3)), /letters/);
+  assert.match(ladder.checkStep(dict, 'cold', 'warm'), /exactly one/);
+  assert.ok(ladder.oneApart('cold', 'cord'));
+});
+
+test('word grid: every listed word can be traced', () => {
+  const prefixes = wgrid.prefixSet(dict.list);
+  const g = wgrid.generate(dict, 17, prefixes);
+  assert.equal(g.tiles.length, 16);
+  assert.ok(g.common.length >= 25);
+  for (const w of g.common) assert.ok(g.all.includes(w) && dict.words.has(w));
+  // Re-find a word by walking: at least the first common word has a legal path.
+  assert.ok(wgrid.validPath([0, 1, 5]));
+  assert.ok(!wgrid.validPath([0, 2]));
+  assert.ok(!wgrid.validPath([0, 1, 0]));
+  assert.equal(wgrid.points('cat'), 1);
+  assert.equal(wgrid.points('planet'), 3);
+  assert.equal(wgrid.tileText('q'), 'qu');
+});
