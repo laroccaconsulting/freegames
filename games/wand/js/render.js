@@ -18,8 +18,20 @@ export class View {
     this.h = 0;
     this.dpr = 1;
     this.hallows = true;
+    this.handed = 'right';
     this.reduced = false;
     this.resize();
+  }
+
+  // Hallows lights the chamber with candle gold; Classic with cold blue
+  // witch-light. Either way it is night: the wand has to be the brightest
+  // thing on screen.
+  setHallows(on) {
+    this.hallows = !!on;
+  }
+
+  get palette() {
+    return this.hallows ? HALLOWS : CLASSIC;
   }
 
   resize() {
@@ -64,7 +76,7 @@ export function centreOf(view, o) {
 
 // Which thing the player drew over: the nearest one to the middle of the
 // stroke, so you aim by drawing across what you want to hit.
-export function targetAt(world, view, stroke, { slack = 2.1 } = {}) {
+export function rankTargets(world, view, stroke, { slack = 2.1 } = {}) {
   const points = Array.isArray(stroke) ? stroke : [stroke];
   let cx = 0;
   let cy = 0;
@@ -72,24 +84,30 @@ export function targetAt(world, view, stroke, { slack = 2.1 } = {}) {
     cx += p.x / points.length;
     cy += p.y / points.length;
   }
-  let best = null;
-  let bestScore = Infinity;
+  const hits = [];
   for (const o of world.objects) {
     const p = centreOf(view, o);
     const r = Math.max(18, p.size * 0.5) * slack;
+    // A long thin thing (the rope) is hit anywhere along its length, not just
+    // at its middle, so measure to a vertical span rather than to a point.
+    const half = ((o.span || 0) * p.scale) / 2;
+    const near = (q) => Math.hypot(p.x - q.x, Math.max(0, Math.abs(p.y - q.y) - half));
     let nearest = Infinity;
-    for (const q of points) nearest = Math.min(nearest, Math.hypot(p.x - q.x, p.y - q.y));
-    // Half "did the stroke pass over it", half "was it what the stroke was
-    // centred on" — measured against the thing's own size, so a far-off
-    // wall carving does not outrank the pixie you swept through.
-    const d = 0.5 * nearest + 0.5 * Math.hypot(p.x - cx, p.y - cy);
+    for (const q of points) nearest = Math.min(nearest, near(q));
+    // Either the stroke was centred on it (a circle drawn *around* a candle
+    // never touches the candle) or the stroke swept over it (a slash across a
+    // darting pixie). Whichever reads better, measured against the thing's own
+    // size so a big crate in front cannot swallow a small brazier behind it.
+    const d = Math.min(near({ x: cx, y: cy }), nearest * 1.5);
     const score = d / r;
-    if (score < 1 && score < bestScore) {
-      bestScore = score;
-      best = o;
-    }
+    if (score < 1) hits.push({ o, score });
   }
-  return best;
+  return hits.sort((a, b) => a.score - b.score).map((h) => h.o);
+}
+
+// The single best guess at what the stroke was drawn over.
+export function targetAt(world, view, stroke, opts) {
+  return rankTargets(world, view, stroke, opts)[0] || null;
 }
 
 // ---------- the chamber ----------
@@ -103,6 +121,48 @@ const rgba = (hex, a) => {
 // drawn a good deal wider than the view so the walls always run off the edges
 // instead of floating in the dark.
 const ROOM = { half: 2.6, top: 2.6, near: 0.6 };
+
+const HALLOWS = {
+  void: '#070510',
+  ceiling: '#150e28',
+  left: '#221839',
+  right: '#281c42',
+  back: '#332552',
+  floor: '#0e0a1c',
+  beamDark: '#0a0616',
+  beamFace: '#1a1230',
+  ledge: '#2e2250',
+  ledgeFace: '#241a42',
+  ledgeEdge: 'rgba(232, 176, 74, 0.2)',
+  course: 'rgba(255, 240, 210, 0.05)',
+  tile: 'rgba(210, 190, 255, 0.07)',
+  plinth: '#231a3c',
+  plinthTop: '#332752',
+  warm: '255, 190, 110',
+  tip: '#ffd98a',
+  trail: '#ffe6a8',
+};
+
+const CLASSIC = {
+  void: '#04070e',
+  ceiling: '#0c1424',
+  left: '#142136',
+  right: '#182742',
+  back: '#1f3152',
+  floor: '#080e1a',
+  beamDark: '#060b16',
+  beamFace: '#101c2e',
+  ledge: '#1c2c49',
+  ledgeFace: '#16243c',
+  ledgeEdge: 'rgba(120, 200, 255, 0.22)',
+  course: 'rgba(220, 240, 255, 0.05)',
+  tile: 'rgba(150, 200, 255, 0.08)',
+  plinth: '#16243c',
+  plinthTop: '#22344f',
+  warm: '120, 190, 255',
+  tip: '#bfe4ff',
+  trail: '#d8f0ff',
+};
 
 function quad(ctx, view, corners, fill, stroke) {
   ctx.beginPath();
@@ -139,18 +199,19 @@ function grid(ctx, view, line, along, across) {
 function drawRoom(ctx, view, world) {
   const { w, h } = view;
   const { half, top, near } = ROOM;
+  const c = view.palette;
   const lit = world.objects.reduce((n, o) => n + (o.lit ? 1 : 0), 0);
 
-  ctx.fillStyle = '#070510';
+  ctx.fillStyle = c.void;
   ctx.fillRect(0, 0, w, h);
 
   // Ceiling, then the two side walls, then the back wall: painting them
   // far-to-near means the near edges overlap cleanly.
-  quad(ctx, view, [[-half, top, near], [half, top, near], [half, top, FAR], [-half, top, FAR]], '#150e28');
-  quad(ctx, view, [[-half, 0, near], [-half, top, near], [-half, top, FAR], [-half, 0, FAR]], '#221839');
-  quad(ctx, view, [[half, 0, near], [half, top, near], [half, top, FAR], [half, 0, FAR]], '#281c42');
-  quad(ctx, view, [[-half, 0, FAR], [-half, top, FAR], [half, top, FAR], [half, 0, FAR]], '#332552');
-  quad(ctx, view, [[-half, 0, near], [half, 0, near], [half, 0, FAR], [-half, 0, FAR]], '#0e0a1c');
+  quad(ctx, view, [[-half, top, near], [half, top, near], [half, top, FAR], [-half, top, FAR]], c.ceiling);
+  quad(ctx, view, [[-half, 0, near], [-half, top, near], [-half, top, FAR], [-half, 0, FAR]], c.left);
+  quad(ctx, view, [[half, 0, near], [half, top, near], [half, top, FAR], [half, 0, FAR]], c.right);
+  quad(ctx, view, [[-half, 0, FAR], [-half, top, FAR], [half, top, FAR], [half, 0, FAR]], c.back);
+  quad(ctx, view, [[-half, 0, near], [half, 0, near], [half, 0, FAR], [-half, 0, FAR]], c.floor);
 
   // Stone courses. The floor gets both directions; the walls only need the
   // horizontal ones to read as blocks.
@@ -163,24 +224,24 @@ function drawRoom(ctx, view, world) {
   const floor = [];
   for (let x = -half; x <= half + 0.01; x += 0.65) floor.push([[x, 0, near], [x, 0, FAR]]);
   for (let z = near; z <= FAR + 0.01; z += 0.65) floor.push([[-half, 0, z], [half, 0, z]]);
-  grid(ctx, view, 'rgba(255, 240, 210, 0.05)', courses, []);
-  grid(ctx, view, 'rgba(210, 190, 255, 0.07)', floor, []);
+  grid(ctx, view, c.course, courses, []);
+  grid(ctx, view, c.tile, floor, []);
 
   // Beams across the ceiling: without them the top of the frame is a blank slab.
   for (let z = 1.2; z <= FAR; z += 0.95) {
-    quad(ctx, view, [[-half, top, z], [half, top, z], [half, top - 0.16, z + 0.02], [-half, top - 0.16, z + 0.02]], '#0a0616');
-    quad(ctx, view, [[-half, top - 0.16, z + 0.02], [half, top - 0.16, z + 0.02], [half, top - 0.16, z + 0.2], [-half, top - 0.16, z + 0.2]], '#1a1230');
+    quad(ctx, view, [[-half, top, z], [half, top, z], [half, top - 0.16, z + 0.02], [-half, top - 0.16, z + 0.02]], c.beamDark);
+    quad(ctx, view, [[-half, top - 0.16, z + 0.02], [half, top - 0.16, z + 0.02], [half, top - 0.16, z + 0.2], [-half, top - 0.16, z + 0.2]], c.beamFace);
   }
 
   // The ledge the vine is meant to reach, jutting off the right-hand wall.
-  quad(ctx, view, [[0.45, 1.95, 2.5], [half, 1.95, 2.5], [half, 1.95, 3.6], [0.45, 1.95, 3.6]], '#2e2250');
-  quad(ctx, view, [[0.45, 1.82, 2.5], [half, 1.82, 2.5], [half, 1.95, 2.5], [0.45, 1.95, 2.5]], '#241a42', 'rgba(232, 176, 74, 0.2)');
+  quad(ctx, view, [[0.45, 1.95, 2.5], [half, 1.95, 2.5], [half, 1.95, 3.6], [0.45, 1.95, 3.6]], c.ledge);
+  quad(ctx, view, [[0.45, 1.82, 2.5], [half, 1.82, 2.5], [half, 1.95, 2.5], [0.45, 1.95, 2.5]], c.ledgeFace, c.ledgeEdge);
 
   // Everything alight warms the room, and the dark closes in at the edges.
   if (lit) {
     const g = ctx.createRadialGradient(view.cx, view.horizon, 0, view.cx, view.horizon, Math.max(w, h) * 0.85);
-    g.addColorStop(0, `rgba(255, 190, 110, ${Math.min(0.18, 0.07 * lit)})`);
-    g.addColorStop(1, 'rgba(255, 190, 110, 0)');
+    g.addColorStop(0, `rgba(${c.warm}, ${Math.min(0.18, 0.07 * lit)})`);
+    g.addColorStop(1, `rgba(${c.warm}, 0)`);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
   }
@@ -519,7 +580,7 @@ function drawObjects(ctx, view, world, t, highlight) {
     // Things that sit at head height need something to sit on.
     if (o.plinth) {
       const foot = view.project(o.x, 0, o.z);
-      ctx.fillStyle = '#231a3c';
+      ctx.fillStyle = view.palette.plinth;
       ctx.beginPath();
       ctx.moveTo(p.x - s * 0.42, base);
       ctx.lineTo(p.x + s * 0.42, base);
@@ -527,7 +588,7 @@ function drawObjects(ctx, view, world, t, highlight) {
       ctx.lineTo(p.x - s * 0.3, foot.y);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = '#332752';
+      ctx.fillStyle = view.palette.plinthTop;
       ctx.beginPath();
       ctx.ellipse(p.x, base, s * 0.42, s * 0.12, 0, 0, TAU);
       ctx.fill();

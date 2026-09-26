@@ -30,7 +30,9 @@ const OBJECTS = [
   { id: 'pixie', kind: 'pixie', label: 'a pixie', x: 1.15, z: 2.7, baseY: 1.62, size: 0.24, mass: 'light', alive: true },
   { id: 'chest', kind: 'chest', label: 'an iron chest', x: 1.85, z: 4.0, baseY: 0, size: 0.78, mass: 'fixed', locked: true, openable: true },
   { id: 'lantern', kind: 'lantern', label: 'a hanging lantern', x: 1.15, z: 2.15, baseY: 1.9, size: 0.38, mass: 'normal', lightable: true, hangsFrom: 'rope' },
-  { id: 'rope', kind: 'rope', label: 'the lantern rope', x: 1.15, z: 2.15, baseY: 2.25, size: 0.24, mass: 'fixed', cuttable: true },
+  // `span` makes the rope a line to aim at rather than a point: it is hit
+  // anywhere between the ceiling and the lantern it holds up.
+  { id: 'rope', kind: 'rope', label: 'the lantern rope', x: 1.15, z: 2.15, baseY: 2.28, size: 0.2, span: 0.32, mass: 'fixed', cuttable: true },
 ];
 
 export function makeWorld() {
@@ -254,6 +256,19 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
  * Mutates the world and returns what to say and what to draw.
  */
 const FORCE = new Set(['levo', 'demitto', 'attraho', 'repello', 'tempesto']);
+
+// Would this spell do anything to this thing? Answered on a copy, so asking
+// changes nothing. Used to break a tie between two things the stroke covered:
+// aim at the lantern and its rope together and the cutting spell takes the
+// rope, while the lighting spell takes the lantern.
+export function wouldAffect(world, spellId, o) {
+  const reaction = REACTIONS[spellId];
+  if (!reaction || !o) return false;
+  if (!o.seen && spellId !== 'aperio') return false;
+  if (o.alive && !o.caged && o.frozen <= 0 && FORCE.has(spellId)) return false;
+  if (o.frozen > 0 && spellId !== 'ignito' && spellId !== 'clario') return false;
+  return !!reaction({ ...o });
+}
 
 export function castSpell(world, spellId, targetId) {
   world.cast.push(spellId);

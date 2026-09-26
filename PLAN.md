@@ -473,10 +473,18 @@ drew over.
   only grows in soil Unda has watered; a mended urn dropped from a height
   breaks again; the rope can be cut or burned. Ten trials track the
   combinations, and each has more than one solution.
+- **Aiming is forgiving on purpose.** Of everything a stroke covered, the game
+  prefers a target the spell can actually do something to, so a slash over the
+  hanging lantern cuts its rope while a light spell lights the lantern. Long
+  thin things (the rope) are hit anywhere along their length. A dashed ring
+  marks what you are aimed at while you are still drawing.
 - Spellbook with every glyph drawing itself so the direction to trace is
   obvious; tap one to trace it on screen as a ghost.
-- Hallows theme throughout, left- or right-handed wand, sounds, effects and
-  reduced-motion respected.
+- Two looks, both night: **Hallows** lights the chamber with candle gold,
+  **Classic** with cold blue witch-light. Left- or right-handed wand, sounds,
+  effects and reduced-motion respected.
+- Eight achievements, including casting all eighteen glyphs, finishing every
+  trial, and one secret for mending the urn and then breaking it again.
 
 ### Ideas for later
 

@@ -1,22 +1,32 @@
 import { makeStore } from './core/storage.js';
 import { makeSettings } from './core/settings.js';
-import { applyTheme, openDialog, toggle, segmented, el, toast } from './core/ui.js';
+import { applyTheme, offerHallows, openDialog, toggle, segmented, el, toast } from './core/ui.js';
+import { themeFor, onLookChange } from './core/hallows.js';
 import { audio, setSoundEnabled, tone, noiseBurst } from './core/sound.js';
 import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
 import { Particles } from './core/fx.js';
+import { makeAchievements } from './core/achievements.js';
+import ACHIEVEMENTS from './achievements.js';
 import { SPELL_LIST, SPELLS_BY_ID, TEMPLATES } from './js/glyphs.js';
 import { prepare, recognize, fitTemplate, centroid } from './js/recognizer.js';
-import { makeWorld, castSpell, tick, progress, remember, find, TASKS } from './js/scene.js';
-import { View, targetAt, centreOf, drawRoom, drawObjects, drawWand, drawTrail, drawSigil, drawGlyph, grip, SIGIL_SECONDS } from './js/render.js';
+import { makeWorld, castSpell, wouldAffect, tick, progress, remember, find, TASKS } from './js/scene.js';
+import { View, targetAt, rankTargets, centreOf, drawRoom, drawObjects, drawWand, drawTrail, drawSigil, drawGlyph, grip, SIGIL_SECONDS } from './js/render.js';
 
 const $ = (id) => document.getElementById(id);
 const store = makeStore('wand');
-const settings = makeSettings(store, { sound: true, effects: true, handed: 'right', ghosts: true });
+const settings = makeSettings(store, { sound: true, effects: true, handed: 'right', ghosts: true, theme: null });
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const ach = makeAchievements('wand', ACHIEVEMENTS);
 
-applyTheme('hallows');
-setSoundEnabled(settings.get('sound'));
+// The chamber is always night; the theme decides whether it is lit by candles
+// (Hallows) or by cold blue witch-light (Classic). The newer of the player's
+// pick here and the look chosen on the games list wins — see core/hallows.js.
+const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'classic');
+const pickTheme = (id) => {
+  settings.set('themeAt', Date.now());
+  settings.set('theme', id);
+};
 
 const view = new View($('canvas'));
 const fx = new Particles();
@@ -24,11 +34,18 @@ const prepared = prepare(TEMPLATES);
 const byId = new Map(TEMPLATES.map((t) => [t.id, t]));
 const world = makeWorld();
 
-view.handed = settings.get('handed');
-settings.onChange((key, value) => {
-  if (key === 'sound') setSoundEnabled(value);
-  if (key === 'handed') view.handed = value;
-});
+function applySettings() {
+  const hallows = themeId() === 'hallows';
+  applyTheme(hallows ? 'hallows' : 'dark');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', hallows ? '#120c22' : '#0d1220');
+  view.setHallows(hallows);
+  view.handed = settings.get('handed');
+  setSoundEnabled(settings.get('sound'));
+}
+applySettings();
+settings.onChange(applySettings);
+onLookChange(applySettings);
+offerHallows(store, themeId(), () => pickTheme('hallows'));
 
 // ---------- drawing state ----------
 
@@ -43,6 +60,9 @@ let glow = 0;
 let ghost = null; // a spell picked from the book, traced faintly on screen
 let highlight = null; // the object the current stroke is aimed at
 let done = new Set();
+const glyphsCast = new Set(); // for the "whole spellbook" achievement
+let streak = 0; // casts in a row that did not fizzle
+let mended = false; // the urn has been whole at least once this visit
 
 const announce = (text) => ($('announce').textContent = text);
 
@@ -144,13 +164,17 @@ function cast(pts) {
     if (result.reason === 'short') return; // a tap, not a spell
     const near = result.near && result.score > 0.5 ? SPELLS_BY_ID.get(result.near) : null;
     show('The spell will not take', near ? `The shape was nearly ${near.name}. Try again, a little cleaner.` : 'That shape means nothing.', true);
+    streak = 0;
     sfx.fizzle();
     if (settings.get('effects')) fx.burst(centre.x, centre.y, '#6b5f96', 'sparks', { count: 14, speed: 160 });
     return;
   }
 
   const s = SPELLS_BY_ID.get(result.id);
-  const target = targetAt(world, view, pts);
+  // Of everything the stroke covered, prefer one this spell can actually do
+  // something to — so a slash over the hanging lantern cuts its rope.
+  const covered = rankTargets(world, view, pts);
+  const target = covered.find((o) => wouldAffect(world, s.id, o)) || covered[0] || null;
   const outcome = castSpell(world, s.id, target?.id);
   remember(world);
 
@@ -170,6 +194,21 @@ function cast(pts) {
 
   lastHit = aimed || centre;
   show(s.name, outcome.message);
+
+  ach.unlock('first-spell');
+  ach.add('casts-100');
+  glyphsCast.add(s.id);
+  ach.at('every-glyph', glyphsCast.size);
+  ach.at('streak-10', ++streak);
+  if (result.score >= 0.96) ach.unlock('clean-cast');
+  // Two spells to do what neither could alone: the whole point of the game.
+  if (outcome.hit && ((s.id === 'levo' && target?.id === 'crate') || (s.id === 'levo' && target?.id === 'chest') || (s.id === 'crescito' && target?.id === 'vine'))) {
+    if (!outcome.inert) ach.unlock('combination');
+  }
+  const urn = find(world, 'urn');
+  if (!urn.broken) mended = true;
+  else if (mended) ach.unlock('butterfingers');
+
   checkTrials();
 }
 
@@ -192,6 +231,7 @@ function checkTrials(at = lastHit) {
   shown = done.size;
   $('tasks-count').textContent = String(done.size);
   if (done.size > store.get('best', 0)) store.set('best', done.size);
+  ach.at('all-trials', done.size);
   if (drawerOpen) renderTasks();
 }
 
@@ -232,10 +272,10 @@ function frame(ts) {
     ctx.restore();
   }
 
-  drawTrail(ctx, trail, now, stroke ? '#ffe6a8' : 'rgba(255, 230, 168, 0.6)', { width: 8 });
+  drawTrail(ctx, trail, now, view.palette.trail, { width: 8 });
   for (const s of sigils) drawSigil(ctx, s, now - s.born);
   if (settings.get('effects')) fx.draw(ctx, { additive: true, width: view.w, height: view.h });
-  drawWand(ctx, view, tip, glow, '#ffd98a', now);
+  drawWand(ctx, view, tip, glow, view.palette.tip, now);
 
   requestAnimationFrame(frame);
 }
@@ -338,6 +378,12 @@ $('settings-btn').addEventListener('click', () => {
       el(
         'div',
         { class: 'field' },
+        el('span', { class: 'field-label' }, 'Look'),
+        segmented('theme', [['hallows', 'Hallows'], ['classic', 'Classic']], themeId(), pickTheme),
+      ),
+      el(
+        'div',
+        { class: 'field' },
         el('span', { class: 'field-label' }, 'Wand hand'),
         segmented('handed', [['right', 'Right'], ['left', 'Left']], settings.get('handed'), (v) => settings.set('handed', v)),
       ),
@@ -368,4 +414,4 @@ registerServiceWorker({
 });
 
 // Reachable from browser tests.
-$('canvas').game = { view, world, prepared, cast, find };
+$('canvas').game = { view, world, prepared, cast, find, aimTest: (pts) => targetAt(world, view, pts)?.id ?? null };
