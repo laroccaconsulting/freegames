@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SPELL_LIST, SPELLS_BY_ID, TEMPLATES } from '../games/wand/js/glyphs.js';
 import { prepare, recognize, rank, resample, normalize, bounds, centroid, pathLength, fitTemplate, SAMPLES } from '../games/wand/js/recognizer.js';
-import { makeWorld, castSpell, tick, progress, remember, find, TASKS, NEAR, FAR } from '../games/wand/js/scene.js';
+import { makeWorld, castSpell, wouldAffect, blocked, tick, progress, finished, currentStep, find, SPELL_IDS } from '../games/wand/js/scene.js';
+import { LEVELS, levelById, isUnlocked, knownSpells } from '../games/wand/js/levels.js';
 
 const prepared = prepare(TEMPLATES);
 const template = (id) => TEMPLATES.find((t) => t.id === id);
@@ -183,7 +184,6 @@ test('the clean glyph is laid back over the stroke the player drew', () => {
 
 const run = (world, seconds) => {
   for (let i = 0; i < Math.round(seconds * 60); i++) tick(world, 1 / 60);
-  remember(world);
 };
 
 test('every spell has something in the chamber to do', () => {
@@ -193,10 +193,10 @@ test('every spell has something in the chamber to do', () => {
   // stretch of a warm-up sequence, and ask only that *some* combination works.
   const warmUp = ['aperio', 'reserato', 'minuito', 'ignito', 'levo', 'unda'];
   for (const s of SPELL_LIST) {
-    const worked = makeWorld().objects.some((o) =>
+    const worked = makeWorld('chamber').objects.some((o) =>
       // n runs from 0 (no warm-up) through the whole sequence.
       Array.from({ length: warmUp.length + 1 }, (_, i) => i).some((n) => {
-        const w = makeWorld();
+        const w = makeWorld('chamber');
         for (const p of warmUp.slice(0, n)) {
           castSpell(w, p, o.id);
           tick(w, 1 / 60);
@@ -210,7 +210,7 @@ test('every spell has something in the chamber to do', () => {
 });
 
 test('fire lights a candle and water puts it out', () => {
-  const w = makeWorld();
+  const w = makeWorld('chamber');
   assert.equal(find(w, 'candle').lit, false);
   castSpell(w, 'ignito', 'candle');
   assert.equal(find(w, 'candle').lit, true);
@@ -220,14 +220,14 @@ test('fire lights a candle and water puts it out', () => {
 });
 
 test('a lit thing cannot be relit, and says so by doing nothing', () => {
-  const w = makeWorld();
+  const w = makeWorld('chamber');
   castSpell(w, 'ignito', 'brazier');
   const again = castSpell(w, 'ignito', 'brazier');
   assert.equal(again.inert, true);
 });
 
 test('the crate is too heavy until it is shrunk: spells are building blocks', () => {
-  const w = makeWorld();
+  const w = makeWorld('chamber');
   castSpell(w, 'levo', 'crate');
   assert.equal(find(w, 'crate').held, false, 'a heavy crate should not lift');
   castSpell(w, 'minuito', 'crate');
@@ -241,7 +241,7 @@ test('the crate is too heavy until it is shrunk: spells are building blocks', ()
 });
 
 test('pull and push move a thing nearer and further, within the room', () => {
-  const w = makeWorld();
+  const w = makeWorld('chamber');
   castSpell(w, 'minuito', 'crate');
   const start = find(w, 'crate').z;
   castSpell(w, 'attraho', 'crate');
@@ -251,11 +251,11 @@ test('pull and push move a thing nearer and further, within the room', () => {
     castSpell(w, 'repello', 'crate');
     run(w, 1);
   }
-  assert.ok(find(w, 'crate').z <= FAR + 0.001 && find(w, 'crate').z >= NEAR);
+  assert.ok(find(w, 'crate').z <= w.room.far && find(w, 'crate').z >= w.room.near);
 });
 
 test('the chest needs two spells in the right order', () => {
-  const w = makeWorld();
+  const w = makeWorld('chamber');
   castSpell(w, 'levo', 'chest');
   assert.equal(find(w, 'chest').open, false, 'a locked lid should not lift');
   castSpell(w, 'reserato', 'chest');
@@ -268,7 +268,7 @@ test('the chest needs two spells in the right order', () => {
 });
 
 test('the vine only grows in wet soil, and takes three goes', () => {
-  const w = makeWorld();
+  const w = makeWorld('chamber');
   castSpell(w, 'crescito', 'vine');
   assert.equal(find(w, 'vine').grown, 0, 'dry soil should not grow');
   for (let i = 0; i < 3; i++) {
@@ -279,7 +279,7 @@ test('the vine only grows in wet soil, and takes three goes', () => {
 });
 
 test('the pixie dodges force until it is stopped', () => {
-  const w = makeWorld();
+  const w = makeWorld('chamber');
   assert.equal(castSpell(w, 'attraho', 'pixie').inert, true);
   castSpell(w, 'vincito', 'pixie');
   assert.equal(find(w, 'pixie').caged, true);
@@ -292,7 +292,7 @@ test('the pixie dodges force until it is stopped', () => {
 });
 
 test('frost holds a thing still, and wears off', () => {
-  const w = makeWorld();
+  const w = makeWorld('chamber');
   castSpell(w, 'gelo', 'pixie');
   assert.ok(find(w, 'pixie').frozen > 0);
   assert.equal(castSpell(w, 'unda', 'pixie').message.includes('glances off'), true);
@@ -301,7 +301,7 @@ test('frost holds a thing still, and wears off', () => {
 });
 
 test('cut the rope and the lantern falls to the floor', () => {
-  const w = makeWorld();
+  const w = makeWorld('chamber');
   castSpell(w, 'secato', 'rope');
   run(w, 3);
   assert.equal(find(w, 'lantern').fallen, true);
@@ -309,14 +309,14 @@ test('cut the rope and the lantern falls to the floor', () => {
 });
 
 test('fire will cut a rope too: more than one way to solve it', () => {
-  const w = makeWorld();
+  const w = makeWorld('chamber');
   castSpell(w, 'ignito', 'rope');
   run(w, 3);
   assert.equal(find(w, 'lantern').fallen, true);
 });
 
 test('only Aperio can touch what has not been revealed', () => {
-  const w = makeWorld();
+  const w = makeWorld('chamber');
   assert.equal(castSpell(w, 'clario', 'rune').hit, false);
   assert.equal(find(w, 'rune').seen, false);
   castSpell(w, 'aperio', 'rune');
@@ -324,7 +324,7 @@ test('only Aperio can touch what has not been revealed', () => {
 });
 
 test('a mended urn dropped from a height breaks again', () => {
-  const w = makeWorld();
+  const w = makeWorld('chamber');
   castSpell(w, 'sarcito', 'urn');
   assert.equal(find(w, 'urn').broken, false);
   castSpell(w, 'levo', 'urn');
@@ -337,8 +337,8 @@ test('a mended urn dropped from a height breaks again', () => {
 // ---------- the trials ----------
 
 test('every trial can be finished, and each one has a hint', () => {
-  const w = makeWorld();
-  for (const t of TASKS) assert.ok(t.text && t.hint, `${t.id} needs copy`);
+  const w = makeWorld('chamber');
+  for (const t of levelById('chamber').steps) assert.ok(t.text && t.hint, `${t.id} needs copy`);
 
   const script = [
     ['ignito', 'candle'],
@@ -373,14 +373,252 @@ test('every trial can be finished, and each one has a hint', () => {
 });
 
 test('nothing in the chamber reacts to a spell that is not in the book', () => {
-  const w = makeWorld();
+  const w = makeWorld('chamber');
   const out = castSpell(w, 'not-a-spell', 'candle');
   assert.equal(out.inert, true);
   assert.equal(find(w, 'candle').lit, false);
 });
 
 test('the spellbook and the chamber agree on what exists', () => {
-  const w = makeWorld();
-  for (const o of w.objects) assert.ok(SPELLS_BY_ID.size === SPELL_LIST.length);
-  for (const t of TASKS) assert.ok(typeof t.done(w) === 'boolean', `${t.id} has a broken goal`);
+  const w = makeWorld('chamber');
+  assert.equal(SPELLS_BY_ID.size, SPELL_LIST.length);
+  for (const t of w.level.steps) assert.ok(typeof t.done(w) === 'boolean', `${t.id} has a broken goal`);
+});
+
+// ---------- the places ----------
+
+const run60 = (w, seconds) => {
+  for (let i = 0; i < Math.round(seconds * 60); i++) tick(w, 1 / 60);
+};
+
+// The intended route through each journey. These are the tests that would
+// catch a level going unsolvable after a rules change.
+const WALKTHROUGHS = {
+  platform: [
+    ['clario', 'lamp'], ['aperio', 'wall'], ['reserato', 'arch'], ['levo', 'arch'],
+    ['minuito', 'trunk'], ['levo', 'trunk'], ['repello', 'trunk'], ['reserato', 'cage'],
+    ['tardito', 'clock'], ['ignito', 'whistle'],
+  ],
+  hall: [
+    ['ignito', 'hearth'], ['levo', 'candleA'], ['levo', 'candleB'], ['levo', 'candleC'],
+    ['clario', 'candleA'], ['clario', 'candleB'], ['clario', 'candleC'],
+    ['clario', 'chandelier'], ['unda', 'goblet'], ['aperio', 'sky'],
+  ],
+  stacks: [
+    ['gelo', 'bell'], ['clario', 'lamp'], ['reserato', 'grille'], ['levo', 'grille'],
+    ['secato', 'chain'], ['levo', 'book'], ['demitto', 'book'], ['aperio', 'book'],
+  ],
+  glasshouse: [
+    ['sarcito', 'pane'], ['ignito', 'bed'], ['unda', 'bed'], ['vincito', 'snapper'],
+    ['unda', 'climber'], ['crescito', 'climber'], ['unda', 'climber'], ['crescito', 'climber'],
+    ['unda', 'climber'], ['crescito', 'climber'], ['reserato', 'latch'], ['levo', 'latch'],
+  ],
+};
+
+test('every level is well formed: named, roomed, stocked and stepped', () => {
+  const ids = new Set();
+  for (const level of LEVELS) {
+    assert.ok(!ids.has(level.id), `duplicate level ${level.id}`);
+    ids.add(level.id);
+    assert.ok(level.name && level.place && level.blurb && level.done, `${level.id} needs copy`);
+    assert.ok(level.props.length >= 5, `${level.id} is bare`);
+    assert.ok(level.steps.length >= 5, `${level.id} needs a puzzle`);
+    assert.ok(level.room.far > level.room.near + 2 && level.room.half > 1, `${level.id} room`);
+    const propIds = new Set();
+    for (const p of level.props) {
+      assert.ok(!propIds.has(p.id), `${level.id}/${p.id} is not unique`);
+      propIds.add(p.id);
+      assert.ok(p.kind && p.label, `${level.id}/${p.id} needs a kind and a label`);
+      // Everything has to be on screen on a tall phone: the camera sees about
+      // 0.92 of a radian either side, so |x| / z must stay well under that.
+      assert.ok(Math.abs(p.x) / p.z < 0.8, `${level.id}/${p.id} is off the edge of the screen`);
+      assert.ok(p.z > level.room.near && p.z <= level.room.far, `${level.id}/${p.id} is outside the room`);
+      assert.ok(p.baseY >= 0 && p.baseY < level.room.top, `${level.id}/${p.id} is through the ceiling`);
+    }
+    const stepIds = new Set();
+    for (const s of level.steps) {
+      assert.ok(!stepIds.has(s.id), `${level.id}/${s.id} is not unique`);
+      stepIds.add(s.id);
+      assert.ok(s.text && s.hint && typeof s.done === 'function', `${level.id}/${s.id} needs copy and a goal`);
+    }
+    if (level.kit !== 'all') for (const id of level.kit) assert.ok(SPELLS_BY_ID.has(id), `${level.id} asks for unknown spell ${id}`);
+  }
+});
+
+test('no level starts already solved, and none starts with nothing to do', () => {
+  for (const level of LEVELS) {
+    const w = makeWorld(level.id);
+    run60(w, 0.2);
+    assert.ok(!finished(w), `${level.id} is already finished on arrival`);
+    assert.ok(currentStep(w), `${level.id} has no step to show`);
+  }
+});
+
+test('every journey can be finished with the spells it gives you', () => {
+  for (const [id, script] of Object.entries(WALKTHROUGHS)) {
+    const level = levelById(id);
+    const w = makeWorld(id);
+    run60(w, 0.2);
+    for (const [spell, target] of script) {
+      assert.ok(level.kit.includes(spell), `${id}: ${spell} is not in the kit but the walkthrough needs it`);
+      assert.ok(find(w, target), `${id}: no ${target}`);
+      castSpell(w, spell, target);
+      run60(w, 0.4);
+    }
+    run60(w, 2);
+    const left = progress(w).filter((s) => !s.complete).map((s) => s.id);
+    assert.deepEqual(left, [], `${id} could not be finished: ${left.join(', ')}`);
+  }
+});
+
+test('a journey unfolds one step at a time', () => {
+  const w = makeWorld('platform');
+  run60(w, 0.2);
+  assert.equal(progress(w).filter((s) => s.revealed).length, 1, 'only the first step shows');
+  castSpell(w, 'clario', 'lamp');
+  run60(w, 0.2);
+  const shown = progress(w).filter((s) => s.revealed);
+  assert.equal(shown.length, 2);
+  assert.equal(shown[0].complete, true);
+  assert.equal(shown[1].id, 'seam');
+  // The practice chamber is the exception: everything at once.
+  assert.equal(progress(makeWorld('chamber')).every((s) => s.revealed), true);
+});
+
+test('a step stays done even if the world moves on', () => {
+  const w = makeWorld('platform');
+  castSpell(w, 'clario', 'lamp');
+  run60(w, 0.3);
+  assert.equal(progress(w)[0].complete, true);
+  castSpell(w, 'tenebro', 'lamp'); // put it out again
+  run60(w, 0.3);
+  assert.equal(find(w, 'lamp').lit, false);
+  assert.equal(progress(w)[0].complete, true, 'undoing a step must not lock the player out');
+});
+
+test('the platform will not give up its archway in the dark', () => {
+  const w = makeWorld('platform');
+  const refused = castSpell(w, 'aperio', 'wall');
+  assert.match(refused.message, /light/i);
+  assert.equal(find(w, 'arch').seen, false);
+  castSpell(w, 'clario', 'lamp');
+  castSpell(w, 'aperio', 'wall');
+  assert.equal(find(w, 'arch').seen, true);
+});
+
+test('the trunk only goes through an archway that is open', () => {
+  const w = makeWorld('platform');
+  castSpell(w, 'minuito', 'trunk');
+  castSpell(w, 'levo', 'trunk');
+  castSpell(w, 'repello', 'trunk');
+  assert.ok(!find(w, 'trunk').gone, 'it should just slide back, with the arch shut');
+  castSpell(w, 'clario', 'lamp');
+  castSpell(w, 'aperio', 'wall');
+  castSpell(w, 'reserato', 'arch');
+  castSpell(w, 'levo', 'arch');
+  castSpell(w, 'levo', 'trunk');
+  castSpell(w, 'repello', 'trunk');
+  assert.ok(find(w, 'trunk').gone);
+  run60(w, 0.5);
+  assert.equal(find(w, 'trunk').seen, false, 'and then it is not in the room any more');
+});
+
+test('the hall needs its candles floating before they will light, and five lights before it shows its sky', () => {
+  const w = makeWorld('hall');
+  const cold = castSpell(w, 'ignito', 'candleA');
+  assert.match(cold.message, /float/i);
+  assert.equal(find(w, 'candleA').lit, false);
+  castSpell(w, 'levo', 'candleA');
+  castSpell(w, 'ignito', 'candleA');
+  assert.equal(find(w, 'candleA').lit, true);
+
+  const early = castSpell(w, 'aperio', 'sky');
+  assert.match(early.message, /not enough|five/i);
+  assert.equal(find(w, 'sky').seen, false);
+  for (const id of ['candleB', 'candleC']) {
+    castSpell(w, 'levo', id);
+    castSpell(w, 'clario', id);
+  }
+  castSpell(w, 'ignito', 'hearth');
+  castSpell(w, 'clario', 'chandelier');
+  castSpell(w, 'aperio', 'sky');
+  assert.equal(find(w, 'sky').seen, true);
+});
+
+test('the library will not let you work while the alarm is ringing', () => {
+  const w = makeWorld('stacks');
+  const refused = castSpell(w, 'clario', 'lamp');
+  assert.match(refused.message, /bell/i);
+  assert.equal(find(w, 'lamp').lit, false);
+  castSpell(w, 'vincito', 'bell');
+  assert.equal(find(w, 'bell').ringing, false);
+  castSpell(w, 'clario', 'lamp');
+  assert.equal(find(w, 'lamp').lit, true);
+});
+
+test('the chained book cannot be lifted, and blank pages need light and a desk', () => {
+  const w = makeWorld('stacks');
+  castSpell(w, 'gelo', 'bell');
+  castSpell(w, 'reserato', 'grille');
+  castSpell(w, 'levo', 'grille');
+  assert.match(castSpell(w, 'levo', 'book').message, /chain/i);
+  castSpell(w, 'secato', 'chain');
+  castSpell(w, 'levo', 'book');
+  run60(w, 1);
+  assert.match(castSpell(w, 'aperio', 'book').message, /far away/i);
+  castSpell(w, 'demitto', 'book');
+  assert.equal(find(w, 'book').onDesk, true);
+  assert.match(castSpell(w, 'aperio', 'book').message, /dark/i, 'and not in the dark');
+  castSpell(w, 'clario', 'lamp');
+  castSpell(w, 'aperio', 'book');
+  assert.equal(find(w, 'book').read, true);
+});
+
+test('the glasshouse has to be closed up and thawed before anything will grow', () => {
+  const w = makeWorld('glasshouse');
+  assert.match(castSpell(w, 'unda', 'bed').message, /freezes|thaw/i);
+  assert.match(castSpell(w, 'crescito', 'climber').message, /draught|pane/i);
+  castSpell(w, 'sarcito', 'pane');
+  castSpell(w, 'ignito', 'bed');
+  assert.equal(find(w, 'bed').iced, false);
+  // The snapper guards the latch until it is stopped.
+  assert.match(castSpell(w, 'reserato', 'latch').message, /snapper/i);
+  castSpell(w, 'vincito', 'snapper');
+  assert.match(castSpell(w, 'reserato', 'latch').message, /reach|grow/i);
+});
+
+test('places unlock in order, and the spells you know grow with them', () => {
+  assert.equal(isUnlocked(levelById('chamber'), []), true);
+  assert.equal(isUnlocked(levelById('platform'), []), true, 'the first journey is always open');
+  assert.equal(isUnlocked(levelById('hall'), []), false);
+  assert.equal(isUnlocked(levelById('hall'), ['platform']), true);
+  assert.equal(isUnlocked(levelById('glasshouse'), ['platform', 'hall']), false);
+  const early = knownSpells([]);
+  const late = knownSpells(['platform', 'hall', 'stacks']);
+  assert.ok(early.size < late.size, 'finishing places teaches you more glyphs');
+  for (const id of early) assert.ok(late.has(id), 'and you never forget one');
+  assert.equal(knownSpells(['platform', 'hall', 'stacks', 'glasshouse']).size, SPELL_LIST.length, 'and the journeys between them teach every glyph');
+});
+
+test("each level's own kit is unambiguous: a shaky hand never casts the wrong one", () => {
+  for (const level of LEVELS) {
+    const kit = level.kit === 'all' ? TEMPLATES : TEMPLATES.filter((t) => level.kit.includes(t.id));
+    const set = prepare(kit);
+    for (const t of kit) {
+      const rnd = mulberry32(t.id.length * 613 + level.id.length);
+      for (let k = 0; k < 15; k++) {
+        const got = recognize(drawnByHand(t.points, rnd), set);
+        assert.ok(got.id === t.id || got.id === null, `${level.id}: ${t.id} read as ${got.id}`);
+      }
+    }
+  }
+});
+
+test('the level a spell is cast in is the only one that can block it', () => {
+  // Nothing in the chamber leans on another level's rules.
+  const w = makeWorld('chamber');
+  for (const id of SPELL_IDS) {
+    for (const o of w.objects) assert.equal(typeof wouldAffect(w, id, o), 'boolean');
+    assert.equal(blocked(w, id, null), 'The spell flies off into the dark.');
+  }
 });

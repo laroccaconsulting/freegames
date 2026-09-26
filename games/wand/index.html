@@ -24,13 +24,17 @@
     <canvas id="canvas" aria-hidden="true"></canvas>
 
     <header class="hud-top topbar">
+      <button class="hud-btn" id="places-btn" aria-label="Places">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4.5L3.5 6.8v12.7L9 17.2l6 2.3 5.5-2.3V4.5L15 6.8z" /><path d="M9 4.5v12.7M15 6.8v12.7" /></svg>
+        <span>Places</span>
+      </button>
       <button class="hud-btn" id="book-btn" aria-label="Spellbook">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.2A2.2 2.2 0 0 1 6.2 3H19v15H6.2A2.2 2.2 0 0 0 4 20.2z" /><path d="M4 20.2A2.2 2.2 0 0 1 6.2 18H19v3H6.2A2.2 2.2 0 0 1 4 20.2z" /><path d="M8.5 7.5h6M8.5 11h4" /></svg>
         <span>Spells</span>
       </button>
-      <button class="hud-btn" id="tasks-btn" aria-label="Trials">
+      <button class="hud-btn" id="steps-btn" aria-label="Steps">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5l1.8 1.8L9 5M4 13l1.8 1.8L9 11.5M4 19.5l1.8 1.8L9 18M12 7h8M12 13.5h8M12 20h8" /></svg>
-        <span><b id="tasks-count">0</b>/10</span>
+        <span><b id="steps-count">0</b>/<b id="steps-total">10</b></span>
       </button>
       <h1 class="visually-hidden">Wand</h1>
       <span class="spacer"></span>
@@ -39,19 +43,46 @@
       </button>
     </header>
 
+    <p class="place-name" id="place-name" aria-hidden="true"></p>
+
     <!-- What just happened -->
     <div class="readout" id="readout" aria-hidden="true">
       <b id="spell-name"></b>
       <span id="spell-msg"></span>
     </div>
 
-    <!-- Trial list, slides up from the bottom -->
-    <section class="drawer" id="tasks-drawer" hidden aria-label="Trials">
-      <h2>Trials</h2>
-      <ul id="task-list"></ul>
-      <p class="muted small" id="tasks-best"></p>
-      <p class="muted small">Every trial can be solved more than one way. Tap a spell in the book to trace it as a ghost.</p>
-      <button class="btn" id="tasks-close">Close</button>
+    <!-- The steps of the place you are in, slides up from the bottom -->
+    <section class="drawer" id="steps-drawer" hidden aria-label="Steps">
+      <h2 id="steps-title">Steps</h2>
+      <ul id="step-list"></ul>
+      <p class="muted small" id="steps-note"></p>
+      <button class="btn" id="steps-close">Close</button>
+    </section>
+
+    <!-- Where you can go -->
+    <section class="panel places" id="places" hidden aria-label="Places">
+      <div class="panel-inner">
+        <header>
+          <h2>Places</h2>
+          <p class="muted small" id="places-known"></p>
+        </header>
+        <div class="place-list" id="place-list"></div>
+        <button class="btn btn-primary" id="places-close">Back to the wand</button>
+      </div>
+    </section>
+
+    <!-- Finished a place -->
+    <section class="panel victory" id="victory" hidden aria-label="Finished">
+      <div class="panel-inner">
+        <p class="eyebrow">Finished</p>
+        <h2 id="victory-name"></h2>
+        <p id="victory-line"></p>
+        <p class="unlocked" id="victory-unlocked"></p>
+        <div class="row">
+          <button class="btn" id="victory-stay">Stay a while</button>
+          <button class="btn btn-primary" id="victory-next">Next</button>
+        </div>
+      </div>
     </section>
 
     <p class="hint" id="hint" aria-hidden="true">Drag anywhere to draw. Draw <b>across the thing you want to hit</b>.</p>

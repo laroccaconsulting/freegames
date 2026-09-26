@@ -1,44 +1,39 @@
-// The test chamber: a small first-person alcove and the rules for what each
-// spell does to what. Pure state and pure functions — no DOM, no canvas — so
-// the whole spell system can be unit-tested in tests/wand.test.js.
+// The rules: what each spell does to what, and how a room settles afterwards.
+// Pure state and pure functions — no DOM, no canvas — so the whole spell
+// system can be unit-tested in tests/wand.test.js.
 //
 // The world is in metres. The camera stands at the origin at eye height
 // looking along +z, so x is left/right, y is up from the floor, and z is how
 // far away a thing is. Spells that push and pull move z; spells that lift move y.
+//
+// Nothing in here knows about any particular place. The places, and the
+// puzzles in them, live in js/levels.js and reach the rules through two
+// hooks: `block` (a reason a spell cannot work here) and `onCast` (an
+// authored outcome that replaces the generic one).
+
+import { levelById } from './levels.js';
 
 export const EYE = 1.55; // camera height, metres
 export const FLOOR = 0;
-export const NEAR = 1.2; // nothing may come closer than this
-export const FAR = 5.5;
 
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // `mass` decides what force spells can do:
 //   light  — a gust alone will move it
 //   normal — Levo lifts it, Attraho and Repello slide it
 //   heavy  — too heavy to lift or shove until something makes it smaller
 //   fixed  — bolted down; force spells do nothing
-const OBJECTS = [
-  { id: 'candle', kind: 'candle', label: 'a candle', x: -1.45, z: 2.7, baseY: 1.05, size: 0.36, mass: 'fixed', plinth: true, lightable: true },
-  { id: 'urn', kind: 'urn', label: 'a cracked urn', x: -1.25, z: 1.95, baseY: 0.8, size: 0.42, mass: 'normal', plinth: true, broken: true, fragile: true },
-  { id: 'vane', kind: 'vane', label: 'a little weather vane', x: -1.95, z: 4.2, baseY: 1.85, size: 0.44, mass: 'fixed', spinnable: true },
-  { id: 'brazier', kind: 'brazier', label: 'the brazier', x: -1.7, z: 4.8, baseY: 0, size: 0.7, mass: 'fixed', lightable: true },
-  { id: 'crate', kind: 'crate', label: 'a crate', x: -0.8, z: 3.5, baseY: 0, size: 0.85, mass: 'heavy' },
-  { id: 'basin', kind: 'basin', label: 'a stone basin', x: -0.05, z: 1.7, baseY: 0.6, size: 0.5, mass: 'fixed', plinth: true, fillable: true },
-  { id: 'rune', kind: 'rune', label: 'a mark on the wall', x: -1.0, z: FAR - 0.05, baseY: 2.15, size: 0.6, mass: 'fixed', hidden: true },
-  { id: 'vine', kind: 'vine', label: 'a potted vine', x: 0.85, z: 3.0, baseY: 0, size: 0.62, mass: 'fixed', growable: true, grown: 0 },
-  { id: 'pixie', kind: 'pixie', label: 'a pixie', x: 1.15, z: 2.7, baseY: 1.62, size: 0.24, mass: 'light', alive: true },
-  { id: 'chest', kind: 'chest', label: 'an iron chest', x: 1.85, z: 4.0, baseY: 0, size: 0.78, mass: 'fixed', locked: true, openable: true },
-  { id: 'lantern', kind: 'lantern', label: 'a hanging lantern', x: 1.15, z: 2.15, baseY: 1.9, size: 0.38, mass: 'normal', lightable: true, hangsFrom: 'rope' },
-  // `span` makes the rope a line to aim at rather than a point: it is hit
-  // anywhere between the ceiling and the lantern it holds up.
-  { id: 'rope', kind: 'rope', label: 'the lantern rope', x: 1.15, z: 2.15, baseY: 2.28, size: 0.2, span: 0.32, mass: 'fixed', cuttable: true },
-];
-
-export function makeWorld() {
+export function makeWorld(level = 'chamber') {
+  const def = typeof level === 'string' ? levelById(level) : level;
   return {
+    level: def,
+    room: { ...def.room },
     time: 0,
-    objects: OBJECTS.map((o) => ({
+    // States the world only passes through: steps that have ever been
+    // finished, and anything level.watch wants to remember.
+    latch: { steps: new Set() },
+    objects: def.props.map((o) => ({
       ...o,
       y: o.baseY,
       vy: 0,
@@ -126,10 +121,10 @@ const REACTIONS = {
   },
   levo(o) {
     if (o.openable) {
-      if (o.locked) return `The lid of ${o.label} will not shift: it is locked.`;
+      if (o.locked) return `${cap(o.label)} will not shift: it is locked.`;
       if (o.open) return null;
       o.open = true;
-      return `The heavy lid of ${o.label} swings up.`;
+      return `${cap(o.label)} swings open.`;
     }
     if (o.mass === 'fixed') return null;
     if (o.caged) return `${cap(o.label)} strains against the cage.`;
@@ -142,26 +137,26 @@ const REACTIONS = {
   demitto(o) {
     if (o.openable && o.open) {
       o.open = false;
-      return `The lid of ${o.label} closes.`;
+      return `${cap(o.label)} closes again.`;
     }
     if (!o.held) return null;
     o.held = false;
     return `${cap(o.label)} settles back down.`;
   },
-  attraho(o) {
+  attraho(o, world) {
     if (o.mass === 'fixed' || o.caged) return null;
     if (effectiveMass(o) === 'heavy') return `${cap(o.label)} will not budge.`;
-    o.targetZ = clamp(o.targetZ - 0.9, NEAR, FAR);
+    o.targetZ = clamp(o.targetZ - 0.9, nearLimit(world), farLimit(world));
     return `${cap(o.label)} slides towards you.`;
   },
-  repello(o) {
+  repello(o, world) {
     if (o.mass === 'fixed' || o.caged) return null;
     if (effectiveMass(o) === 'heavy') return `${cap(o.label)} rocks, but stays put.`;
-    o.targetZ = clamp(o.targetZ + 1.1, NEAR, FAR);
-    if (o.fragile && o.targetZ >= FAR - 0.01) o.broken = true;
+    o.targetZ = clamp(o.targetZ + 1.1, nearLimit(world), farLimit(world));
+    if (o.fragile && o.targetZ >= farLimit(world) - 0.01) o.broken = true;
     return `${cap(o.label)} is flung back.`;
   },
-  tempesto(o) {
+  tempesto(o, world) {
     if (o.spinnable) {
       o.spun += 1;
       return `${cap(o.label)} whirls round.`;
@@ -171,7 +166,7 @@ const REACTIONS = {
       return `The gust blows ${o.label} out.`;
     }
     if (o.mass === 'light' && !o.caged && !o.frozen) {
-      o.targetZ = clamp(o.targetZ + 0.7, NEAR, FAR);
+      o.targetZ = clamp(o.targetZ + 0.7, nearLimit(world), farLimit(world));
       return `${cap(o.label)} is tumbled by the wind.`;
     }
     return null;
@@ -183,7 +178,7 @@ const REACTIONS = {
       return `${cap(o.label)} freezes and the flame dies.`;
     }
     o.frozen = 6;
-    if (o.alive) return `${cap(o.label)} is frozen mid-air.`;
+    if (o.alive) return `${cap(o.label)} is frozen where it stands.`;
     return `Frost creeps over ${o.label}.`;
   },
   tardito(o) {
@@ -226,7 +221,7 @@ const REACTIONS = {
       if (o.wet <= 0.05) return `Nothing happens: ${o.label} is bone dry.`;
       o.grown = clamp(o.grown + 1, 0, 3);
       o.wet = Math.max(0, o.wet - 0.5);
-      return o.grown >= 3 ? `${cap(o.label)} reaches the ledge.` : `${cap(o.label)} puts out another length.`;
+      return o.grown >= 3 ? `${cap(o.label)} reaches the top.` : `${cap(o.label)} puts out another length.`;
     }
     if (o.scale >= 2) return null;
     o.scale = clamp(o.scale * 1.5, 0.4, 2);
@@ -243,19 +238,28 @@ const REACTIONS = {
   },
 };
 
+export const SPELL_IDS = Object.keys(REACTIONS);
+
 // A crate is heavy until it has been shrunk; that is the point of Minuito.
 function effectiveMass(o) {
   if (o.mass !== 'heavy') return o.mass;
   return o.scale <= 0.7 ? 'normal' : 'heavy';
 }
 
-const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+const nearLimit = (world) => (world?.room?.near ?? 0.6) + 0.6;
+const farLimit = (world) => (world?.room?.far ?? 5.5) - 0.2;
 
-/**
- * Cast `spellId` at `targetId` (or at nothing).
- * Mutates the world and returns what to say and what to draw.
- */
 const FORCE = new Set(['levo', 'demitto', 'attraho', 'repello', 'tempesto']);
+
+// A reason this spell cannot work on this thing here, or null. Levels use it
+// to teach: "the bricks are a wall of shadow", "not with that bell going".
+export function blocked(world, spellId, o) {
+  if (!o) return 'The spell flies off into the dark.';
+  if (!o.seen && spellId !== 'aperio') return 'The spell passes through empty air.';
+  if (o.alive && !o.caged && o.frozen <= 0 && FORCE.has(spellId)) return `${cap(o.label)} darts out of the way. Stop it moving first.`;
+  if (o.frozen > 0 && spellId !== 'ignito' && spellId !== 'clario') return `${cap(o.label)} is frozen solid; the spell glances off.`;
+  return world.level?.block?.(world, spellId, o) || null;
+}
 
 // Would this spell do anything to this thing? Answered on a copy, so asking
 // changes nothing. Used to break a tie between two things the stroke covered:
@@ -264,27 +268,33 @@ const FORCE = new Set(['levo', 'demitto', 'attraho', 'repello', 'tempesto']);
 export function wouldAffect(world, spellId, o) {
   const reaction = REACTIONS[spellId];
   if (!reaction || !o) return false;
-  if (!o.seen && spellId !== 'aperio') return false;
-  if (o.alive && !o.caged && o.frozen <= 0 && FORCE.has(spellId)) return false;
-  if (o.frozen > 0 && spellId !== 'ignito' && spellId !== 'clario') return false;
-  return !!reaction({ ...o });
+  if (blocked(world, spellId, o)) return false;
+  if (reaction({ ...o }, world)) return true;
+  // The level may have authored an outcome the generic rules know nothing of.
+  return (world.level?.authored?.[o.id] || []).includes(spellId);
 }
 
+/**
+ * Cast `spellId` at `targetId` (or at nothing).
+ * Mutates the world and returns what to say and what to draw.
+ */
 export function castSpell(world, spellId, targetId) {
   world.cast.push(spellId);
   const reaction = REACTIONS[spellId];
-  if (!targetId) return { hit: false, message: 'The spell flies off into the dark.', targetId: null };
-  const o = find(world, targetId);
+  const o = targetId ? find(world, targetId) : null;
   if (!o) return { hit: false, message: 'The spell flies off into the dark.', targetId: null };
-  // Only Aperio can act on something that has not been revealed yet.
-  if (!o.seen && spellId !== 'aperio') return { hit: false, message: 'The spell passes through empty air.', targetId: null };
-  if (o.alive && !o.caged && o.frozen <= 0 && FORCE.has(spellId)) {
-    return { hit: true, targetId, message: `${cap(o.label)} darts out of the way. Stop it moving first.`, inert: true };
-  }
-  if (o.frozen > 0 && spellId !== 'ignito' && spellId !== 'clario') {
-    return { hit: true, targetId, message: `${cap(o.label)} is frozen solid; the spell glances off.` };
-  }
-  const message = reaction ? reaction(o) : null;
+
+  const refusal = blocked(world, spellId, o);
+  // A spell aimed at something not yet revealed must not give away where it
+  // is, so it reports as a miss rather than a bounce.
+  if (refusal && !o.seen) return { hit: false, targetId: null, message: refusal };
+  if (refusal) return { hit: true, targetId, message: refusal, inert: true };
+
+  const generic = reaction ? reaction(o, world) : null;
+  // The level gets the last word: it can replace the line, or supply one
+  // where the generic rules had nothing to say.
+  const authored = world.level?.onCast?.(world, spellId, o) || null;
+  const message = authored || generic;
   if (!message) return { hit: true, targetId, message: `${cap(o.label)} pays the spell no mind.`, inert: true };
   return { hit: true, targetId, message };
 }
@@ -296,6 +306,10 @@ const HOLD_HEIGHT = 1.35; // how high above its resting place a held thing rides
 export function tick(world, dt) {
   world.time += dt;
   for (const o of world.objects) {
+    if (o.gone) {
+      o.seen = false;
+      continue;
+    }
     const slow = o.slowed > 0 ? 0.25 : 1;
     if (o.frozen > 0) o.frozen = Math.max(0, o.frozen - dt);
     if (o.slowed > 0) o.slowed = Math.max(0, o.slowed - dt);
@@ -333,8 +347,8 @@ export function tick(world, dt) {
       o.y = rest;
     }
 
-    // The pixie will not sit still unless it is stopped.
-    if (o.alive && !o.caged && o.frozen <= 0 && !o.held) {
+    // Flitting things will not sit still unless they are stopped.
+    if (o.wander && !o.caged && o.frozen <= 0 && !o.held) {
       o.phase += dt * 1.6 * slow;
       o.x = o.x0 + Math.sin(o.phase) * 0.55;
       o.y = o.baseY + Math.sin(o.phase * 2.3) * 0.28;
@@ -342,31 +356,37 @@ export function tick(world, dt) {
       o.targetZ = o.z;
     }
 
-    // A watered vine climbs; drawn height comes from `grown`.
-    if (o.growable) o.height = (o.height ?? 0) + ((o.grown * 0.62) - (o.height ?? 0)) * Math.min(1, dt * 2);
+    // A watered plant climbs; drawn height comes from `grown`.
+    if (o.growable) o.height = (o.height ?? 0) + (o.grown * 0.62 - (o.height ?? 0)) * Math.min(1, dt * 2);
   }
+  world.level?.watch?.(world);
+  // A step that has ever been finished stays finished, so undoing something
+  // later — dropping the mended urn, letting the snapper go — can never lock
+  // a player out of a puzzle they have already solved.
+  for (const s of world.level.steps) if (s.done(world)) world.latch.steps.add(s.id);
 }
 
-// ---------- the trials: proof that spells combine into puzzles ----------
+// ---------- the puzzle ----------
 
-export const TASKS = [
-  { id: 'light', text: 'Light the candle', hint: 'Fire, or just a light.', done: (w) => find(w, 'candle').lit },
-  { id: 'douse', text: 'Put the brazier out once it is burning', hint: 'Water, wind, frost or plain darkness.', done: (w) => !!w.brazierLit && !find(w, 'brazier').lit },
-  { id: 'pull', text: 'Bring the crate to the front of the room', hint: 'It is too heavy as it is. Make it smaller first.', done: (w) => find(w, 'crate').z < 2.0 },
-  { id: 'float', text: 'Float the crate off the floor', hint: 'Same problem: shrink it, then lift it.', done: (w) => find(w, 'crate').y > 0.6 },
-  { id: 'chest', text: 'Get the iron chest open', hint: 'Turn the lock, then lift the lid.', done: (w) => find(w, 'chest').open },
-  { id: 'urn', text: 'Mend the cracked urn', hint: 'One spell puts broken things back together.', done: (w) => !find(w, 'urn').broken },
-  { id: 'vine', text: 'Grow the vine up to the ledge', hint: 'Water the soil, then grow it. Three times over.', done: (w) => find(w, 'vine').grown >= 3 },
-  { id: 'pixie', text: 'Stop the pixie', hint: 'Freeze it, cage it, or slow time round it.', done: (w) => find(w, 'pixie').caged || find(w, 'pixie').frozen > 0 },
-  { id: 'rune', text: 'Find what is hidden on the back wall', hint: 'Something has to reveal it.', done: (w) => find(w, 'rune').seen },
-  { id: 'lantern', text: 'Bring the hanging lantern down', hint: 'Cut the rope. Or burn it.', done: (w) => find(w, 'lantern').fallen },
-];
-
-// Some goals need a state the world only passes through, so remember it.
-export function remember(world) {
-  if (find(world, 'brazier').lit) world.brazierLit = true;
-}
-
+/**
+ * Where the player is up to.
+ * A journey is strictly sequential: the step after the current one is not
+ * shown at all, so the room unfolds instead of listing itself. The practice
+ * chamber sets `ordered: false` and shows every trial at once.
+ */
 export function progress(world) {
-  return TASKS.map((t) => ({ ...t, complete: !!t.done(world) }));
+  const level = world.level;
+  const steps = level.steps.map((s) => ({ ...s, complete: world.latch.steps.has(s.id) || !!s.done(world) }));
+  if (level.ordered === false) return steps.map((s) => ({ ...s, revealed: true }));
+  let reached = true;
+  return steps.map((s) => {
+    const revealed = reached;
+    if (revealed && !s.complete) reached = false;
+    return { ...s, revealed };
+  });
 }
+
+export const finished = (world) => progress(world).every((s) => s.complete);
+
+// The step the player is on, or null when the level is done.
+export const currentStep = (world) => progress(world).find((s) => s.revealed && !s.complete) || null;

@@ -156,7 +156,7 @@ Collection (MIT) is a good reference for generators and rules.
 | **Chess vs. computer** | Low priority: lichess already does this free and well. Stockfish is GPL |
 | **Jigsaw** | Public-domain art from Met / Rijksmuseum / Art Institute of Chicago open access |
 | **Backgammon** | ✅ Built — `games/backgammon/`. Computer at three levels, pass-and-play, hits, doubles, bear-off, gammon/backgammon scoring |
-| **Wand** | 🚧 Mechanics built — `games/wand/`. Trace a glyph in the air and the spell fires; 18 glyphs, a first-person chamber, ten trials. The puzzle campaign is the next step |
+| **Wand** | ✅ Built — `games/wand/`. Trace a glyph in the air and the spell fires; 18 glyphs, five places (a practice chamber and four sequenced puzzle rooms), spells unlocked place by place |
 | **Hearts** ✅, **Spades** ✅, Dominoes, Checkers ✅ | Hearts — `games/hearts/`: vs three computer players, passing rotation, shooting the moon, game to 100. Spades — `games/spades/`: with a computer partner, bidding (nil, suggested bid), trumps, bags, game to 500. Dominoes still to do |
 | **Nonograms** | ✅ Built — `games/nonograms/`: blobby seeded pictures kept only when line-by-line solving finishes them (so unique, no guessing); 5×5, 10×10, 15×15 and a daily 10×10; drag to fill or cross, finished lines cross themselves, hints name the deciding line. Never call it "Picross" (a trademark) |
 | **Dice poker** (Yahtzee-style) | Must *not* be called Yahtzee |
@@ -440,7 +440,7 @@ The template (`node scripts/new-game.mjs`) starts with all of these, and
 
 - Klotski-style blocks (2×2 key piece), box pushing, picture tiles from public-domain art
 - Unblock par above 22 needs a faster generator (bitboards) or pre-made packs
-## Wand — feature list (mechanics build)
+## Wand — feature list (v1)
 
 First-person spellcasting. The wand is anchored below the bottom edge of the
 screen and its tip follows your finger, so dragging *is* waving the wand. Let
@@ -465,14 +465,48 @@ drew over.
   and name the glyph you were close to, rather than firing the wrong spell.
 - **Aim by drawing over things.** The target is scored against the whole stroke
   and each object's own size, so sweeping across a darting pixie catches it.
-- **A chamber that answers back** (`js/scene.js`): candle, brazier, crate,
-  locked chest, cracked urn, potted vine, pixie, hanging lantern on a rope,
-  basin, hidden wall rune, weather vane. Pure rules, no DOM, unit-tested.
+- **Rooms that answer back** (`js/scene.js`): candles, braziers, crates,
+  locked chests, a cracked urn, a pixie, a lantern on a rope, an owl in a
+  cage, a station clock, floating candles, a chandelier, an alarm bell, a
+  chained book, a snapper that bites. Pure rules, no DOM, unit-tested —
+  including a walkthrough test per journey that fails if a level ever becomes
+  unsolvable.
 - **Spells are building blocks, not buttons.** The crate is too heavy to lift
   until Minuito shrinks it; the chest needs Reserato and *then* Levo; the vine
   only grows in soil Unda has watered; a mended urn dropped from a height
   breaks again; the rope can be cut or burned. Ten trials track the
   combinations, and each has more than one solution.
+- **Five places, four of them puzzles** (`js/levels.js`). Each is plain data:
+  the room, the things in it, the spells you bring, and an ordered list of
+  steps. A journey is strictly sequential — the next step is not shown until
+  this one is done — so a place unfolds instead of listing itself:
+  - **The Practice Chamber** — the sandbox. Every glyph, ten trials, any order.
+  - **The Hidden Platform** — a station before dawn. Light the lamp so you can
+    see the wall, reveal the archway in it, turn its lock, lift it open, shrink
+    your too-heavy trunk, float it, shove it through, let the owl out, thicken
+    time round the station clock, and call the train.
+  - **The Banquet Hall** — a long hall laid for four hundred, in the dark.
+    Wake the hearth, set three candles floating (they will not take a flame
+    sitting on the table), light them, light the chandelier, fill a goblet —
+    and with five lights burning, the ceiling turns into a snowing winter sky.
+  - **The Shut Stacks** — the restricted library, alarm already ringing.
+    Silence the bell before anything else, light the reading lamp, unlock and
+    lift the grille, cut the chain, float the book down to the desk, and read
+    the ink that is not there until you reveal it.
+  - **The Cold Glasshouse** — first frost, a pane gone. Mend the glass, thaw
+    the bed, water it, stop the snapper that bites at your wand arm, grow the
+    climber up in three waterings, and open the roof vent.
+- **Two hooks keep the rules generic.** `block` gives a level a *reason* a
+  spell cannot work ("the bricks are a wall of shadow", "not with that bell
+  going"), which is how the game teaches; `onCast` lets a level author an
+  outcome the generic rules know nothing of. `js/scene.js` knows nothing about
+  any particular place.
+- **Spells unlock with the places.** Each journey brings its own kit, and only
+  those glyphs are matched against, so a spell you have not been given simply
+  does not take. Journeys open in order; between them they teach all eighteen.
+- **Steps latch.** Once a step is finished it stays finished, so dropping the
+  mended urn or letting the snapper go can never lock you out of a puzzle you
+  have already solved.
 - **Aiming is forgiving on purpose.** Of everything a stroke covered, the game
   prefers a target the spell can actually do something to, so a slash over the
   hanging lantern cuts its rope while a light spell lights the lantern. Long
@@ -488,13 +522,14 @@ drew over.
 
 ### Ideas for later
 
-- The real point: a puzzle campaign where spells are unlocked one at a time and
-  rooms are solved by combining them (the `tier` field on each spell is the hook).
+- More places: a moving staircase, a potions cellar, a boathouse on a frozen
+  lake, a clock tower. A level is ~40 lines of data plus a backdrop.
 - More glyphs: shield, summon, swap places, silence, duplicate, mirror.
 - Two-stroke glyphs for higher tiers, and combination casting (Gelo then Secato
   shatters instead of cutting).
 - A wand you choose (length, wood, core) that changes the tip's light and sound.
-- Rooms shared by link, built from a compact chamber format.
+- Rooms shared by link, built from a compact level format.
+- A hint that draws the next glyph for you after a long enough stall.
 
 ## Hallows — the autumn theme
 

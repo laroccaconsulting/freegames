@@ -1607,6 +1607,17 @@ export default {
       "desc": "Solve something no single spell can do."
     },
     {
+      "id": "journey-done",
+      "title": "Somewhere else",
+      "desc": "Finish a place beyond the practice chamber."
+    },
+    {
+      "id": "all-places",
+      "title": "Everywhere",
+      "desc": "Finish all four journeys.",
+      "goal": 4
+    },
+    {
       "id": "butterfingers",
       "title": "Butterfingers",
       "desc": "Mend the urn, then break it again.",

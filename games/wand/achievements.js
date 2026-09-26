@@ -8,5 +8,7 @@ export default [
   { id: 'streak-10', title: 'No fumbles', desc: 'Cast ten spells in a row without one fizzling.', goal: 10 },
   { id: 'casts-100', title: 'Practised', desc: 'Cast a hundred spells.', goal: 100 },
   { id: 'combination', title: 'Two spells, one problem', desc: 'Solve something no single spell can do.' },
+  { id: 'journey-done', title: 'Somewhere else', desc: 'Finish a place beyond the practice chamber.' },
+  { id: 'all-places', title: 'Everywhere', desc: 'Finish all four journeys.', goal: 4 },
   { id: 'butterfingers', title: 'Butterfingers', desc: 'Mend the urn, then break it again.', secret: true },
 ];

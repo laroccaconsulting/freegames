@@ -10,7 +10,8 @@ import { makeAchievements } from './core/achievements.js';
 import ACHIEVEMENTS from './achievements.js';
 import { SPELL_LIST, SPELLS_BY_ID, TEMPLATES } from './js/glyphs.js';
 import { prepare, recognize, fitTemplate, centroid } from './js/recognizer.js';
-import { makeWorld, castSpell, wouldAffect, tick, progress, remember, find, TASKS } from './js/scene.js';
+import { LEVELS, levelById, isUnlocked, knownSpells } from './js/levels.js';
+import { makeWorld, castSpell, wouldAffect, tick, progress, finished, currentStep, find } from './js/scene.js';
 import { View, targetAt, rankTargets, centreOf, drawRoom, drawObjects, drawWand, drawTrail, drawSigil, drawGlyph, grip, SIGIL_SECONDS } from './js/render.js';
 
 const $ = (id) => document.getElementById(id);
@@ -19,7 +20,7 @@ const settings = makeSettings(store, { sound: true, effects: true, handed: 'righ
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const ach = makeAchievements('wand', ACHIEVEMENTS);
 
-// The chamber is always night; the theme decides whether it is lit by candles
+// Every place is night; the theme decides whether it is lit by candles
 // (Hallows) or by cold blue witch-light (Classic). The newer of the player's
 // pick here and the look chosen on the games list wins — see core/hallows.js.
 const themeId = () => themeFor(settings.get('theme'), settings.get('themeAt'), 'classic');
@@ -30,9 +31,48 @@ const pickTheme = (id) => {
 
 const view = new View($('canvas'));
 const fx = new Particles();
-const prepared = prepare(TEMPLATES);
 const byId = new Map(TEMPLATES.map((t) => [t.id, t]));
-const world = makeWorld();
+
+// ---------- where we are ----------
+
+let level = levelById(store.get('level', 'chamber'));
+let world = makeWorld(level);
+let prepared = prepare(TEMPLATES);
+let done = new Set(); // steps finished in this visit to this place
+let victory = false;
+const beaten = new Set(store.get('finished', []).filter((id) => LEVELS.some((l) => l.id === id)));
+
+// Only the spells you have with you are matched against, so a glyph you have
+// not been given here simply will not take.
+const kitOf = (lvl) => (lvl.kit === 'all' ? SPELL_LIST : SPELL_LIST.filter((s) => lvl.kit.includes(s.id)));
+
+function enter(id) {
+  level = levelById(id);
+  world = makeWorld(level);
+  prepared = prepare(TEMPLATES.filter((t) => level.kit === 'all' || level.kit.includes(t.id)));
+  done = new Set();
+  // -1 means "absorb whatever is already true here without celebrating it".
+  shown = -1;
+  victory = false;
+  sigils = [];
+  trail = [];
+  ghost = null;
+  store.set('level', level.id);
+  $('readout').classList.remove('show');
+  $('place-name').textContent = level.name;
+  $('place-name').classList.add('show');
+  clearTimeout(enter.nameTimer);
+  enter.nameTimer = setTimeout(() => $('place-name').classList.remove('show'), 5000);
+  $('places').hidden = true;
+  $('victory').hidden = true;
+  closeDrawer();
+  $('hint').classList.remove('gone');
+  $('hint').innerHTML = level.kind === 'practice'
+    ? 'Drag anywhere to draw. Draw <b>across the thing you want to hit</b>.'
+    : `<b>${level.place}</b> — open <b>Steps</b> if you get stuck.`;
+  renderSteps();
+  announce(`${level.name}. ${level.blurb}`);
+}
 
 function applySettings() {
   const hallows = themeId() === 'hallows';
@@ -59,7 +99,6 @@ let idleSince = 0;
 let glow = 0;
 let ghost = null; // a spell picked from the book, traced faintly on screen
 let highlight = null; // the object the current stroke is aimed at
-let done = new Set();
 const glyphsCast = new Set(); // for the "whole spellbook" achievement
 let streak = 0; // casts in a row that did not fizzle
 let mended = false; // the urn has been whole at least once this visit
@@ -89,16 +128,21 @@ const sfx = {
     tone(ac, { freq: 190, duration: 0.18, gain: 0.06, type: 'sawtooth' });
     noiseBurst(ac, { duration: 0.16, freq: 700, q: 0.5, gain: 0.08 });
   },
-  trial() {
+  step() {
     const ac = audio();
     if (!ac) return;
     [659.25, 987.77, 1318.5].forEach((f, i) => tone(ac, { freq: f, duration: 0.45, gain: 0.07, when: i * 0.09, type: 'triangle' }));
+  },
+  win() {
+    const ac = audio();
+    if (!ac) return;
+    [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => tone(ac, { freq: f, duration: 0.6, gain: 0.08, when: i * 0.13, type: 'triangle' }));
   },
 };
 
 // ---------- input ----------
 
-const inHud = (e) => !!e.target.closest?.('.hud-top, .drawer, dialog, .toast');
+const inHud = (e) => !!e.target.closest?.('.hud-top, .drawer, .panel, dialog, .toast');
 
 function point(e) {
   const r = $('canvas').getBoundingClientRect();
@@ -108,7 +152,7 @@ function point(e) {
 addEventListener(
   'pointerdown',
   (e) => {
-    if (inHud(e) || e.button > 0) return;
+    if (inHud(e) || e.button > 0 || !$('places').hidden) return;
     e.preventDefault();
     const p = point(e);
     aim = p;
@@ -153,7 +197,7 @@ function show(name, message, fizzle = false) {
   box.classList.add('show');
   announce(`${name}. ${message}`);
   clearTimeout(show.timer);
-  show.timer = setTimeout(() => box.classList.remove('show'), 3200);
+  show.timer = setTimeout(() => box.classList.remove('show'), 4000);
 }
 
 function cast(pts) {
@@ -163,7 +207,7 @@ function cast(pts) {
   if (!result.id) {
     if (result.reason === 'short') return; // a tap, not a spell
     const near = result.near && result.score > 0.5 ? SPELLS_BY_ID.get(result.near) : null;
-    show('The spell will not take', near ? `The shape was nearly ${near.name}. Try again, a little cleaner.` : 'That shape means nothing.', true);
+    show('The spell will not take', near ? `The shape was nearly ${near.name}. Try again, a little cleaner.` : 'That shape means nothing here.', true);
     streak = 0;
     sfx.fizzle();
     if (settings.get('effects')) fx.burst(centre.x, centre.y, '#6b5f96', 'sparks', { count: 14, speed: 160 });
@@ -176,7 +220,6 @@ function cast(pts) {
   const covered = rankTargets(world, view, pts);
   const target = covered.find((o) => wouldAffect(world, s.id, o)) || covered[0] || null;
   const outcome = castSpell(world, s.id, target?.id);
-  remember(world);
 
   // The scrawl is replaced by the clean glyph, which then flies at the target.
   const aimed = outcome.hit && target ? centreOf(view, target) : null;
@@ -201,39 +244,74 @@ function cast(pts) {
   ach.at('every-glyph', glyphsCast.size);
   ach.at('streak-10', ++streak);
   if (result.score >= 0.96) ach.unlock('clean-cast');
-  // Two spells to do what neither could alone: the whole point of the game.
-  if (outcome.hit && ((s.id === 'levo' && target?.id === 'crate') || (s.id === 'levo' && target?.id === 'chest') || (s.id === 'crescito' && target?.id === 'vine'))) {
-    if (!outcome.inert) ach.unlock('combination');
-  }
   const urn = find(world, 'urn');
-  if (!urn.broken) mended = true;
-  else if (mended) ach.unlock('butterfingers');
+  if (urn && !urn.broken) mended = true;
+  else if (urn && mended) ach.unlock('butterfingers');
 
-  checkTrials();
+  checkSteps();
 }
 
-// A trial can finish a moment after the spell lands (the lantern has to fall),
-// so this runs every frame, not just on a cast. Once earned a trial stays
-// earned, even if you break the urn again afterwards.
+// A step can finish a moment after the spell lands (the lantern has to fall),
+// so this runs every frame, not just on a cast.
 let lastHit = null;
 let shown = -1;
-function checkTrials(at = lastHit) {
+function checkSteps(at = lastHit) {
   const list = progress(world);
-  for (const t of list) {
-    if (t.complete && !done.has(t.id)) {
-      done.add(t.id);
-      sfx.trial();
-      toast(`Trial done — ${t.text}`);
-      if (at && settings.get('effects') && !reducedMotion.matches) fx.burst(at.x, at.y, '#e8b04a', 'stars', { count: 40, speed: 380 });
+  for (const step of list) {
+    if (step.complete && !done.has(step.id)) {
+      done.add(step.id);
+      // The first step of a level completes as you arrive sometimes; only
+      // celebrate the ones the player actually did something for.
+      if (shown >= 0) {
+        sfx.step();
+        toast(level.kind === 'practice' ? `Trial done — ${step.text}` : `Done — ${step.text}`);
+        if (at && settings.get('effects') && !reducedMotion.matches) fx.burst(at.x, at.y, '#e8b04a', 'stars', { count: 36, speed: 360 });
+      }
     }
   }
-  if (done.size === shown) return;
-  shown = done.size;
-  $('tasks-count').textContent = String(done.size);
-  if (done.size > store.get('best', 0)) store.set('best', done.size);
-  ach.at('all-trials', done.size);
-  if (drawerOpen) renderTasks();
+  if (done.size !== shown) {
+    shown = done.size;
+    $('steps-count').textContent = String(done.size);
+    $('steps-total').textContent = String(level.steps.length);
+    if (drawerOpen) renderSteps();
+    // Two spells to do what neither could alone: the point of the game.
+    if (done.size >= 2 && level.kind === 'journey') ach.unlock('combination');
+    if (level.kind === 'practice') {
+      if (done.size > store.get('best', 0)) store.set('best', done.size);
+      ach.at('all-trials', done.size);
+    }
+  }
+  if (!victory && finished(world)) celebrate();
 }
+
+function celebrate() {
+  victory = true;
+  const first = !beaten.has(level.id);
+  beaten.add(level.id);
+  store.set('finished', [...beaten]);
+  if (level.kind === 'journey') {
+    ach.unlock('journey-done');
+    ach.at('all-places', LEVELS.filter((l) => l.kind === 'journey' && beaten.has(l.id)).length);
+  } else ach.at('all-trials', level.steps.length);
+  sfx.win();
+  if (settings.get('effects') && !reducedMotion.matches) {
+    fx.fountain(view.w, view.h, ['#e8b04a', '#ffd98a', '#fff3cf', '#c3a2ff'], 'stars', 1);
+    fx.flash = 0.5;
+  }
+  const next = nextJourney();
+  $('victory-name').textContent = level.name;
+  $('victory-line').textContent = level.kind === 'practice' ? 'Every trial in the chamber, done.' : level.done || 'The way is open.';
+  $('victory-unlocked').textContent = first && next ? `${next.name} is open to you.` : '';
+  $('victory-next').textContent = next ? `Go to ${next.name}` : 'Back to the places';
+  $('victory').hidden = false;
+  announce(`${level.name} complete.`);
+}
+
+const nextJourney = () => {
+  const journeys = LEVELS.filter((l) => l.kind === 'journey');
+  const i = journeys.findIndex((l) => l.id === level.id);
+  return i >= 0 ? journeys[i + 1] : journeys.find((l) => !beaten.has(l.id)) || journeys[0];
+};
 
 // ---------- the loop ----------
 
@@ -245,7 +323,7 @@ function frame(ts) {
   view.resize();
   tick(world, dt);
   fx.step(dt);
-  checkTrials();
+  checkSteps();
 
   // The tip chases the finger; with nothing to chase it drifts and breathes.
   if (!stroke && now - idleSince > 1.2) {
@@ -262,6 +340,7 @@ function frame(ts) {
   sigils = sigils.filter((s) => now - s.born < SIGIL_SECONDS);
 
   const ctx = view.ctx;
+  const palette = view.paletteFor(world);
   drawRoom(ctx, view, world);
   drawObjects(ctx, view, world, now, highlight);
 
@@ -272,10 +351,10 @@ function frame(ts) {
     ctx.restore();
   }
 
-  drawTrail(ctx, trail, now, view.palette.trail, { width: 8 });
+  drawTrail(ctx, trail, now, palette.trail, { width: 8 });
   for (const s of sigils) drawSigil(ctx, s, now - s.born);
   if (settings.get('effects')) fx.draw(ctx, { additive: true, width: view.w, height: view.h });
-  drawWand(ctx, view, tip, glow, view.palette.tip, now);
+  drawWand(ctx, view, tip, glow, palette.tip, now);
 
   requestAnimationFrame(frame);
 }
@@ -291,7 +370,8 @@ function restPoint() {
 // ---------- the spellbook ----------
 
 function renderBook() {
-  const cards = SPELL_LIST.map((s) => {
+  const kit = kitOf(level);
+  const cards = kit.map((s) => {
     const canvas = el('canvas', { width: 148, height: 148, 'aria-hidden': 'true' });
     const card = el(
       'button',
@@ -327,47 +407,121 @@ function renderBook() {
   };
   animate();
 
+  const known = knownSpells([...beaten]).size;
   openDialog({
-    title: 'Spellbook',
+    title: level.kit === 'all' ? 'Spellbook' : `What you brought to ${level.name}`,
     className: 'wide',
     body: el(
       'div',
       {},
       el('p', { class: 'muted small', style: 'margin:0 0 12px' }, 'Trace a glyph anywhere on screen, across the thing you mean to hit. The dot is where the stroke starts; the arrow is where it ends. Tap a spell to trace it as a ghost.'),
       el('div', { class: 'book' }, cards),
+      level.kit === 'all' ? null : el('p', { class: 'muted small', style: 'margin:12px 0 0' }, `${kit.length} of the ${SPELL_LIST.length} glyphs, chosen for this place. You have met ${known} so far.`),
     ),
   }).then(() => cancelAnimationFrame(raf));
 }
 
-// ---------- trials ----------
+// ---------- the steps ----------
 
 let drawerOpen = false;
-function renderTasks() {
-  const list = progress(world).map((t) => ({ ...t, complete: t.complete || done.has(t.id) }));
-  const best = store.get('best', 0);
-  $('tasks-best').textContent = best ? `Best so far: ${best} of ${TASKS.length}.` : '';
-  $('task-list').replaceChildren(
-    ...list.map((t) =>
+function renderSteps() {
+  const list = progress(world);
+  $('steps-title').textContent = level.kind === 'practice' ? 'Trials' : 'Steps';
+  $('steps-note').textContent =
+    level.kind === 'practice'
+      ? 'Any order you like. Most can be solved more than one way.'
+      : 'One thing at a time. The next step shows itself once this one is done.';
+  const items = [];
+  let hiddenCount = 0;
+  for (const s of list) {
+    if (!s.revealed) {
+      hiddenCount++;
+      continue;
+    }
+    items.push(
       el(
         'li',
-        { class: t.complete ? 'done' : '' },
-        el('i', {}, t.complete ? '✓' : '○'),
-        el('span', {}, t.text, el('small', {}, t.hint)),
+        { class: s.complete ? 'done' : 'now' },
+        el('i', {}, s.complete ? '✓' : '○'),
+        el('span', {}, s.text, s.complete ? null : el('small', {}, s.hint)),
       ),
-    ),
-  );
+    );
+  }
+  if (hiddenCount) items.push(el('li', { class: 'later' }, el('i', {}, '·'), el('span', {}, `${hiddenCount} more to come`)));
+  $('step-list').replaceChildren(...items);
+  $('steps-count').textContent = String(list.filter((s) => s.complete).length);
+  $('steps-total').textContent = String(level.steps.length);
 }
 
-$('tasks-btn').addEventListener('click', () => {
-  drawerOpen = !drawerOpen;
-  $('tasks-drawer').hidden = !drawerOpen;
-  if (drawerOpen) renderTasks();
-});
-$('tasks-close').addEventListener('click', () => {
+const closeDrawer = () => {
   drawerOpen = false;
-  $('tasks-drawer').hidden = true;
+  $('steps-drawer').hidden = true;
+};
+
+$('steps-btn').addEventListener('click', () => {
+  drawerOpen = !drawerOpen;
+  $('steps-drawer').hidden = !drawerOpen;
+  if (drawerOpen) renderSteps();
 });
+$('steps-close').addEventListener('click', closeDrawer);
 $('book-btn').addEventListener('click', renderBook);
+
+// ---------- the places ----------
+
+function renderPlaces() {
+  const cards = LEVELS.map((l) => {
+    const open = isUnlocked(l, [...beaten]);
+    const beat = beaten.has(l.id);
+    const canvas = el('canvas', { width: 220, height: 132, class: 'place-art', 'aria-hidden': 'true' });
+    const card = el(
+      'button',
+      {
+        class: `place${open ? '' : ' locked'}${beat ? ' beaten' : ''}`,
+        disabled: open ? null : 'disabled',
+        onclick: () => open && enter(l.id),
+      },
+      canvas,
+      el(
+        'span',
+        { class: 'place-text' },
+        el('strong', {}, l.name),
+        el('em', {}, open ? l.blurb : 'Finish the place before this one to come here.'),
+        el('small', {}, open ? `${l.steps.length} ${l.kind === 'practice' ? 'trials' : 'steps'} · ${l.kit === 'all' ? 'every glyph' : `${l.kit.length} glyphs`}${beat ? ' · done' : ''}` : 'Locked'),
+      ),
+    );
+    card.art = { canvas, level: l, open };
+    return card;
+  });
+  // Each card shows its own room, drawn by the real renderer at thumbnail size.
+  for (const card of cards) {
+    const { canvas, level: l, open } = card.art;
+    const mini = new View(canvas);
+    mini.setHallows(themeId() === 'hallows');
+    const w = makeWorld(l);
+    tick(w, 0.2);
+    drawRoom(mini.ctx, mini, w);
+    drawObjects(mini.ctx, mini, w, 0.3, null);
+    if (!open) {
+      mini.ctx.fillStyle = 'rgba(8, 5, 16, 0.72)';
+      mini.ctx.fillRect(0, 0, mini.w, mini.h);
+    }
+  }
+  $('place-list').replaceChildren(...cards);
+  $('places-known').textContent = `${knownSpells([...beaten]).size} of ${SPELL_LIST.length} glyphs known`;
+  $('places').hidden = false;
+}
+
+$('places-btn').addEventListener('click', renderPlaces);
+$('places-close').addEventListener('click', () => ($('places').hidden = true));
+$('victory-next').addEventListener('click', () => {
+  const next = nextJourney();
+  if (next && isUnlocked(next, [...beaten])) enter(next.id);
+  else {
+    $('victory').hidden = true;
+    renderPlaces();
+  }
+});
+$('victory-stay').addEventListener('click', () => ($('victory').hidden = true));
 
 $('settings-btn').addEventListener('click', () => {
   openDialog({
@@ -391,27 +545,46 @@ $('settings-btn').addEventListener('click', () => {
       toggle('Effects', settings.get('effects'), (v) => settings.set('effects', v)),
       toggle('Ghost glyphs', settings.get('ghosts'), (v) => settings.set('ghosts', v), 'Tapping a spell in the book traces it faintly on screen.'),
     ),
-    actions: [{ label: 'Start over', value: 'reset' }, { label: 'Done', primary: true, value: null }],
+    actions: [
+      { label: 'Start this place again', value: 'restart' },
+      { label: 'Done', primary: true, value: null },
+    ],
   }).then((v) => {
-    if (v === 'reset') location.reload();
+    if (v === 'restart') enter(level.id);
   });
 });
 
 // ---------- go ----------
 
-// The chamber always starts fresh; only the best run so far is remembered.
-$('tasks-count').textContent = '0';
-
+enter(level.id);
 addEventListener('resize', () => view.resize());
 addHubLink();
 requestAnimationFrame((ts) => {
   last = ts;
   frame(ts);
 });
+if (!store.get('visited', false)) {
+  store.set('visited', true);
+  renderPlaces();
+}
 
 registerServiceWorker({
   onUpdateReady: () => toast('A new version is ready', { action: { label: 'Reload', onClick: () => location.reload() } }),
 });
 
 // Reachable from browser tests.
-$('canvas').game = { view, world, prepared, cast, find, aimTest: (pts) => targetAt(world, view, pts)?.id ?? null };
+$('canvas').game = {
+  view,
+  get world() {
+    return world;
+  },
+  get prepared() {
+    return prepared;
+  },
+  cast,
+  find,
+  enter,
+  levels: LEVELS,
+  step: () => currentStep(world),
+  aimTest: (pts) => targetAt(world, view, pts)?.id ?? null,
+};
