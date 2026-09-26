@@ -156,6 +156,7 @@ Collection (MIT) is a good reference for generators and rules.
 | **Chess vs. computer** | Low priority: lichess already does this free and well. Stockfish is GPL |
 | **Jigsaw** | Public-domain art from Met / Rijksmuseum / Art Institute of Chicago open access |
 | **Backgammon** | ✅ Built — `games/backgammon/`. Computer at three levels, pass-and-play, hits, doubles, bear-off, gammon/backgammon scoring |
+| **Wand** | 🚧 Mechanics built — `games/wand/`. Trace a glyph in the air and the spell fires; 18 glyphs, a first-person chamber, ten trials. The puzzle campaign is the next step |
 | **Hearts** ✅, **Spades** ✅, Dominoes, Checkers ✅ | Hearts — `games/hearts/`: vs three computer players, passing rotation, shooting the moon, game to 100. Spades — `games/spades/`: with a computer partner, bidding (nil, suggested bid), trumps, bags, game to 500. Dominoes still to do |
 | **Nonograms** | ✅ Built — `games/nonograms/`: blobby seeded pictures kept only when line-by-line solving finishes them (so unique, no guessing); 5×5, 10×10, 15×15 and a daily 10×10; drag to fill or cross, finished lines cross themselves, hints name the deciding line. Never call it "Picross" (a trademark) |
 | **Dice poker** (Yahtzee-style) | Must *not* be called Yahtzee |
@@ -439,6 +440,53 @@ The template (`node scripts/new-game.mjs`) starts with all of these, and
 
 - Klotski-style blocks (2×2 key piece), box pushing, picture tiles from public-domain art
 - Unblock par above 22 needs a faster generator (bitboards) or pre-made packs
+## Wand — feature list (mechanics build)
+
+First-person spellcasting. The wand is anchored below the bottom edge of the
+screen and its tip follows your finger, so dragging *is* waving the wand. Let
+go and the shape you drew is matched against the spellbook; on a hit the
+scrawl is replaced by the clean glyph, which flares and flies at whatever you
+drew over.
+
+- **18 glyphs, one stroke each** (`js/glyphs.js`), built from maths rather than
+  image files. The shape follows the meaning, so they are guessable: wind a
+  spiral inwards to pull (Attraho) and outwards to push (Repello); a circle
+  clockwise for light (Clario) and the same circle unwound to put it out
+  (Tenebro); a lightning zigzag to burn, a wave for water, a pentagram to
+  freeze, a key-turn to unlock, a figure eight to mend, an eye to reveal.
+- **Nothing from any book or film.** The names are our own dog-Latin and the
+  shapes are our own drawings. Only the *idea* — a wand gesture per spell — is
+  shared with the theme-park wands, and that is not ownable.
+- **The recognizer** (`js/recognizer.js`) is in the spirit of the $1 unistroke
+  recognizer with three changes for spells: direction matters (no rotation onto
+  an indicative angle, only a ±18° tilt allowance), scaling is uniform so a
+  straight slash stays straight, and closed loops may be started anywhere.
+  Tested at 0 miscasts over 1080 simulated shaky strokes; near-misses fizzle
+  and name the glyph you were close to, rather than firing the wrong spell.
+- **Aim by drawing over things.** The target is scored against the whole stroke
+  and each object's own size, so sweeping across a darting pixie catches it.
+- **A chamber that answers back** (`js/scene.js`): candle, brazier, crate,
+  locked chest, cracked urn, potted vine, pixie, hanging lantern on a rope,
+  basin, hidden wall rune, weather vane. Pure rules, no DOM, unit-tested.
+- **Spells are building blocks, not buttons.** The crate is too heavy to lift
+  until Minuito shrinks it; the chest needs Reserato and *then* Levo; the vine
+  only grows in soil Unda has watered; a mended urn dropped from a height
+  breaks again; the rope can be cut or burned. Ten trials track the
+  combinations, and each has more than one solution.
+- Spellbook with every glyph drawing itself so the direction to trace is
+  obvious; tap one to trace it on screen as a ghost.
+- Hallows theme throughout, left- or right-handed wand, sounds, effects and
+  reduced-motion respected.
+
+### Ideas for later
+
+- The real point: a puzzle campaign where spells are unlocked one at a time and
+  rooms are solved by combining them (the `tier` field on each spell is the hook).
+- More glyphs: shield, summon, swap places, silence, duplicate, mirror.
+- Two-stroke glyphs for higher tiers, and combination casting (Gelo then Secato
+  shatters instead of cutting).
+- A wand you choose (length, wood, core) that changes the tip's light and sound.
+- Rooms shared by link, built from a compact chamber format.
 
 ## Hallows — the autumn theme
 

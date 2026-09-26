@@ -1,55 +1,26 @@
 // Offline support for the hub page only. Each game has its own service
 // worker for its own folder, so requests outside FILES are left alone.
 // VERSION and FILES are rewritten by scripts/build-sw.mjs.
-const VERSION = 'ec455acb7cf4';
+const VERSION = '31f52744b58c';
 const FILES = [
   './',
-  './achievements.js',
-  './arcade.js',
   './backgammon.svg',
   './blocks.svg',
-  './boxes.svg',
-  './bricks.svg',
-  './checkers.svg',
-  './clusters.svg',
-  './codebreaker.svg',
   './corridors.svg',
-  './dice.svg',
-  './drift.svg',
-  './flap.svg',
-  './fleet.svg',
-  './flood.svg',
-  './four.svg',
   './gems.svg',
   './hallows.js',
-  './hearts.svg',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon.svg',
   './icons/maskable-512.png',
   './index.html',
-  './logic.svg',
-  './mahjong.svg',
-  './mancala.svg',
   './manifest.webmanifest',
-  './mines.svg',
-  './morris.svg',
-  './nonograms.svg',
-  './peaks.svg',
-  './pipes.svg',
   './pour.svg',
   './pulse.svg',
-  './rally.svg',
-  './reversi.svg',
-  './slide.svg',
-  './snake.svg',
   './solitaire.svg',
-  './spades.svg',
-  './sudoku.svg',
   './trio.svg',
-  './trophies.js',
-  './words.svg'
+  './wand.svg'
 ];
 
 const PREFIX = `freegames-hub:${self.registration.scope}:`;

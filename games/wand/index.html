@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <title>Wand — trace a spell, cast it. Free, no ads</title>
+    <meta name="description" content="Hold the wand, trace a shape in the air and the spell fires. Eighteen glyphs: pull, push, lift, light, burn, freeze, unlock, mend. A first-person spellcasting sandbox. Free forever, no ads, no tracking, works offline." />
+    <meta name="theme-color" content="#120c22" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Wand" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:title" content="Wand — trace a spell, cast it" />
+    <meta property="og:description" content="Draw the shape, the spell fires. Eighteen glyphs in a first-person chamber. No ads, no tracking, works offline." />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="core/base.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <canvas id="canvas" aria-hidden="true"></canvas>
+
+    <header class="hud-top topbar">
+      <button class="hud-btn" id="book-btn" aria-label="Spellbook">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.2A2.2 2.2 0 0 1 6.2 3H19v15H6.2A2.2 2.2 0 0 0 4 20.2z" /><path d="M4 20.2A2.2 2.2 0 0 1 6.2 18H19v3H6.2A2.2 2.2 0 0 1 4 20.2z" /><path d="M8.5 7.5h6M8.5 11h4" /></svg>
+        <span>Spells</span>
+      </button>
+      <button class="hud-btn" id="tasks-btn" aria-label="Trials">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5l1.8 1.8L9 5M4 13l1.8 1.8L9 11.5M4 19.5l1.8 1.8L9 18M12 7h8M12 13.5h8M12 20h8" /></svg>
+        <span><b id="tasks-count">0</b>/10</span>
+      </button>
+      <span class="spacer"></span>
+      <button class="hud-btn" id="settings-btn" aria-label="Settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2.2" /><circle cx="9" cy="17" r="2.2" /></svg>
+      </button>
+    </header>
+
+    <!-- What just happened -->
+    <div class="readout" id="readout" aria-hidden="true">
+      <b id="spell-name"></b>
+      <span id="spell-msg"></span>
+    </div>
+
+    <!-- Trial list, slides up from the bottom -->
+    <section class="drawer" id="tasks-drawer" hidden aria-label="Trials">
+      <h2>Trials</h2>
+      <ul id="task-list"></ul>
+      <p class="muted small" id="tasks-best"></p>
+      <p class="muted small">Every trial can be solved more than one way. Tap a spell in the book to trace it as a ghost.</p>
+      <button class="btn" id="tasks-close">Close</button>
+    </section>
+
+    <p class="hint" id="hint" aria-hidden="true">Drag anywhere to draw. Draw <b>across the thing you want to hit</b>.</p>
+    <p class="visually-hidden" id="announce" aria-live="polite"></p>
+    <noscript><p style="padding: 24px; color: #fff">Wand needs JavaScript to run.</p></noscript>
+  </body>
+</html>

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#2c1b4e" />
+      <stop offset="0.55" stop-color="#170e30" />
+      <stop offset="1" stop-color="#090615" />
+    </linearGradient>
+    <linearGradient id="wood" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#3b2a1c" />
+      <stop offset="0.6" stop-color="#7a5735" />
+      <stop offset="1" stop-color="#c49a66" />
+    </linearGradient>
+    <radialGradient id="spark">
+      <stop offset="0" stop-color="#fffaf0" />
+      <stop offset="0.3" stop-color="#ffd98a" stop-opacity="0.85" />
+      <stop offset="1" stop-color="#ffb347" stop-opacity="0" />
+    </radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="9" /></filter>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#bg)" />
+
+  <!-- a scatter of stars -->
+  <g fill="#f4e8cc" opacity="0.5">
+    <circle cx="74" cy="82" r="3" />
+    <circle cx="418" cy="58" r="2.4" />
+    <circle cx="452" cy="196" r="3.2" />
+    <circle cx="58" cy="286" r="2.2" />
+    <circle cx="146" cy="44" r="2" />
+    <circle cx="372" cy="396" r="2.6" />
+  </g>
+
+  <!-- the glyph traced in the air: a spiral, wound inwards -->
+  <g filter="url(#glow)" opacity="0.55">
+    <path d="M340 86 A130 130 0 1 0 356 300 A86 86 0 1 1 300 172 A44 44 0 1 0 288 234"
+      fill="none" stroke="#e8b04a" stroke-width="26" stroke-linecap="round" />
+  </g>
+  <path d="M340 86 A130 130 0 1 0 356 300 A86 86 0 1 1 300 172 A44 44 0 1 0 288 234"
+    fill="none" stroke="#ffe6a8" stroke-width="13" stroke-linecap="round" />
+
+  <!-- the wand, rising from the bottom right corner -->
+  <path d="M470 496 L214 226" fill="none" stroke="#1a1024" stroke-width="40" stroke-linecap="round" opacity="0.6" />
+  <path d="M470 496 L214 226" fill="none" stroke="url(#wood)" stroke-width="28" stroke-linecap="round" />
+  <path d="M452 486 L232 254" fill="none" stroke="#ffe2b4" stroke-width="5" stroke-linecap="round" opacity="0.32" />
+  <circle cx="428" cy="452" r="17" fill="#2b1e10" opacity="0.65" />
+
+  <!-- the light at the tip -->
+  <circle cx="214" cy="226" r="92" fill="url(#spark)" />
+  <circle cx="214" cy="226" r="17" fill="#fffdf6" />
+</svg>
