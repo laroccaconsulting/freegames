@@ -1,7 +1,7 @@
 import { makeStore } from './core/storage.js';
 import { makeSettings } from './core/settings.js';
 import { themeFor, onLookChange } from './core/hallows.js';
-import { applyTheme, openDialog, toggle, segmented, el, toast, offerHallows } from './core/ui.js';
+import { applyTheme, openDialog, toggle, segmented, el, toast, hideToast, offerHallows } from './core/ui.js';
 import { setSoundEnabled } from './core/sound.js';
 import { addHubLink } from './core/hub.js';
 import { registerServiceWorker } from './core/pwa.js';
@@ -79,6 +79,7 @@ const announce = (text) => ($('announce').textContent = text);
 // ---------- Background work (puzzle generation and hints) ----------
 
 let worker = null;
+let lookahead = { key: null, result: null };
 const pending = new Map();
 let nextId = 1;
 
@@ -178,6 +179,7 @@ function begin() {
   $('challenge').hidden = !c;
   if (c) $('challenge').replaceChildren(icon('flag', { size: 16 }), ` Beat ${c} moves · par is ${game.par}`);
   announce(`${titleText()}. ${game.colors} colours, par ${game.par}.`);
+  checkAhead();
 }
 
 const save = () => game && store.set('game', game);
@@ -280,8 +282,28 @@ async function move(from, to, n) {
   });
   if (current !== game) return;
   if (solved && !game.done) win();
-  else if (!solved && !renderer.busy && !hasLegalMove(game.tubes))
-    toast('No moves left', { action: { label: 'Undo', onClick: undo } });
+  else if (!solved) checkAhead();
+}
+
+// After each move, look ahead in the worker and say so at once if the puzzle
+// can no longer be finished, rather than waiting for the player to ask.
+// A found solution is kept so Hint can answer without solving again.
+const positionKey = () => `${game.tubes.length}|${game.tubes.map((t) => t.join(',')).join('/')}`;
+const notice = (message) => toast(message, { position: 'top', duration: 0, action: { label: 'Undo', onClick: undo } });
+
+async function checkAhead() {
+  hideToast();
+  if (!game || game.done || game.solving) return;
+  if (!hasLegalMove(game.tubes)) return notice('No moves left');
+  // Without a worker the solver would block the page, so leave it to Hint.
+  if (worker === false) return;
+  const current = game;
+  const key = positionKey();
+  lookahead = { key, result: null };
+  const result = await run('solve', { tubes: game.tubes });
+  if (current !== game || lookahead.key !== key || positionKey() !== key) return;
+  lookahead.result = result;
+  if (!result.moves && !result.gaveUp && !game.done && !game.solving) notice('No way to finish from here');
 }
 
 function undo() {
@@ -299,6 +321,7 @@ function undo() {
   updateHud();
   save();
   announce(`Undid a move. ${game.history.length} moves.`);
+  checkAhead();
 }
 
 async function restart() {
@@ -321,7 +344,8 @@ async function hint() {
   if (!game || game.done || game.solving) return;
   $('hint-btn').disabled = true;
   const current = game;
-  const result = await run('solve', { tubes: game.tubes });
+  const key = positionKey();
+  const result = lookahead.key === key && lookahead.result ? lookahead.result : await run('solve', { tubes: game.tubes });
   updateHud();
   if (current !== game) return;
   if (result.moves?.length) {
@@ -332,8 +356,8 @@ async function hint() {
     save();
     sfx.hint();
     announce(`Hint: pour tube ${from + 1} into tube ${to + 1}.`);
-  } else if (result.gaveUp) toast('Too tangled to see ahead — try a different move');
-  else toast('No way to finish from here', { action: { label: 'Undo', onClick: undo } });
+  } else if (result.gaveUp) toast('Too tangled to see ahead — try a different move', { position: 'top' });
+  else notice('No way to finish from here');
 }
 
 async function addTube() {
@@ -355,6 +379,7 @@ async function addTube() {
   renderer.addTube();
   updateHud();
   save();
+  checkAhead();
 }
 
 // ---------- Winning ----------
