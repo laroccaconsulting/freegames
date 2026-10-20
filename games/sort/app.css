@@ -213,6 +213,19 @@ body[data-skin='calm'] .blob {
   display: none;
 }
 
+/* Mono: plain white and black for grayscale and e-paper screens. */
+body[data-skin='mono'] {
+  --ink: #000000;
+  --ink-muted: rgba(0, 0, 0, 0.7);
+  --bar: #ffffff;
+  --bar-border: rgba(0, 0, 0, 0.5);
+  --pop: #000000;
+  background: #f7f7f7;
+}
+body[data-skin='mono'] .blob {
+  display: none;
+}
+
 body.no-effects .blob,
 body.no-effects .floor,
 body.no-effects .motes {
