@@ -220,7 +220,7 @@ body[data-skin='mono'] {
   --bar: #ffffff;
   --bar-border: rgba(0, 0, 0, 0.5);
   --pop: #000000;
-  background: #f7f7f7;
+  background: #ffffff;
 }
 body[data-skin='mono'] .blob {
   display: none;

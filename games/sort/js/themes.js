@@ -92,10 +92,11 @@ export const THEMES = [
     name: 'Mono',
     dark: false,
     // For grayscale and e-paper screens: every liquid has its own pattern as
-    // well as its own shade, so nothing depends on colour.
-    colors: ['#1c1c1c', '#f4f4f4', '#8c8c8c', '#cfcfcf', '#4d4d4d', '#e2e2e2', '#6e6e6e', '#b4b4b4', '#2e2e2e', '#ededed', '#a0a0a0', '#5c5c5c'],
-    patterns: ['plain', 'plain', 'stripes', 'dots', 'vstripes', 'checks', 'hatch', 'zigzag', 'bigdots', 'backstripes', 'grid', 'waves'],
-    names: ['black', 'white', 'grey stripes', 'dotted', 'dark tall stripes', 'checked', 'cross-hatched', 'zigzag', 'big dots', 'back stripes', 'grid', 'wavy'],
+    // well as its own shade, so nothing depends on colour. No liquid is lighter
+    // than mid-light grey, so none fades into a grey e-paper background.
+    colors: ['#1c1c1c', '#c4c4c4', '#8c8c8c', '#bababa', '#4d4d4d', '#c8c8c8', '#6e6e6e', '#a8a8a8', '#2e2e2e', '#c0c0c0', '#9a9a9a', '#5c5c5c'],
+    patterns: ['plain', 'checks', 'stripes', 'dots', 'vstripes', 'rings', 'hatch', 'zigzag', 'bigdots', 'backstripes', 'grid', 'waves'],
+    names: ['black', 'checked', 'grey stripes', 'dotted', 'dark tall stripes', 'ringed', 'cross-hatched', 'zigzag', 'big dots', 'back stripes', 'grid', 'wavy'],
     glass: { fill: 'rgba(255,255,255,0.6)', edge: 'rgba(0,0,0,0.8)', rim: 'rgba(0,0,0,0.85)', shine: 0.15, shade: 0.08, glow: 0 },
     bubbles: false,
     additive: false,
