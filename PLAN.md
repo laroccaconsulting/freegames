@@ -81,6 +81,18 @@ Themes are plug-ins (see `games/sort/js/themes.js`).
 
 ## Roadmap
 
+### Next up
+
+The short list for the next sessions. Details are in the waves below.
+
+- New games: **Number Link**, **Slitherlink** and **Nurikabe** (Logic modes),
+  box pushing and Klotski-style blocks (Slide modes), **9×9 Go**, **Cribbage**,
+  **Gin Rummy**, **Dominoes**, Fill-in and the 5×5 mini crossword (Words)
+- **Seasons**: winter, spring and summer looks alongside Hallows (see "Seasons (planned)")
+- Touch-ups: redraw the rough Nonograms pictures (Flower, Watermelon, Glasses,
+  Bicycle, Rose, Saturn, Hedgehog; keep their numbers), Word Search custom lists
+  shared by link, a chain-rule lesson in Dots and Boxes
+
 ### Wave 1 — Flagships (own domains)
 
 | Game | Scope | Notes |
@@ -298,6 +310,8 @@ The template (`node scripts/new-game.mjs`) starts with all of these, and
   (in a Web Worker) proves each level solvable and sets par = fewest pours
 - Daily puzzle (same for everyone), streaks, share line + link with your score as a challenge
 - Unlimited undo, restart, hints from the solver (💡), one free extra tube (🧪)
+- Dead-end warning: after every move the worker solves ahead; if the puzzle can no
+  longer be finished, a notice under the top bar says so (with Undo) without pressing Hint
 - Canvas renderer: liquid stays level as tubes tip, pour stream, splashes, bubbles,
   stoppers, combo chimes that climb, win marquee + jackpot fountain, slot-reel results
 - Themes as plug-ins: Neon, Aurora, Sunny, Calm (colour-blind safe, symbols on)
