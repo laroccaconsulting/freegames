@@ -158,7 +158,7 @@ Collection (MIT) is a good reference for generators and rules.
 | **Backgammon** | ✅ Built — `games/backgammon/`. Computer at three levels, pass-and-play, hits, doubles, bear-off, gammon/backgammon scoring |
 | **Wand** | ✅ Built — `games/wand/`. Trace a glyph in the air and the spell fires; 18 glyphs, five places (a practice chamber and four sequenced puzzle rooms), spells unlocked place by place |
 | **Hearts** ✅, **Spades** ✅, Dominoes, Checkers ✅ | Hearts — `games/hearts/`: vs three computer players, passing rotation, shooting the moon, game to 100. Spades — `games/spades/`: with a computer partner, bidding (nil, suggested bid), trumps, bags, game to 500. Dominoes still to do |
-| **Nonograms** | ✅ Built — `games/nonograms/`: blobby seeded pictures kept only when line-by-line solving finishes them (so unique, no guessing); 5×5, 10×10, 15×15 and a daily 10×10; drag to fill or cross, finished lines cross themselves, hints name the deciding line. Never call it "Picross" (a trademark) |
+| **Nonograms** | ✅ Built — `games/nonograms/`: blobby seeded pictures kept only when line-by-line solving finishes them (so unique, no guessing); 5×5, 10×10, 15×15 and a daily 10×10; drag to fill or cross, finished lines cross themselves, hints name the deciding line. **Pictures**: a series of 100 hand-drawn puzzles (`js/pictures.js`, 5×5 → 15×15, the same for everyone), each checked to solve line by line; names stay hidden until solved, a gallery fills in as you go, milestone achievements at 1/10/25/50/100. Add new pictures only at the end (progress is saved by number). Never call it "Picross" (a trademark) |
 | **Dice poker** (Yahtzee-style) | Must *not* be called Yahtzee |
 
 ### Avoid

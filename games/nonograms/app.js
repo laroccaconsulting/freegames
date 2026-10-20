@@ -10,6 +10,7 @@ import { icon, withIcon, medal } from './core/icons.js';
 import { makeAchievements } from './core/achievements.js';
 import ACHIEVEMENTS from './achievements.js';
 import * as N from './js/nonogram.js';
+import { PICTURES } from './js/pictures.js';
 
 const LAUNCH_DAY = '2026-09-25';
 const LABELS = { small: '5×5', medium: '10×10', large: '15×15' };
@@ -54,22 +55,36 @@ const sfx = {
 
 // ---------- Puzzles ----------
 
-// spec: { size, daily } or { size, n }
+// spec: { size, daily }, { size, n }, or { pic } for the picture series
 let spec = null;
 let puzzle = null;
 let play = null; // { cells: [1 | 0 | -1], history, hints, checks, time, done }
 let tool = 'fill';
 let clock = null;
 
-const specId = (s) => `${s.size}:${s.daily ? `d${s.daily}` : `n${s.n}`}`;
+const specId = (s) => (s.pic != null ? `pic:${s.pic}` : `${s.size}:${s.daily ? `d${s.daily}` : `n${s.n}`}`);
 const seedOf = (s) => (s.daily ? dailySeed('nonograms', s.daily) : hashSeed(`nonograms-${s.size}:${s.n}`));
-const titleOf = (s) => (s.daily ? `Daily #${dailyNumber(s.daily, LAUNCH_DAY)}` : `${LABELS[s.size]} #${s.n}`);
+// Pictures keep their name a secret until they're solved.
+const drawn = () => store.get('pictures', {});
+const titleOf = (s) => (s.pic != null ? (drawn()[s.pic] ? PICTURES[s.pic].name : `Picture ${s.pic + 1}`) : s.daily ? `Daily #${dailyNumber(s.daily, LAUNCH_DAY)}` : `${LABELS[s.size]} #${s.n}`);
+const SIZE_OF = { 5: 'small', 10: 'medium', 15: 'large' };
+const nextPicture = (from = 0) => {
+  const done = drawn();
+  for (let k = 0; k < PICTURES.length; k++) {
+    const j = (from + k) % PICTURES.length;
+    if (!done[j]) return j;
+  }
+  return -1;
+};
 const today = () => dateKey();
 
 function open(next) {
   spec = { size: 'medium', ...next };
+  if (spec.pic != null) {
+    puzzle = N.fromPicture(PICTURES[spec.pic].rows);
+    spec.size = SIZE_OF[puzzle.w] || 'medium';
+  } else puzzle = N.generate(seedOf(spec), spec.size);
   store.set('last', spec);
-  puzzle = N.generate(seedOf(spec), spec.size);
   const saved = store.get(`p:${specId(spec)}`);
   play = { cells: new Array(puzzle.w * puzzle.h).fill(0), history: [], hints: 0, checks: 0, time: 0, done: false, ...saved };
   build();
@@ -241,7 +256,7 @@ function paint() {
   $('check-btn').disabled = play.done;
   const filled = play.cells.filter((v) => v === 1).length;
   const total = puzzle.solution.filter(Boolean).length;
-  $('subtitle').textContent = `${LABELS[spec.size]} · ${filled}/${total} filled${spec.daily ? streakText() : ''}`;
+  $('subtitle').textContent = `${spec.pic != null && drawn()[spec.pic] ? `#${spec.pic + 1} · ` : ''}${LABELS[spec.size]} · ${filled}/${total} filled${spec.daily ? streakText() : ''}`;
 }
 const streakText = () => {
   const s = dailyStreak(store.get('daily', {}), today());
@@ -330,6 +345,20 @@ function finish() {
 
   ach.unlock('first');
   ach.add('solved-50');
+  let revealed = null;
+  if (spec.pic != null) {
+    const done = drawn();
+    if (!done[spec.pic]) {
+      store.set('pictures', { ...done, [spec.pic]: Date.now() });
+      revealed = PICTURES[spec.pic].name;
+    }
+    const count = Object.keys(drawn()).length;
+    ach.unlock('picture-1');
+    for (const id of ['pictures-10', 'pictures-25', 'pictures-50', 'pictures-100']) ach.at(id, count);
+    if (PICTURES.every((pic, k) => pic.rows.length !== 15 || drawn()[k])) ach.unlock('pictures-big');
+    $('title').textContent = titleOf(spec);
+    paint();
+  }
   if (spec.size === 'large') ach.unlock('large');
   if (!play.hints && spec.size !== 'small') ach.unlock('clean');
   if (spec.size === 'medium' && play.time < 300) ach.unlock('fast');
@@ -345,27 +374,35 @@ function finish() {
   if (!play.hints && (!s.best || play.time < s.best)) s.best = Math.round(play.time);
   store.set('stats', stats);
   const clean = !play.hints;
-  const text = `Nonograms · ${titleOf(spec)} ${clean ? '💎' : '💡'}\nSolved in ${formatTime(play.time)}${play.hints ? ` with ${play.hints} hint${play.hints > 1 ? 's' : ''}` : ''}`;
-  const url = location.origin + location.pathname + buildHash(spec.daily ? { d: spec.daily } : { s: spec.size, n: spec.n });
+  const text = `Nonograms · ${spec.pic != null ? `Picture ${spec.pic + 1}` : titleOf(spec)} ${clean ? '💎' : '💡'}\nSolved in ${formatTime(play.time)}${play.hints ? ` with ${play.hints} hint${play.hints > 1 ? 's' : ''}` : ''}`;
+  const url = location.origin + location.pathname + buildHash(spec.pic != null ? { p: spec.pic + 1 } : spec.daily ? { d: spec.daily } : { s: spec.size, n: spec.n });
+  const picture = spec.pic != null;
+  const nextPic = picture ? nextPicture(spec.pic + 1) : -1;
   setTimeout(
     () =>
       openDialog({
-        title: 'Solved!',
+        title: picture ? `It’s ${article(PICTURES[spec.pic].name)}!` : 'Solved!',
         className: 'results',
         body: el(
           'div',
           {},
-          el('div', { class: 'stamp show' }, medal(clean ? 'diamond' : 'check')),
+          picture ? el('div', { class: 'reveal' }, thumb(spec.pic, 140)) : el('div', { class: 'stamp show' }, medal(clean ? 'diamond' : 'check')),
+          picture && el('p', { class: 'result-note' }, revealed ? `Picture ${spec.pic + 1} of ${PICTURES.length} added to your gallery (${Object.keys(drawn()).length} drawn)` : `Picture ${spec.pic + 1} of ${PICTURES.length}`),
           el('p', { class: 'result-note' }, `Time: ${formatTime(play.time)}`),
           el('p', { class: 'result-note' }, play.hints ? `Hints: ${play.hints}` : 'No hints'),
           spec.daily && el('p', { class: 'result-note' }, icon('flame', { size: 18 }), `${dailyStreak(store.get('daily', {}), today())}-day streak`),
           el('button', { class: 'btn share-btn', onclick: async () => (await shareText(text, url)) === 'copied' && toast('Result copied — paste it anywhere') }, icon('share'), 'Share result'),
         ),
-        actions: [
-          { label: 'See the picture', value: null },
-          { label: 'Next puzzle', value: 'next', primary: true },
-        ],
-      }).then((v) => v === 'next' && open({ size: spec.size, n: nextNumber(spec.size) })),
+        actions: picture
+          ? [{ label: 'Gallery', value: 'gallery' }, ...(nextPic >= 0 ? [{ label: `Picture ${nextPic + 1} →`, value: 'next', primary: true }] : [{ label: 'See the picture', value: null, primary: true }])]
+          : [
+              { label: 'See the picture', value: null },
+              { label: 'Next puzzle', value: 'next', primary: true },
+            ],
+      }).then((v) => {
+        if (v === 'gallery') openGallery();
+        else if (v === 'next') open(picture ? { pic: nextPic } : { size: spec.size, n: nextNumber(spec.size) });
+      }),
     reduced.matches ? 200 : 900,
   );
 }
@@ -374,6 +411,53 @@ function nextNumber(size) {
   const n = store.get(`next-${size}`, 1);
   store.set(`next-${size}`, n + 1);
   return n;
+}
+
+// ---------- Pictures ----------
+
+const article = (name) => (/^[aeiou]/i.test(name) ? `an ${name}` : `a ${name}`);
+
+// A small drawing of a picture, for the gallery and the reveal.
+function thumb(k, size = 56) {
+  const { rows } = PICTURES[k];
+  const n = rows.length;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', `0 0 ${n} ${n}`);
+  svg.setAttribute('width', size);
+  svg.setAttribute('height', size);
+  svg.setAttribute('class', 'thumb');
+  svg.setAttribute('aria-hidden', 'true');
+  let d = '';
+  rows.forEach((row, r) => [...row].forEach((ch, c) => ch === '#' && (d += `M${c} ${r}h1v1h-1z`)));
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', d);
+  svg.append(path);
+  return svg;
+}
+
+// Every picture in order: solved ones show their drawing and name,
+// the rest a question mark and their size.
+function openGallery() {
+  const done = drawn();
+  const count = Object.keys(done).length;
+  let dialog;
+  const tiles = PICTURES.map((pic, k) => {
+    const got = done[k];
+    const n = pic.rows.length;
+    return el(
+      'button',
+      { class: `pic-tile${got ? ' got' : ''}`, onclick: () => (dialog?.closeWith?.(null), open({ pic: k })), 'aria-label': got ? `Picture ${k + 1}: ${pic.name}` : `Picture ${k + 1}, ${n} by ${n}, not solved yet` },
+      el('span', { class: 'pic-no' }, k + 1),
+      got ? thumb(k) : el('span', { class: 'pic-q' }, '?'),
+      el('small', {}, got ? pic.name : `${n}×${n}`),
+    );
+  });
+  openDialog({
+    title: 'Pictures',
+    className: 'gallery-dialog',
+    body: el('div', {}, el('p', { class: 'gallery-count' }, `${count} of ${PICTURES.length} drawn. Solve a picture to see what it is.`), el('div', { class: 'gallery' }, tiles)),
+  });
+  dialog = document.querySelector('dialog.dialog:last-of-type');
 }
 
 // ---------- Menus ----------
@@ -399,6 +483,7 @@ function openMenu() {
       el(
         'div',
         { class: 'menu-list' },
+        menuCard('star', 'Pictures', `${Object.keys(drawn()).length} of ${PICTURES.length} drawn · cats, houses, rockets and more`, () => (dialog?.closeWith?.(null), openGallery())),
         menuCard('calendar', `Daily #${dailyNumber(key, LAUNCH_DAY)}`, r ? `Solved in ${formatTime(r.time)}${r.hints ? ' with hints' : ''}` : '10×10, the same for everyone', go({ size: 'medium', daily: key })),
         ...Object.entries(LABELS).map(([size, label]) => menuCard(size === 'small' ? 'grid' : size === 'medium' ? 'tiles' : 'levels', `${label} puzzle`, stats[size]?.solved ? `${stats[size].solved} solved${stats[size].best ? ` · best ${formatTime(stats[size].best)}` : ''}` : { small: 'A quick warm-up', medium: 'The classic size', large: 'A proper picture' }[size], go({ size, n: nextNumber(size) }))),
       ),
@@ -431,6 +516,7 @@ function openHelp() {
       el('p', {}, 'Each number is a run of filled squares in that row (read left to right) or column (top to bottom), in order, with at least one empty square between runs. “3 1” means three filled in a row, a gap, then one more.'),
       el('p', {}, 'Tap or drag to fill squares. Switch to ✕ to cross squares you know are empty (or right-click). Drag along a row or column to do several at once.'),
       el('p', {}, 'Every puzzle can be solved one line at a time, without guessing. Finish to reveal the picture.'),
+      el('p', {}, el('b', {}, 'Pictures: '), `a series of ${PICTURES.length} hand-drawn puzzles, the same for everyone, from 5×5 up to 15×15. Each one’s name stays hidden until you solve it, then it joins your gallery.`),
       el('p', { class: 'muted' }, 'Keys: F fill, X cross, Z undo, H hint.'),
     ),
   });
@@ -466,10 +552,12 @@ registerServiceWorker({
 
 function fromLink() {
   const h = parseHash(location.hash);
-  if (!h.d && !h.s) return null;
+  if (!h.d && !h.s && !h.p) return null;
   history.replaceState(null, '', location.pathname + location.search);
   if (h.d && /^\d{4}-\d{2}-\d{2}$/.test(h.d)) return { size: 'medium', daily: h.d > today() ? today() : h.d };
   if (LABELS[h.s] && Number(h.n) >= 1) return { size: h.s, n: Math.floor(Number(h.n)) };
+  const k = Math.floor(Number(h.p)) - 1;
+  if (k >= 0 && k < PICTURES.length) return { pic: k };
   return null;
 }
 open(fromLink() || store.get('last') || { size: 'medium', daily: today() });
@@ -477,3 +565,7 @@ if (!store.get('welcomed')) {
   store.set('welcomed', true);
   openHelp();
 }
+addEventListener('hashchange', () => {
+  const next = fromLink();
+  if (next) open(next);
+});

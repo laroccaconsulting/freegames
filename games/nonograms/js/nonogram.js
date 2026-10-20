@@ -176,3 +176,11 @@ export function doneLines(p, cells) {
     cols: p.cols.map((runs, c) => same(clue(colOf(filled, p.w, p.h, c)), runs)),
   };
 }
+
+// A puzzle from a drawing: rows of '#' (filled) and '.' (empty).
+export function fromPicture(rows) {
+  const h = rows.length;
+  const w = rows[0].length;
+  const solution = rows.join('').split('').map((ch) => (ch === '#' ? 1 : 0));
+  return { w, h, solution, ...clues(w, h, solution) };
+}

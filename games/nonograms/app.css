@@ -460,3 +460,93 @@ body {
   padding-left: 1.2em;
 }
 
+
+/* ---------- Pictures ---------- */
+
+.gallery-count {
+  margin: 0 0 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  gap: 8px;
+}
+.pic-tile {
+  position: relative;
+  appearance: none;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 4px;
+  min-height: 104px;
+  padding: 10px 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.pic-tile:hover {
+  border-color: var(--accent);
+}
+.pic-tile small {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.15;
+}
+.pic-tile.got small {
+  color: var(--text);
+}
+.pic-no {
+  position: absolute;
+  top: 4px;
+  left: 7px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.pic-q {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  border: 2px dashed var(--border);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+.thumb path {
+  fill: var(--ink);
+}
+.pic-tile.got {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.reveal {
+  display: grid;
+  place-items: center;
+  margin: 4px 0 8px;
+}
+.reveal .thumb {
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.4);
+  animation: pop 0.4s ease;
+}
+@keyframes pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal .thumb {
+    animation: none;
+  }
+}
