@@ -440,6 +440,14 @@ dialog.closing::backdrop {
   transform: translate(-50%, 0);
   pointer-events: auto;
 }
+.toast.toast-top {
+  top: calc(76px + var(--safe-top)); /* just under the top bar */
+  bottom: auto;
+  transform: translate(-50%, -20px);
+}
+.toast.toast-top.show {
+  transform: translate(-50%, 0);
+}
 .toast-action {
   appearance: none;
   border: 0;

@@ -1,6 +1,6 @@
 // Offline support: every file is cached on install and served cache-first.
 // VERSION and FILES are rewritten by scripts/build-sw.mjs; run it before deploying.
-const VERSION = 'c4bf02d704d4';
+const VERSION = 'a25b64b6e2e1';
 const FILES = [
   './',
   './achievements.js',

@@ -69,7 +69,9 @@ export function openDialog({ title, body, actions = [], className = '', dismissi
 }
 
 let toastTimer = null;
-export function toast(message, { duration = 2600, action } = {}) {
+// position: 'top' keeps a notice clear of thumbs on phones; duration 0 keeps
+// it up until hideToast() or the next toast.
+export function toast(message, { duration = 2600, action, position = 'bottom' } = {}) {
   let host = document.querySelector('.toast');
   if (!host) {
     host = el('div', { class: 'toast', role: 'status', 'aria-live': 'polite' });
@@ -87,9 +89,15 @@ export function toast(message, { duration = 2600, action } = {}) {
       }, action.label),
     );
   }
+  host.classList.toggle('toast-top', position === 'top');
   host.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => host.classList.remove('show'), action ? duration * 3 : duration);
+  if (duration) toastTimer = setTimeout(() => host.classList.remove('show'), action ? duration * 3 : duration);
+}
+
+export function hideToast() {
+  clearTimeout(toastTimer);
+  document.querySelector('.toast')?.classList.remove('show');
 }
 
 // theme: 'auto' | 'light' | 'dark' | 'hallows' (the autumn night theme)
