@@ -78,7 +78,7 @@
   letter-spacing: 0;
 }
 body {
-  min-height: 100dvh;
+  min-height: var(--app-height);
   padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
 }
 #announce {
@@ -88,7 +88,7 @@ body {
 .app {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+  height: calc(var(--app-height) - var(--safe-top) - var(--safe-bottom));
   min-height: 520px;
   max-width: 520px;
   margin: 0 auto;

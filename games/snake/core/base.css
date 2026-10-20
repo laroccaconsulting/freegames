@@ -21,6 +21,15 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+  /* The height a game fills. core/ui.js replaces it with the measured height of
+     the window, because some browsers' 100dvh is taller than what you can see
+     (Android installed apps count the navigation bar), which makes the page scroll. */
+  --app-height: 100vh;
+}
+@supports (height: 100dvh) {
+  :root {
+    --app-height: 100dvh;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -191,7 +200,7 @@ dialog.dialog {
   color: var(--text);
   max-width: min(460px, calc(100vw - 24px));
   width: 100%;
-  max-height: calc(100dvh - 24px - var(--safe-top) - var(--safe-bottom));
+  max-height: calc(var(--app-height) - 24px - var(--safe-top) - var(--safe-bottom));
   overflow: visible;
 }
 dialog.dialog::backdrop {
