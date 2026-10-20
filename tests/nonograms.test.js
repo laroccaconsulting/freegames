@@ -49,3 +49,20 @@ test('finished lines and a solved grid are recognised', () => {
   assert.ok(!N.isSolved(p, partial));
   assert.ok(!N.doneLines(p, partial).rows[Math.floor(i / p.w)]);
 });
+
+test('the picture series: 100 named drawings, each solving line by line to itself', async () => {
+  const { PICTURES } = await import('../games/nonograms/js/pictures.js');
+  assert.equal(PICTURES.length, 100);
+  assert.equal(new Set(PICTURES.map((p) => p.name)).size, 100, 'names are unique');
+  let last = 0;
+  for (const [k, pic] of PICTURES.entries()) {
+    const n = pic.rows.length;
+    assert.ok([5, 10, 15].includes(n), `${pic.name} is 5, 10 or 15 square`);
+    assert.ok(n >= last, 'sizes never shrink along the series');
+    last = n;
+    assert.ok(pic.rows.every((r) => r.length === n && /^[#.]+$/.test(r)), `${pic.name} rows`);
+    const p = N.fromPicture(pic.rows);
+    const solved = N.solve(p);
+    assert.ok(solved.every((v, i) => (v === 1) === Boolean(p.solution[i])), `picture ${k + 1} (${pic.name}) solves by lines alone`);
+  }
+});
