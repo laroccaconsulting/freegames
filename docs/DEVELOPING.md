@@ -128,6 +128,7 @@ states.
 - Workers can fail to start (old browsers, file://); keep the same-thread fallback and avoid long solves on the main thread.
 - Daily puzzles must be seeded from the date only (`dailySeed`), so everyone gets the same one; budgets are node counts, not time, so every device agrees.
 - `games/corridors/js/engine.js` is bundled into `worker/`: no browser APIs there.
+- Full-screen layouts use `var(--app-height)`, never `100dvh`: some browsers (Android installed apps) count the navigation bar in `100dvh`, so the page scrolls. `core/ui.js` sets it to the measured window height. Boards sized in JS should measure what they drew and shrink to fit (see `size()` in Nonograms), not trust an estimate; landscape side-panel layouts must cap the board by width too.
 - Top bars are crowded on phones: keep subtitles short; the trophy button is compact by design.
 
 ## Shipping

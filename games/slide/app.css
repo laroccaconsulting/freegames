@@ -82,7 +82,7 @@
 }
 
 body {
-  min-height: 100dvh;
+  min-height: var(--app-height);
   padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
 }
 #announce {
@@ -92,7 +92,7 @@ body {
 .app {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+  height: calc(var(--app-height) - var(--safe-top) - var(--safe-bottom));
   min-height: 460px;
   max-width: 640px;
   margin: 0 auto;
@@ -659,6 +659,7 @@ body {
     min-height: 0;
   }
   .ub-wrap {
-    width: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 20px);
+    /* As tall as the screen allows, but never wider than the room beside the side panel. */
+    width: min(calc(var(--app-height) - var(--safe-top) - var(--safe-bottom) - 20px), calc(100vw - var(--safe-left) - var(--safe-right) - 264px));
   }
 }

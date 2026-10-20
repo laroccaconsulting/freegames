@@ -2,6 +2,19 @@
 import { icon } from './icons.js';
 import { setHallows, isHallowsSeason, readLook } from './hallows.js';
 
+// Games fill exactly the visible window (see --app-height in base.css). The
+// root's clientHeight is the layout viewport: what fits there never scrolls,
+// and pinch-zoom does not change it.
+function fitViewport() {
+  document.documentElement.style.setProperty('--app-height', `${document.documentElement.clientHeight}px`);
+}
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  fitViewport();
+  addEventListener('resize', fitViewport);
+  addEventListener('orientationchange', fitViewport);
+  addEventListener('pageshow', fitViewport);
+}
+
 export function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {

@@ -148,10 +148,23 @@ function size() {
   const topRuns = Math.max(...puzzle.cols.map((c) => c.length));
   const availW = stage.clientWidth - 24;
   const availH = stage.clientHeight - 70;
-  const cell = Math.floor(Math.min(availW / (w + leftRuns * 0.62 + 0.4), availH / (h + topRuns * 0.52 + 0.4), 44));
-  boardEl.style.setProperty('--cell', `${Math.max(14, cell)}px`);
+  let cell = Math.max(14, Math.floor(Math.min(availW / (w + leftRuns * 0.62 + 0.4), availH / (h + topRuns * 0.52 + 0.4), 44)));
+  boardEl.style.setProperty('--cell', `${cell}px`);
+  // The estimate can't know the device's fonts or text size, so measure and
+  // shrink until the board and the tools fit (no page scrolling).
+  const tools = boardEl.nextElementSibling;
+  const roomW = stage.clientWidth - 20;
+  const roomH = stage.clientHeight - 12;
+  for (let k = 0; k < 4 && cell > 14; k++) {
+    const usedH = boardEl.offsetHeight + (tools ? tools.offsetHeight + 10 : 0);
+    const fit = Math.min(roomW / boardEl.offsetWidth, roomH / usedH);
+    if (fit >= 1) break;
+    cell = Math.max(14, Math.min(cell - 1, Math.floor(cell * fit)));
+    boardEl.style.setProperty('--cell', `${cell}px`);
+  }
 }
-addEventListener('resize', size);
+// The stage changes size with the window and when the status line wraps.
+new ResizeObserver(() => size()).observe($('stage'));
 
 // Drag to paint: the first cell decides whether this stroke sets or clears,
 // and the stroke sticks to the row or column it starts along.
