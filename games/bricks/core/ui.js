@@ -4,15 +4,65 @@ import { setHallows, isHallowsSeason, readLook } from './hallows.js';
 
 // Games fill exactly the visible window (see --app-height in base.css). The
 // root's clientHeight is the layout viewport: what fits there never scrolls,
-// and pinch-zoom does not change it.
+// and pinch-zoom does not change it. Some browsers draw bars over the page
+// without shrinking it; the visual viewport (scaled back up while zoomed)
+// still shows the true height then, so take the smaller.
+function viewportHeight() {
+  const root = document.documentElement.clientHeight;
+  const vv = window.visualViewport;
+  return vv ? Math.min(root, Math.round(vv.height * vv.scale)) : root;
+}
 function fitViewport() {
-  document.documentElement.style.setProperty('--app-height', `${document.documentElement.clientHeight}px`);
+  document.documentElement.style.setProperty('--app-height', `${viewportHeight()}px`);
+  if (viewportReport) viewportReport();
+}
+// A readout of what the device reports, for layout bugs on devices we can't test.
+let viewportReport = null;
+function showViewportReport() {
+  const box = document.createElement('pre');
+  box.style.cssText = 'position:fixed;left:8px;top:40%;z-index:9999;margin:0;padding:8px 10px;font:12px/1.4 monospace;background:#000c;color:#fff;border-radius:8px;pointer-events:none';
+  document.body.append(box);
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;top:0;height:100dvh;width:0;visibility:hidden';
+  document.body.append(probe);
+  const inset = (side) => {
+    probe.style.paddingTop = `env(safe-area-inset-${side}, 0px)`;
+    return getComputedStyle(probe).paddingTop;
+  };
+  viewportReport = () => {
+    const vv = window.visualViewport;
+    const se = document.scrollingElement;
+    box.textContent = [
+      `screen     ${screen.width}x${screen.height} @${devicePixelRatio}`,
+      `inner      ${innerWidth}x${innerHeight}`,
+      `client     ${document.documentElement.clientWidth}x${document.documentElement.clientHeight}`,
+      `visual     ${vv ? `${Math.round(vv.width)}x${Math.round(vv.height)} scale ${vv.scale.toFixed(2)}` : 'none'}`,
+      `100dvh     ${probe.offsetHeight}`,
+      `app-height ${getComputedStyle(document.documentElement).getPropertyValue('--app-height')}`,
+      `page       ${se.scrollWidth}x${se.scrollHeight}`,
+      `safe t/b   ${inset('top')} / ${inset('bottom')}`,
+      `standalone ${matchMedia('(display-mode: standalone)').matches}`,
+    ].join('\n');
+  };
+  viewportReport();
+  setInterval(viewportReport, 1000);
 }
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   fitViewport();
   addEventListener('resize', fitViewport);
   addEventListener('orientationchange', fitViewport);
   addEventListener('pageshow', fitViewport);
+  window.visualViewport?.addEventListener('resize', fitViewport);
+  // ?viewport turns the report on for this site (the installed app too, which
+  // shares storage with the browser); ?viewport=off turns it off.
+  const flag = new URLSearchParams(location.search).get('viewport');
+  try {
+    if (flag === 'off') localStorage.removeItem('viewport-report');
+    else if (flag != null) localStorage.setItem('viewport-report', '1');
+    if (localStorage.getItem('viewport-report')) addEventListener('DOMContentLoaded', showViewportReport);
+  } catch {
+    if (flag != null && flag !== 'off') addEventListener('DOMContentLoaded', showViewportReport);
+  }
 }
 
 export function el(tag, attrs = {}, ...children) {
