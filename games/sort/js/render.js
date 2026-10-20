@@ -164,6 +164,91 @@ function drawSymbol(ctx, kind, x, y, r) {
   }
 }
 
+// ---------- Patterns for grayscale screens ----------
+
+// One texture per colour, so liquids stay apart on e-paper and other
+// grayscale displays (and for colour-blind play). Themes can list their own.
+export const PATTERNS = ['plain', 'stripes', 'dots', 'checks', 'vstripes', 'hatch', 'zigzag', 'rings', 'backstripes', 'grid', 'waves', 'bigdots'];
+const TILE = 12; // pattern tile size in CSS pixels
+
+function patternTile(base, kind, dpr) {
+  const n = Math.round(TILE * dpr);
+  const c = document.createElement('canvas');
+  c.width = c.height = n;
+  const g = c.getContext('2d');
+  g.fillStyle = base;
+  g.fillRect(0, 0, n, n);
+  const ink = luminance(base) > 0.5 ? 'rgba(0,0,0,0.78)' : 'rgba(255,255,255,0.88)';
+  g.fillStyle = g.strokeStyle = ink;
+  g.lineWidth = n * 0.16;
+  g.lineCap = 'square';
+  const line = (x0, y0, x1, y1) => {
+    g.beginPath();
+    g.moveTo(x0 * n, y0 * n);
+    g.lineTo(x1 * n, y1 * n);
+    g.stroke();
+  };
+  const dot = (x, y, r) => {
+    g.beginPath();
+    g.arc(x * n, y * n, r * n, 0, TAU);
+    g.fill();
+  };
+  switch (kind) {
+    case 'stripes': // diagonal, drawn three times so the tile wraps cleanly
+      for (const k of [-1, 0, 1]) line(k, 1, k + 1, 0);
+      break;
+    case 'backstripes':
+      for (const k of [-1, 0, 1]) line(k, 0, k + 1, 1);
+      break;
+    case 'vstripes':
+      g.fillRect(n * 0.35, 0, n * 0.3, n);
+      break;
+    case 'dots':
+      dot(0.5, 0.5, 0.17);
+      break;
+    case 'bigdots':
+      dot(0.5, 0.5, 0.3);
+      break;
+    case 'checks':
+      g.fillRect(0, 0, n / 2, n / 2);
+      g.fillRect(n / 2, n / 2, n / 2, n / 2);
+      break;
+    case 'hatch':
+      g.lineWidth = n * 0.1;
+      for (const k of [-1, 0, 1]) {
+        line(k, 1, k + 1, 0);
+        line(k, 0, k + 1, 1);
+      }
+      break;
+    case 'grid':
+      g.lineWidth = n * 0.12;
+      line(0.5, 0, 0.5, 1);
+      line(0, 0.5, 1, 0.5);
+      break;
+    case 'zigzag':
+      g.lineCap = 'butt';
+      g.beginPath();
+      g.moveTo(0, n * 0.7);
+      g.lineTo(n / 2, n * 0.3);
+      g.lineTo(n, n * 0.7);
+      g.stroke();
+      break;
+    case 'waves':
+      g.lineWidth = n * 0.12;
+      g.beginPath();
+      for (let s = 0; s <= 12; s++) g.lineTo((s / 12) * n, n * (0.5 + 0.22 * Math.sin((s / 12) * TAU)));
+      g.stroke();
+      break;
+    case 'rings':
+      g.lineWidth = n * 0.1;
+      g.beginPath();
+      g.arc(n / 2, n / 2, n * 0.26, 0, TAU);
+      g.stroke();
+      break;
+  }
+  return c;
+}
+
 // ---------- Renderer ----------
 
 export class Renderer {
@@ -176,7 +261,7 @@ export class Renderer {
     this.fx = new Particles();
     this.anims = new Set();
     this.streams = [];
-    this.options = { symbols: false, speed: 1, effects: true, reduced: false, vibrate: true };
+    this.options = { symbols: false, patterns: false, speed: 1, effects: true, reduced: false, vibrate: true };
     this.focus = -1;
     this.hintPair = null;
     this.time = 0;
@@ -204,12 +289,28 @@ export class Renderer {
   setTheme(theme) {
     this.theme = theme;
     this.shineCache = null;
+    this.patternCache = null;
     this.dirty = true;
   }
 
   setOptions(options) {
     Object.assign(this.options, options);
     this.dirty = true;
+  }
+
+  // The fill for a liquid colour: plain, or its pattern when patterns are on.
+  // `matrix` places the pattern in user space (tilted tubes draw in screen space).
+  liquid(c, matrix) {
+    const color = this.theme.colors[c];
+    if (!this.options.patterns) return color;
+    const kinds = this.theme.patterns || PATTERNS;
+    const kind = kinds[c % kinds.length];
+    if (kind === 'plain') return color;
+    if (!this.patternCache || this.patternCache.dpr !== this.dpr) this.patternCache = { dpr: this.dpr };
+    const cache = this.patternCache;
+    cache[c] ||= this.ctx.createPattern(patternTile(color, kind, this.dpr), 'repeat');
+    cache[c].setTransform((matrix || new DOMMatrix()).scale(1 / this.dpr));
+    return cache[c];
   }
 
   get busy() {
@@ -753,7 +854,7 @@ export class Renderer {
       const pulse = hinted ? 0.5 + 0.5 * Math.sin(this.hintPair.t * 8) : 1;
       ctx.save();
       ctx.lineWidth = lw * 1.6;
-      ctx.strokeStyle = hinted ? (theme.dark ? '#ffe66b' : '#e8a400') : topColor && selected ? mix(topColor, '#ffffff', 0.35) : theme.dark ? '#ffffff' : '#333333';
+      ctx.strokeStyle = theme.highlight || (hinted ? (theme.dark ? '#ffe66b' : '#e8a400') : topColor && selected ? mix(topColor, '#ffffff', 0.35) : theme.dark ? '#ffffff' : '#333333');
       ctx.globalAlpha = pulse;
       if (i === this.focus && !selected && !hinted) ctx.setLineDash([lw * 2.5, lw * 2]);
       if (theme.dark && this.options.effects) {
@@ -778,7 +879,7 @@ export class Renderer {
       const h = layer.a * uh;
       const top = y - h;
       const isTop = k === t.layers.length - 1;
-      ctx.fillStyle = colors[layer.c];
+      ctx.fillStyle = this.liquid(layer.c);
       ctx.beginPath();
       if (isTop && wave > 0.05) {
         ctx.moveTo(-w, y + 1);
@@ -824,6 +925,8 @@ export class Renderer {
     const rect = [{ x: -w / 2, y: 0 }, { x: w / 2, y: 0 }, { x: w / 2, y: H }, { x: -w / 2, y: H }];
     const poly = rotate(rect, t.angle, t.pivot, t.P);
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    // Patterns turn with the tube, continuing where the upright tube left off.
+    const matrix = new DOMMatrix().translate(t.P.x, t.P.y).rotate((t.angle * 180) / Math.PI).translate(-t.pivot.x, -t.pivot.y);
     let lower = Math.max(...poly.map((p) => p.y)) + 1;
     let cum = 0;
     t.layers.forEach((layer, k) => {
@@ -831,7 +934,7 @@ export class Renderer {
       const level = levelForArea(poly, cum * uh * w);
       const band = clipY(clipY(poly, level, true), lower, false);
       if (band.length > 2) {
-        ctx.fillStyle = this.theme.colors[layer.c];
+        ctx.fillStyle = this.liquid(layer.c, matrix);
         ctx.beginPath();
         band.forEach((p, j) => (j ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
         ctx.fill();
@@ -879,7 +982,7 @@ export class Renderer {
       ctx.shadowColor = color;
       ctx.shadowBlur = 16 * this.theme.glass.glow;
     }
-    ctx.strokeStyle = color;
+    ctx.strokeStyle = this.liquid(s.color);
     ctx.lineWidth = s.width * (1 - s.tail * 0.6);
     ctx.beginPath();
     ctx.moveTo(s.x, a);
@@ -907,7 +1010,7 @@ export class Renderer {
     const x = t.hx;
     const y = t.hy - uh * 1.1 + bob;
     ctx.save();
-    ctx.fillStyle = this.theme.dark ? '#ffe66b' : '#e8a400';
+    ctx.fillStyle = this.theme.highlight || (this.theme.dark ? '#ffe66b' : '#e8a400');
     ctx.beginPath();
     ctx.moveTo(x - w * 0.32, y - w * 0.3);
     ctx.lineTo(x + w * 0.32, y - w * 0.3);

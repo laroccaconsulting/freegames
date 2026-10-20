@@ -19,7 +19,7 @@ below in `js/` (rules, kept free of the DOM and unit-tested in `tests/`).
 | [Hearts](https://laroccaconsulting.github.io/freegames/hearts/) | [`games/hearts`](games/hearts) | Dodge the queen, or shoot the moon | `hearts.js` (rules + computer players) |
 | [Spades](https://laroccaconsulting.github.io/freegames/spades/) | [`games/spades`](games/spades) | Bid your tricks with a partner | `spades.js` (bidding, tricks, scoring, computer) |
 | [Mahjong](https://laroccaconsulting.github.io/freegames/mahjong/) | [`games/mahjong`](games/mahjong) | Every deal winnable | `mahjong.js` (layouts, winnable deals), `faces.js` (tile art) |
-| [Pour](https://laroccaconsulting.github.io/freegames/sort/) | [`games/sort`](games/sort) | Water sort with a par for every level | `rules.js`, `solver.js` (A* par + dead-end check), `levels.js`, `render.js`, `worker.js` |
+| [Pour](https://laroccaconsulting.github.io/freegames/sort/) | [`games/sort`](games/sort) | Water sort with a par for every level; Mono theme with patterns for grayscale screens | `rules.js`, `solver.js` (A* par + dead-end check), `levels.js`, `render.js`, `worker.js` |
 | [Slide](https://laroccaconsulting.github.io/freegames/slide/) | [`games/slide`](games/slide) | Unblock the key, or order the tiles | `unblock.js`, `tiles.js` (solvers), `render.js`, `worker.js` |
 | [Words](https://laroccaconsulting.github.io/freegames/words/) | [`games/words`](games/words) | Codeword, Wheel, Ladder, Grid, Search | `dict.js` (word list), `codeword.js`, `wheel.js`, `ladder.js`, `grid.js`, `search.js` |
 | [Four in a Row](https://laroccaconsulting.github.io/freegames/four/) | [`games/four`](games/four) | Line up four before the computer | `engine.js`, `bot.js` + `bot-worker.js` |

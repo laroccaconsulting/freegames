@@ -24,6 +24,7 @@ const settings = makeSettings(store, {
   sound: true,
   vibrate: true,
   symbols: null, // null: follow the theme
+  patterns: null, // null: follow the theme
   effects: true,
   speed: 'normal',
 });
@@ -61,6 +62,7 @@ function applySettings() {
   document.body.classList.toggle('no-effects', !effects || reducedMotion.matches);
   renderer.setOptions({
     symbols: settings.get('symbols') ?? !!theme.symbols,
+    patterns: settings.get('patterns') ?? !!theme.patterns,
     effects,
     reduced: reducedMotion.matches,
     speed: settings.get('speed') === 'fast' ? 1.6 : 1,
@@ -548,6 +550,7 @@ function openSettings() {
       toggle('Sounds', settings.get('sound'), (v) => settings.set('sound', v)),
       toggle('Vibration', settings.get('vibrate'), (v) => settings.set('vibrate', v), 'On phones that support it'),
       toggle('Colour symbols', settings.get('symbols') ?? !!theme.symbols, (v) => settings.set('symbols', v), 'A shape on each colour, for colour-blind play'),
+      toggle('Patterns', settings.get('patterns') ?? !!theme.patterns, (v) => settings.set('patterns', v), 'Stripes, dots and checks on the liquids, for grayscale screens'),
       toggle('Effects', settings.get('effects'), (v) => settings.set('effects', v), 'Glow, particles and moving backgrounds'),
       el('div', { class: 'field' }, el('span', { class: 'field-label' }, 'Pour speed'),
         segmented('speed', [['normal', 'Normal'], ['fast', 'Fast']], settings.get('speed'), (v) => settings.set('speed', v))),

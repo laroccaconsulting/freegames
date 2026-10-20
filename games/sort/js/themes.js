@@ -11,6 +11,8 @@
 //   bubbles       idle bubbles rising in the liquid
 //   additive      particles blend with 'lighter' (glows on dark themes)
 //   particles     burst style: 'sparks' | 'stars' | 'confetti' | 'petals' | 'leaves'
+//   patterns      optional: a texture per colour (see PATTERNS in render.js), on by default
+//   highlight     optional: one colour for the selected tube and hints
 //   cap           colour of the stopper that seals a finished tube (null = liquid colour)
 //   sound         { wave, root, scale } notes for chimes (semitones above root)
 //   preview       CSS background used for the theme's card in the picker
@@ -84,6 +86,24 @@ export const THEMES = [
     symbols: true,
     sound: { wave: 'sine', root: 392, scale: [0, 2, 4, 7, 9, 12, 14, 16, 19] },
     preview: 'linear-gradient(#eeeae0, #e3ded2)',
+  },
+  {
+    id: 'mono',
+    name: 'Mono',
+    dark: false,
+    // For grayscale and e-paper screens: every liquid has its own pattern as
+    // well as its own shade, so nothing depends on colour.
+    colors: ['#1c1c1c', '#f4f4f4', '#8c8c8c', '#cfcfcf', '#4d4d4d', '#e2e2e2', '#6e6e6e', '#b4b4b4', '#2e2e2e', '#ededed', '#a0a0a0', '#5c5c5c'],
+    patterns: ['plain', 'plain', 'stripes', 'dots', 'vstripes', 'checks', 'hatch', 'zigzag', 'bigdots', 'backstripes', 'grid', 'waves'],
+    names: ['black', 'white', 'grey stripes', 'dotted', 'dark tall stripes', 'checked', 'cross-hatched', 'zigzag', 'big dots', 'back stripes', 'grid', 'wavy'],
+    glass: { fill: 'rgba(255,255,255,0.6)', edge: 'rgba(0,0,0,0.8)', rim: 'rgba(0,0,0,0.85)', shine: 0.15, shade: 0.08, glow: 0 },
+    bubbles: false,
+    additive: false,
+    particles: 'confetti',
+    cap: '#3a3a3a',
+    highlight: '#000000',
+    sound: { wave: 'sine', root: 392, scale: [0, 2, 4, 7, 9, 12, 14, 16, 19] },
+    preview: 'repeating-linear-gradient(45deg, #d6d6d6 0 4px, #f6f6f6 4px 10px)',
   },
 ];
 
