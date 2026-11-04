@@ -2,7 +2,7 @@
 // they tilt: each layer's surface is found by clipping the tube's outline
 // against a horizontal line until the area matches the layer's volume.
 // Game rules live in rules.js; this file only draws and animates.
-import { CAPACITY } from './rules.js';
+import { CAPACITY, capOf } from './rules.js';
 import { Particles, drawStar } from '../core/fx.js';
 
 const UNIT = 1.1; // height of one unit of liquid, in tube widths
@@ -301,6 +301,7 @@ export class Renderer {
   // The fill for a liquid colour: plain, or its pattern when patterns are on.
   // `matrix` places the pattern in user space (tilted tubes draw in screen space).
   liquid(c, matrix) {
+    if (c < 0) return this.theme.hidden || (this.theme.dark ? '#3a3550' : '#8d8798');
     const color = this.theme.colors[c];
     if (!this.options.patterns) return color;
     const kinds = this.theme.patterns || PATTERNS;
@@ -322,23 +323,31 @@ export class Renderer {
   }
 
   // Replaces every tube (new puzzle or restart). `enter` plays the deal-in.
-  setTubes(tubes, { enter = true } = {}) {
+  // `layout` (see rules.js) gives each tube its size, lock and ice.
+  setTubes(tubes, { enter = true, layout = null } = {}) {
     this.anims.clear();
     this.streams = [];
     this.hintPair = null;
-    this.tubes = tubes.map((t, i) => this.makeTube(t, enter ? i : -1));
+    this.size = layout?.size ?? CAPACITY;
+    this.tubes = tubes.map((t, i) => this.makeTube(t, enter ? i : -1, layout ? capOf(layout, i) : CAPACITY));
     this.layout(true);
     this.dirty = true;
   }
 
-  makeTube(units, order = -1) {
+  makeTube(units, order = -1, size = this.size || CAPACITY) {
     return {
       layers: toLayers(units),
+      size,
+      H: this.m.uh * (size + NECK),
+      locked: null, // key colour while locked
+      ice: 0, // pours left before it thaws
+      unlock: 0,
+      thaw: 0,
       x: 0, y: 0, hx: 0, hy: 0,
       lift: 0, liftTo: 0,
       P: null, angle: 0, pivot: { x: 0, y: 0 },
       busy: false,
-      wave: 0, flash: 0, shake: 0, glow: 0, cap: units.length === CAPACITY && new Set(units).size === 1 ? 1 : 0,
+      wave: 0, flash: 0, shake: 0, glow: 0, cap: units.length === (this.size || CAPACITY) && units[0] >= 0 && new Set(units).size === 1 ? 1 : 0,
       sweep: 1,
       enter: order >= 0 ? -order * 0.16 : 1,
       bubbles: [],
@@ -346,12 +355,49 @@ export class Renderer {
   }
 
   addTube() {
-    const t = this.makeTube([], 0);
+    const t = this.makeTube([], 0, this.size || CAPACITY);
     t.enter = 0;
     this.tubes.push(t);
     this.layout(false);
     t.x = t.hx;
     t.y = t.hy;
+  }
+
+  // Replaces one tube's contents without animation (a hidden unit revealed,
+  // or a hidden one put back by undo). `flash` marks a reveal.
+  sync(i, units, { flash = false } = {}) {
+    const t = this.tubes[i];
+    if (!t) return;
+    t.layers = toLayers(units);
+    if (flash) {
+      t.flash = Math.max(t.flash, 0.35);
+      const top = t.layers.at(-1);
+      if (top && this.options.effects && !this.options.reduced) this.fx.ring(t.hx, t.hy + t.H - total(t.layers) * this.m.uh, this.theme.colors[top.c], this.m.w * 0.9, 3);
+    }
+    this.dirty = true;
+  }
+
+  // Locks and ice: [{ locked: keyColour | null, ice: poursLeft }] per tube.
+  // A lock coming off or ice melting plays its animation.
+  setStatus(list) {
+    list.forEach((st, i) => {
+      const t = this.tubes[i];
+      if (!t) return;
+      if (t.locked != null && st.locked == null) {
+        t.unlock = 1;
+        t.unlockColor = t.locked;
+        t.flash = 0.6;
+        if (this.options.effects && !this.options.reduced) this.fx.burst(t.hx, t.hy + t.H * 0.5, this.theme.colors[t.locked], this.theme.particles, { count: 22, speed: 240, spread: 2.2 });
+      }
+      if (t.ice > 0 && !st.ice) {
+        t.thaw = 1;
+        t.flash = 0.5;
+        if (this.options.effects && !this.options.reduced) this.fx.burst(t.hx, t.hy + t.H * 0.5, '#bfe9ff', 'sparks', { count: 26, speed: 220, spread: 2.6 });
+      }
+      t.locked = st.locked;
+      t.ice = st.ice || 0;
+    });
+    this.dirty = true;
   }
 
   // Takes the stopper off a tube (when a move into it is undone).
@@ -398,7 +444,8 @@ export class Renderer {
   layout(snap) {
     const box = this.stage.getBoundingClientRect();
     const n = Math.max(1, this.tubes.length);
-    const tall = CAPACITY * UNIT + NECK * UNIT;
+    const most = Math.max(this.size || CAPACITY, ...this.tubes.map((t) => t.size));
+    const tall = most * UNIT + NECK * UNIT;
     let best = null;
     for (const rows of [1, 2, 3]) {
       const perRow = Math.ceil(n / rows);
@@ -410,7 +457,7 @@ export class Renderer {
     }
     const { rows, w } = best;
     const uh = w * UNIT;
-    const H = uh * (CAPACITY + NECK);
+    const H = uh * (most + NECK);
     this.m = { w, uh, H, gap: w * GAP, rowGap: H * 0.42 };
     this.shineCache = null;
     const blockH = rows * H + (rows - 1) * this.m.rowGap;
@@ -423,8 +470,10 @@ export class Renderer {
       const x0 = box.left + (box.width - rowW) / 2 + w / 2;
       for (let k = 0; k < count && i < this.tubes.length; k++, i++) {
         const t = this.tubes[i];
+        t.H = uh * (t.size + NECK);
         t.hx = x0 + k * (w + this.m.gap);
-        t.hy = top + r * (H + this.m.rowGap);
+        // Shorter tubes stand on the same shelf as the rest.
+        t.hy = top + r * (H + this.m.rowGap) + H - t.H;
         if (snap || !t.x) {
           t.x = t.hx;
           t.y = t.hy;
@@ -434,10 +483,10 @@ export class Renderer {
   }
 
   hit(cx, cy) {
-    const { w, gap, H, uh } = this.m;
+    const { w, gap, uh } = this.m;
     for (let i = 0; i < this.tubes.length; i++) {
       const t = this.tubes[i];
-      if (Math.abs(cx - t.hx) <= w / 2 + gap / 2 && cy >= t.hy - uh * 1.3 && cy <= t.hy + H + gap / 2) return i;
+      if (Math.abs(cx - t.hx) <= w / 2 + gap / 2 && cy >= t.hy - uh * 1.3 - (this.m.H - t.H) && cy <= t.hy + t.H + gap / 2) return i;
     }
     return -1;
   }
@@ -446,8 +495,8 @@ export class Renderer {
 
   // The angle (for a tube hanging from its lip) at which `volume` units just
   // reach the lip. Pouring follows this angle as the tube empties.
-  pourAngle(volume, dir) {
-    const { w, H, uh } = this.m;
+  pourAngle(volume, dir, H = this.m.H) {
+    const { w, uh } = this.m;
     const pivot = { x: (dir * w) / 2, y: 0 };
     const rect = [{ x: -w / 2, y: 0 }, { x: w / 2, y: 0 }, { x: w / 2, y: H }, { x: -w / 2, y: H }];
     const target = volume * uh * w;
@@ -468,7 +517,8 @@ export class Renderer {
   pour(from, to, n, color, { onLanded, onStart } = {}) {
     const s = this.tubes[from];
     const t = this.tubes[to];
-    const { w, H, uh } = this.m;
+    const { w, uh } = this.m;
+    const H = t.H;
     const speed = this.options.speed;
     s.busy = t.busy = true;
     t.liftTo = 0;
@@ -480,7 +530,7 @@ export class Renderer {
     const pourT = (reduced ? 0.15 : 0.22 + 0.11 * n) / speed;
     const back = (reduced ? 0.12 : 0.24) / speed;
     const lag = 0.06 / speed;
-    const startAngle = this.pourAngle(volume, dir);
+    const startAngle = this.pourAngle(volume, dir, s.H);
     const startLip = { x: s.x + (dir * w) / 2, y: s.y - s.lift };
     const endLip = { x: t.hx - dir * w * 0.14, y: t.hy - H * 0.36 };
     const fromLayers = s.layers.map((l) => ({ ...l }));
@@ -509,7 +559,7 @@ export class Renderer {
           topFrom.a = Math.max(0, fromLayers.at(-1).a0 - poured);
           s.layers = fromLayers.filter((l) => l.a > 0.0001);
           s.P = endLip;
-          s.angle = this.pourAngle(total(fromLayers), dir);
+          s.angle = this.pourAngle(total(fromLayers), dir, s.H);
           const q2 = clamp((time - move - lag) / pourT);
           target.a = targetStart + n * easeInOut(q2);
           t.wave = Math.max(t.wave, 0.8);
@@ -534,7 +584,7 @@ export class Renderer {
           const k = easeInOut(clamp((time - move - pourT - lag) / back));
           const home = { x: s.x + (dir * w) / 2, y: s.y };
           s.P = { x: lerp(endLip.x, home.x, k), y: lerp(endLip.y, home.y, k) };
-          s.angle = lerp(this.pourAngle(total(s.layers), dir), 0, easeOut(k));
+          s.angle = lerp(this.pourAngle(total(s.layers), dir, s.H), 0, easeOut(k));
           if (k >= 1) {
             s.P = null;
             s.angle = 0;
@@ -604,7 +654,7 @@ export class Renderer {
           t.liftTo = 0;
           t.bounce = 1;
           const color = this.theme.colors[t.layers[0].c];
-          this.fx.ring(t.hx, t.hy + this.m.H / 2, color, this.m.w * 1.4, 4);
+          this.fx.ring(t.hx, t.hy + t.H / 2, color, this.m.w * 1.4, 4);
           onStep?.(next);
           next++;
         }
@@ -627,8 +677,8 @@ export class Renderer {
 
   bubbleBurst(t, count) {
     if (!this.theme.bubbles) return;
-    const { w, H } = this.m;
-    const top = H - total(t.layers) * this.m.uh;
+    const { w } = this.m;
+    const top = t.H - total(t.layers) * this.m.uh;
     for (let i = 0; i < count; i++)
       t.bubbles.push({ x: (Math.random() - 0.5) * w * 0.6, y: top + 4 + Math.random() * this.m.uh, r: 1 + Math.random() * 2.2, vy: -(30 + Math.random() * 50) });
   }
@@ -662,9 +712,9 @@ export class Renderer {
         t.x = t.hx;
         t.y = t.hy;
       }
-      for (const key of ['wave', 'flash', 'shake', 'bounce']) {
+      for (const key of ['wave', 'flash', 'shake', 'bounce', 'unlock', 'thaw']) {
         if (t[key] > 0.001) {
-          t[key] = Math.max(0, t[key] - dt * (key === 'wave' ? 1.1 : key === 'shake' ? 2.8 : 1.8));
+          t[key] = Math.max(0, t[key] - dt * (key === 'wave' ? 1.1 : key === 'shake' ? 2.8 : key === 'unlock' || key === 'thaw' ? 1.4 : 1.8));
           active = true;
         } else t[key] = 0;
       }
@@ -679,10 +729,10 @@ export class Renderer {
       }
       if (ambient && this.theme.bubbles && !t.P && t.layers.length && t.cap < 1 && Math.random() < dt * 0.5) {
         const w = this.m.w;
-        t.bubbles.push({ x: (Math.random() - 0.5) * w * 0.55, y: this.m.H - 3, r: 0.8 + Math.random() * 1.6, vy: -(14 + Math.random() * 22) });
+        t.bubbles.push({ x: (Math.random() - 0.5) * w * 0.55, y: t.H - 3, r: 0.8 + Math.random() * 1.6, vy: -(14 + Math.random() * 22) });
       }
       if (t.bubbles.length) {
-        const top = this.m.H - total(t.layers) * this.m.uh + 3;
+        const top = t.H - total(t.layers) * this.m.uh + 3;
         for (const b of t.bubbles) {
           b.y += b.vy * dt;
           b.x += Math.sin(this.time * 6 + b.r * 9) * dt * 6;
@@ -736,8 +786,8 @@ export class Renderer {
     return g;
   }
 
-  tubePath() {
-    const { w, H } = this.m;
+  tubePath(H = this.m.H) {
+    const { w } = this.m;
     const r = w * 0.46;
     const p = new Path2D();
     p.moveTo(-w / 2, 0);
@@ -758,7 +808,7 @@ export class Renderer {
       return;
     }
     const e = clamp(t.enter);
-    const enterOffset = (1 - easeOutBack(e)) * this.m.H * 0.7;
+    const enterOffset = (1 - easeOutBack(e)) * t.H * 0.7;
     const shake = t.shake ? Math.sin(t.shake * 40) * t.shake * this.m.w * 0.18 : 0;
     const bounce = t.bounce ? -Math.sin((1 - t.bounce) * Math.PI) * this.m.uh * 0.35 : 0;
     ctx.translate(t.x + shake, t.y - t.lift + enterOffset + bounce);
@@ -766,11 +816,12 @@ export class Renderer {
 
   drawTube(t, i) {
     const ctx = this.ctx;
-    const { w, H, uh } = this.m;
+    const { w, uh } = this.m;
+    const H = t.H;
     const theme = this.theme;
     const glass = theme.glass;
     if (t.enter <= 0) return;
-    const path = this.tubePath();
+    const path = this.tubePath(H);
     ctx.save();
     ctx.globalAlpha = clamp(t.enter * 2.5);
     this.applyTubeTransform(ctx, t);
@@ -866,12 +917,103 @@ export class Renderer {
     }
 
     if (t.cap > 0 && t.layers.length) this.drawCap(t);
+    if (t.ice > 0 || t.thaw > 0) this.drawIce(t, path);
+    if (t.locked != null || t.unlock > 0) this.drawLock(t);
+    ctx.restore();
+  }
+
+  // Frost over a frozen tube, with the pours left before it thaws.
+  drawIce(t, path) {
+    const ctx = this.ctx;
+    const { w } = this.m;
+    const H = t.H;
+    const k = t.ice > 0 ? 1 : t.thaw;
+    ctx.save();
+    ctx.globalAlpha *= k;
+    ctx.clip(path);
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, 'rgba(225,245,255,0.72)');
+    g.addColorStop(1, 'rgba(170,215,245,0.6)');
+    ctx.fillStyle = g;
+    ctx.fillRect(-w, 0, w * 2, H);
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = Math.max(1, w * 0.035);
+    for (let y = H * 0.18; y < H; y += w * 0.9) {
+      ctx.beginPath();
+      ctx.moveTo(-w * 0.3, y);
+      ctx.lineTo(w * 0.1, y + w * 0.25);
+      ctx.lineTo(-w * 0.05, y + w * 0.45);
+      ctx.moveTo(w * 0.32, y + w * 0.1);
+      ctx.lineTo(w * 0.05, y + w * 0.3);
+      ctx.stroke();
+    }
+    ctx.restore();
+    if (t.ice > 0) {
+      const r = w * 0.36;
+      const y = H * 0.5;
+      ctx.save();
+      ctx.fillStyle = '#e9f7ff';
+      ctx.strokeStyle = '#2a7fb8';
+      ctx.lineWidth = Math.max(1.5, w * 0.05);
+      ctx.beginPath();
+      ctx.arc(0, y, r, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#14507a';
+      ctx.font = `700 ${Math.round(r * 1.15)}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(t.ice), 0, y + r * 0.05);
+      ctx.restore();
+    }
+  }
+
+  // A padlock in the key colour; it pops off and fades when opened.
+  drawLock(t) {
+    const ctx = this.ctx;
+    const { w } = this.m;
+    const c = t.locked ?? t.unlockColor;
+    const open = t.locked == null;
+    const k = open ? t.unlock : 1;
+    const size = w * 0.78;
+    const y = t.H * 0.42 - (open ? (1 - k) * w * 1.2 : 0);
+    ctx.save();
+    ctx.globalAlpha *= k;
+    // Shackle.
+    ctx.strokeStyle = this.theme.dark ? '#e8e8f0' : '#3b3b48';
+    ctx.lineWidth = Math.max(2, w * 0.1);
+    ctx.beginPath();
+    const lift = open ? (1 - k) * size * 0.3 : 0;
+    ctx.arc(0, y - size * 0.12 - lift, size * 0.28, Math.PI, 0);
+    ctx.lineTo(size * 0.28, y + size * 0.05 - lift);
+    ctx.moveTo(-size * 0.28, y - size * 0.12 - lift);
+    ctx.lineTo(-size * 0.28, y + size * 0.05);
+    ctx.stroke();
+    // Body in the key colour.
+    ctx.fillStyle = this.liquid(c);
+    ctx.strokeStyle = this.theme.dark ? '#ffffff' : '#222230';
+    ctx.lineWidth = Math.max(1.5, w * 0.05);
+    ctx.beginPath();
+    ctx.roundRect(-size / 2, y, size, size * 0.72, size * 0.14);
+    ctx.fill();
+    ctx.stroke();
+    const color = this.theme.colors[c];
+    const light = luminance(color) > 0.6;
+    ctx.fillStyle = ctx.strokeStyle = light ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.9)';
+    if (this.options.symbols) drawSymbol(ctx, SYMBOLS[c % SYMBOLS.length], 0, y + size * 0.36, size * 0.2);
+    else {
+      ctx.beginPath();
+      ctx.arc(0, y + size * 0.3, size * 0.08, 0, TAU);
+      ctx.fill();
+      ctx.fillRect(-size * 0.035, y + size * 0.3, size * 0.07, size * 0.22);
+    }
     ctx.restore();
   }
 
   drawUprightLiquid(t) {
     const ctx = this.ctx;
-    const { w, H, uh } = this.m;
+    const { w, uh } = this.m;
+    const H = t.H;
     const colors = this.theme.colors;
     let y = H;
     const wave = t.wave * uh * 0.12;
@@ -881,7 +1023,7 @@ export class Renderer {
       const isTop = k === t.layers.length - 1;
       ctx.fillStyle = this.liquid(layer.c);
       ctx.beginPath();
-      if (isTop && wave > 0.05) {
+      if (isTop && wave > 0.05 && layer.c >= 0) {
         ctx.moveTo(-w, y + 1);
         ctx.lineTo(-w, top);
         for (let s = 0; s <= 8; s++) {
@@ -895,6 +1037,7 @@ export class Renderer {
       // A lighter band at each surface reads as a meniscus.
       ctx.fillStyle = isTop ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.12)';
       ctx.fillRect(-w, top, w * 2, Math.max(1.2, uh * 0.05));
+      if (layer.c < 0) this.drawMystery(top + h / 2);
       y = top;
     });
     for (const b of t.bubbles) {
@@ -907,6 +1050,10 @@ export class Renderer {
     if (this.options.symbols) {
       let unit = 0;
       for (const layer of t.layers) {
+        if (layer.c < 0) {
+          unit++;
+          continue;
+        }
         for (let k = 0; k < Math.floor(layer.a + 0.001); k++, unit++) {
           const color = colors[layer.c];
           const light = luminance(color) > 0.6;
@@ -917,11 +1064,25 @@ export class Renderer {
     }
   }
 
+  // A "?" on a hidden unit.
+  drawMystery(y) {
+    const ctx = this.ctx;
+    const { w, uh } = this.m;
+    ctx.save();
+    ctx.fillStyle = this.theme.dark ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.92)';
+    ctx.font = `800 ${Math.round(Math.min(w * 0.62, uh * 0.7))}px system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('?', 0, y + uh * 0.03);
+    ctx.restore();
+  }
+
   // Tilted tubes: find each layer's level in screen space so the surfaces
   // stay horizontal, then fill the bands between those levels.
   drawTiltedLiquid(t) {
     const ctx = this.ctx;
-    const { w, H, uh } = this.m;
+    const { w, uh } = this.m;
+    const H = t.H;
     const rect = [{ x: -w / 2, y: 0 }, { x: w / 2, y: 0 }, { x: w / 2, y: H }, { x: -w / 2, y: H }];
     const poly = rotate(rect, t.angle, t.pivot, t.P);
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
@@ -947,6 +1108,7 @@ export class Renderer {
   }
 
   drawCap(t) {
+    if (t.layers[0].c < 0) return;
     const ctx = this.ctx;
     const { w } = this.m;
     const k = easeOutBounce(clamp(t.cap));
@@ -1026,7 +1188,8 @@ export function toLayers(units) {
   const layers = [];
   for (const c of units) {
     const top = layers.at(-1);
-    if (top && top.c === c) top.a++;
+    // Hidden units (negative) stay one per layer so runs give nothing away.
+    if (top && top.c === c && c >= 0) top.a++;
     else layers.push({ c, a: 1 });
   }
   return layers;

@@ -1410,8 +1410,9 @@ export default {
     },
     {
       "id": "birdie",
-      "title": "Birdie",
-      "desc": "Beat par."
+      "title": "Ten perfect",
+      "desc": "Match par on 10 puzzles without help.",
+      "goal": 10
     },
     {
       "id": "level-10",
@@ -1452,6 +1453,60 @@ export default {
       "id": "no-extra",
       "title": "Tidy",
       "desc": "Solve a level 20 or later without the extra tube."
+    },
+    {
+      "id": "advanced",
+      "title": "Advanced",
+      "desc": "Solve an Advanced level."
+    },
+    {
+      "id": "advanced-10",
+      "title": "Tight squeeze",
+      "desc": "Clear Advanced level 10.",
+      "goal": 10
+    },
+    {
+      "id": "advanced-25",
+      "title": "Deep end",
+      "desc": "Clear Advanced level 25.",
+      "goal": 25
+    },
+    {
+      "id": "advanced-50",
+      "title": "Master mixer",
+      "desc": "Clear Advanced level 50.",
+      "goal": 50
+    },
+    {
+      "id": "hidden",
+      "title": "In the dark",
+      "desc": "Solve a puzzle with hidden layers."
+    },
+    {
+      "id": "locked",
+      "title": "Key holder",
+      "desc": "Solve a puzzle with a locked tube."
+    },
+    {
+      "id": "frozen",
+      "title": "Thaw",
+      "desc": "Solve a puzzle with a frozen tube."
+    },
+    {
+      "id": "hardcore",
+      "title": "Hardcore",
+      "desc": "Clear an Advanced level in hardcore."
+    },
+    {
+      "id": "flawless",
+      "title": "Flawless",
+      "desc": "Clear a hardcore level on your first life."
+    },
+    {
+      "id": "flawless-10",
+      "title": "Untouchable",
+      "desc": "Clear 10 hardcore levels on the first life.",
+      "goal": 10
     }
   ],
   "spades": [

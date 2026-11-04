@@ -105,7 +105,7 @@ The short list for the next sessions. Details are in the waves below.
 
 | Game | Notes |
 |---|---|
-| **Pour** (water sort) | ✅ Built — `games/sort/`. First puzzle-golf game: solver par, daily, share links, 6 themes (incl. Mono for grayscale screens) |
+| **Pour** (water sort) | ✅ Built — `games/sort/`. First puzzle-golf game: solver par, daily, share links, 6 themes (incl. Mono for grayscale screens), Advanced track (small tubes, hidden layers, locks, ice, tall tubes) with a Hardcore lives mode |
 | **Trio** (triple tile match) | ✅ Built — `games/trio/`. X-ray through the stack, every board winnable, par = lowest tray peak |
 | **Blocks** (block puzzle) | ✅ Built — `games/blocks/`. Next hand always visible, daily 90 pieces vs a bot, Zen with no game over |
 | **Minesweeper** | ✅ Built — `games/mines/`. Every board solvable by logic from the start square (solver checked against real mines), hints that explain the rule used, daily board, one take-back after a mine |
@@ -317,6 +317,31 @@ The template (`node scripts/new-game.mjs`) starts with all of these, and
 - Themes as plug-ins: Neon, Aurora, Sunny, Calm (colour-blind safe, symbols on),
   Mono (grayscale and e-paper screens: shades plus a pattern per liquid, patterns on)
 - Colour symbols, patterns (stripes, dots, checks… on any theme), reduced motion, effects off, keyboard play, screen-reader announcements
+
+### Pour — Advanced and Hardcore (v2)
+
+Classic levels stop getting harder once they reach 10–12 colours: two spare
+tubes is plenty of room. Advanced is a separate track (its own level count,
+`advanced` save key) so Classic levels, links and progress stay as they were.
+
+- One spare tube plus a small one (3, 2 or 1 units). One spare alone is almost
+  never solvable from a random deal, so the small tube sets the tightness
+- Bands of ten: small tubes (1–10), hidden layers (11–20: lower units show "?"
+  until they reach the top, and do not pour with the colour above them),
+  locked tubes (21–30: open once a tube of the key colour is finished), frozen
+  tubes (31–40: thaw after N pours), taller tubes of 5–6 (41–50), then a
+  seeded mix. A card explains each twist the first time it appears
+- Each level is the hardest of four solvable deals (most solver nodes
+  expanded); the next level is built ahead in a second worker
+- Rules take a layout `{ size, kinds }`; hidden units are stored as `~colour`.
+  Undo replays from the start so hidden units hide again. Par is still the
+  proven minimum (the solver sees hidden units, the rules are the same)
+- Hardcore (a switch, Advanced only): no undo, hints or extra tube. A dead
+  end, a position that can't be finished within the pour limit (par + 15%,
+  at least 2), or a restart costs a life and starts the puzzle again. Score is
+  lives used; first life = Flawless
+- Par can't be beaten in Pour (it is the true minimum), so the old "Birdie"
+  achievement became "Ten perfect" (same id)
 
 ## Trio — feature list (v1)
 

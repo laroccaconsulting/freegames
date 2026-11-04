@@ -1,7 +1,7 @@
 // Optimal solver (A*). The heuristic, segments over one per colour, never
 // overestimates and changes by at most one per move, so the first solution
 // found is the shortest: that is the puzzle's par.
-import { CAPACITY, usefulMoves, pour, isSolved, segmentsOver, stateKey } from './rules.js';
+import { PLAIN, usefulMoves, pour, isSolved, segmentsOver, stateKey } from './rules.js';
 
 class Heap {
   constructor() {
@@ -50,27 +50,31 @@ class Heap {
 // Returns { moves: [[from, to], …] } for the shortest solution, { moves: null }
 // when there is none, or { moves: null, gaveUp: true } past the node budget.
 // The budget counts nodes, not time, so every device gets the same answer.
-export function solve(tubes, { capacity = CAPACITY, maxNodes = 150000 } = {}) {
+// `moves` is how many pours were made before `tubes` (frozen tubes count them).
+export function solve(tubes, { layout, moves = 0, maxNodes = 150000 } = {}) {
+  layout ||= PLAIN;
   const start = { tubes, g: 0, f: segmentsOver(tubes), parent: null, move: null };
-  const best = new Map([[stateKey(tubes), 0]]);
+  const key = (t, g) => stateKey(t, layout, moves + g);
+  const best = new Map([[key(tubes, 0), 0]]);
   const open = new Heap();
   open.push(start);
   let expanded = 0;
   while (open.size) {
     const node = open.pop();
-    if (isSolved(node.tubes, capacity)) {
-      const moves = [];
-      for (let n = node; n.parent; n = n.parent) moves.push(n.move);
-      return { moves: moves.reverse(), expanded };
+    if (isSolved(node.tubes, layout.size)) {
+      const path = [];
+      for (let n = node; n.parent; n = n.parent) path.push(n.move);
+      return { moves: path.reverse(), expanded };
     }
-    if (best.get(stateKey(node.tubes)) < node.g) continue;
+    if (best.get(key(node.tubes, node.g)) < node.g) continue;
     if (++expanded > maxNodes) return { moves: null, gaveUp: true, expanded };
-    for (const move of usefulMoves(node.tubes, capacity)) {
-      const next = pour(node.tubes, move[0], move[1], capacity);
-      const key = stateKey(next);
+    const at = moves + node.g;
+    for (const move of usefulMoves(node.tubes, layout, at)) {
+      const next = pour(node.tubes, move[0], move[1], layout, at);
       const g = node.g + 1;
-      if (best.has(key) && best.get(key) <= g) continue;
-      best.set(key, g);
+      const k = key(next, g);
+      if (best.has(k) && best.get(k) <= g) continue;
+      best.set(k, g);
       open.push({ tubes: next, g, f: g + segmentsOver(next), parent: node, move });
     }
   }
