@@ -1,9 +1,12 @@
 // Shared helpers for Contraption's level and machine tools (Node only).
 // See docs/contraption.md §13 for the workflow these support.
-import { LEVELS, levelById } from '../../games/contraption/js/levels.js';
+import { LEVELS, levelById as byId, ALL_PARTS_SANDBOX } from '../../games/contraption/js/levels.js';
+
+/** A level by id; 'sandbox' gives the sandbox with every part on offer. */
+export const levelById = (id) => (id === 'sandbox' ? ALL_PARTS_SANDBOX : byId(id));
 import { simulate, problems, usage } from '../../games/contraption/js/machine.js';
 
-export { LEVELS, levelById, simulate, problems, usage };
+export { LEVELS, simulate, problems, usage };
 
 export const range = (a, b, s = 1) => {
   const r = [];

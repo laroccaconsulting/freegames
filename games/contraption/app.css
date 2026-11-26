@@ -208,7 +208,7 @@ body {
 }
 .title-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
 @media (min-aspect-ratio: 5/4) {
@@ -682,4 +682,43 @@ body {
 }
 .field-label {
   font-weight: 700;
+}
+
+.gallery {
+  display: grid;
+  gap: 10px;
+}
+.gallery-item {
+  padding: 12px;
+  border: var(--ink-line) solid var(--border);
+  border-radius: 12px;
+}
+.gallery-item h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.gallery-item small {
+  color: var(--text-muted);
+}
+.gallery-item p {
+  margin: 6px 0 10px;
+}
+.changes h3 {
+  margin: 12px 0 4px;
+  font-size: 1rem;
+}
+.changes h3:first-child {
+  margin-top: 0;
+}
+.changes ul {
+  margin: 0;
+  padding-left: 1.2em;
+}
+.changes li {
+  margin: 3px 0;
+}
+.menu-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
 }

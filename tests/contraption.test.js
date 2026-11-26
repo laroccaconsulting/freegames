@@ -106,3 +106,34 @@ test('saved machines from before tooth counts load with 10/20/30 teeth', async (
   const old = { v: 1, engine: 1, parts: [{ id: 'g', type: 'gear', p: [3, 3], size: 2 }] };
   assert.deepEqual(fromSave(old).parts, [{ id: 'g', type: 'gear', p: [3, 3], teeth: 20, plane: 0 }]);
 });
+
+test('machines travel in links: encode, decode, compact enough for a big build', async () => {
+  const { encodeMachine, decodeMachine, machineFromHash } = await import('../games/contraption/js/share.js');
+  const { levelById } = await import('../games/contraption/js/levels.js');
+  const level = levelById('grand');
+  const link = await encodeMachine(level.id, level.solution);
+  assert.match(link, /^[zj][A-Za-z0-9_-]+$/);
+  const back = await decodeMachine(link);
+  assert.equal(back.level, 'grand');
+  assert.deepEqual(back.parts.map(({ id, ...p }) => p), level.solution.map(({ id, ...p }) => p));
+  assert.equal(simulate(level, back.parts).status, 'win', 'a shared solution still wins');
+  assert.equal(machineFromHash(`#m=${link}`), link);
+  assert.equal(await decodeMachine('zgarbage'), null);
+  // a 300-part machine stays a reasonable link
+  const big = Array.from({ length: 300 }, (_, i) => ({ type: 'ramp', a: [i % 40, (i / 40) | 0], b: [(i % 40) + 3, ((i / 40) | 0) + 1] }));
+  assert.ok((await encodeMachine('sandbox', big)).length < 4000);
+});
+
+test('every gallery machine still does what it says', async () => {
+  const { GALLERY } = await import('../games/contraption/js/gallery.js');
+  const { ALL_PARTS_SANDBOX, levelById } = await import('../games/contraption/js/levels.js');
+  const ids = new Set();
+  for (const g of GALLERY) {
+    assert.ok(!ids.has(g.id), `${g.id} unique`);
+    ids.add(g.id);
+    const level = g.level === 'sandbox' ? ALL_PARTS_SANDBOX : levelById(g.level);
+    const parts = g.parts.map((p, i) => ({ ...p, id: `g${i}` }));
+    assert.equal(problems(level, parts).size, 0, `${g.id} is placeable`);
+    assert.equal(simulate(level, parts).status, 'win', `${g.id} delivers`);
+  }
+});

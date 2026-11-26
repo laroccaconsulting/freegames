@@ -450,8 +450,14 @@ judges fairness and fun before merge.
    1:20; a test checks it). Chains name the layer at each end. Sandbox is
    48×32; boards too big to touch comfortably start zoomed on the item,
    pan with one finger, and show a tappable minimap.
-4. Machine links, file export and the level editor.
-5. "What's new" card and the in-game Gallery.
+4. ✅ Machine links (`#m=…`, deflated base64url, about 160 characters for a
+   level solution; a 300-part build stays under 4 KB) and save/open file.
+   A loaded solution counts as a hint on its level. Still to do: the level
+   editor.
+5. ✅ "What's new" (`js/changes.js`, shown once to returning players, and
+   in Settings) and the Gallery (`js/gallery.js`, each entry tested to
+   still work; first entry: a 1:20 compound train). Players send links
+   through a prefilled GitHub issue.
 6. The signal layer: wire, plate, beam, switch, then NAND, delay, pixel.
    Each comes with its teaching levels.
 7. Chips, displays, counters, then the two clocks.
