@@ -458,8 +458,12 @@ judges fairness and fun before merge.
    in Settings) and the Gallery (`js/gallery.js`, each entry tested to
    still work; first entry: a 1:20 compound train). Players send links
    through a prefilled GitHub issue.
-6. The signal layer: wire, plate, beam, switch, then NAND, delay, pixel.
-   Each comes with its teaching levels.
+6. ✅ (first half) The signal layer: plate, beam and wire, with chapter 7
+   "Signals" (Step on it, Break the beam, Chain reaction). There is no
+   separate switch part: a wired motor runs only while a wire into it is
+   on, and a level can make a fixed motor wait (`switched: true`, drawn with
+   a socket). Sensors read the world after each step; motors act on the next
+   step. Still to do: NAND, delay and pixel, and two more Signals levels.
 7. Chips, displays, counters, then the two clocks.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.

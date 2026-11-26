@@ -18,4 +18,5 @@ export default [
   { id: 'tinkerer', title: 'Tinkerer', desc: 'Build a machine of fifteen parts in the sandbox.' },
   { id: 'no-hints', title: 'On my own', desc: 'Finish a chapter without using a hint.' },
   { id: 'persistence', title: 'Persistence', desc: 'Fail fifty runs. Every one teaches something.', goal: 50, secret: true },
+  { id: 'signals-done', title: 'Switched on', desc: 'Finish the Signals chapter.' },
 ];

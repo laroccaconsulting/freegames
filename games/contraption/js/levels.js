@@ -14,6 +14,7 @@ export const CHAPTERS = [
   { id: 'gears', name: 'Gears', part: 'gear', blurb: 'Trade speed for strength, or strength for speed.' },
   { id: 'chains', name: 'Chains', part: 'chain', blurb: 'Send the turning somewhere else, and wait for the moment.' },
   { id: 'timing', name: 'Timing', part: 'bouncer', blurb: 'Moving pieces. Bounce, wait, and go.' },
+  { id: 'signals', name: 'Signals', part: 'plate', blurb: 'Sensors and wires: the machine reacts to what happens.' },
 ];
 
 export const LEVELS = [
@@ -618,6 +619,90 @@ export const LEVELS = [
       { id: 's2', type: 'motor', p: [3, 12], dir: 1, delay: 2.5 },
       { id: 's3', type: 'chain', a: [3, 12], b: [2, 4] },
       { id: 's4', type: 'ramp', a: [10, 8], b: [16, 11] },
+    ],
+  },
+  // ---------------- 7. Signals ----------------
+  {
+    id: 'step-on-it',
+    chapter: 6,
+    name: 'Step on it',
+    goalText: 'This motor waits for a signal. Make the falling ball switch it on.',
+    w: 24,
+    h: 16,
+    items: [
+      { type: 'ball', x: 4, y: 1.5, deliver: false },
+      { type: 'crate', x: 12, y: 7.5 },
+    ],
+    walls: [[0, 15, 24, 1], [0, 11, 8, 4]],
+    danger: [[8, 14, 10, 1]],
+    goal: { x: 18.5, y: 11, w: 4, h: 4, cup: true },
+    fixed: [
+      { id: 'f1', type: 'conveyor', a: [10, 9], b: [17, 9], fixed: true },
+      { id: 'f2', type: 'motor', p: [10, 9], dir: 1, delay: 0, switched: true, fixed: true },
+    ],
+    parts: { plate: 1, wire: 1 },
+    stars: { parts: 2, time: 4 },
+    hint: 'Put a plate where the ball lands, then tap Wire, tap the plate and tap the motor.',
+    solution: [
+      { id: 's1', type: 'plate', p: [4, 10] },
+      { id: 's2', type: 'wire', a: [4, 10], b: [10, 9] },
+    ],
+  },
+  {
+    id: 'beam',
+    chapter: 6,
+    name: 'Break the beam',
+    goalText: 'A beam is only on while something is in it. Park the ball in the light.',
+    w: 24,
+    h: 16,
+    items: [
+      { type: 'ball', x: 3, y: 1.5, deliver: false },
+      { type: 'crate', x: 11.5, y: 7.5 },
+    ],
+    walls: [[0, 15, 24, 1], [1, 11.5, 5, 0.5], [1, 9, 0.3, 2.5], [5.7, 9, 0.3, 2.5]],
+    danger: [[8, 14, 10.75, 1]],
+    goal: { x: 19, y: 11, w: 4, h: 4, cup: true },
+    fixed: [
+      { id: 'f1', type: 'conveyor', a: [10, 9], b: [18, 9], fixed: true },
+      { id: 'f2', type: 'motor', p: [10, 9], dir: 1, delay: 0, switched: true, fixed: true },
+    ],
+    parts: { beam: 1, wire: 1, ramp: 1 },
+    stars: { parts: 2, time: 4 },
+    hint: 'The ball falls into the little box and stays there. Shine the beam across the box.',
+    solution: [
+      { id: 's1', type: 'beam', a: [2, 11], b: [5, 11] },
+      { id: 's2', type: 'wire', a: [2, 11], b: [10, 9] },
+    ],
+  },
+  {
+    id: 'chain-reaction',
+    chapter: 6,
+    name: 'Chain reaction',
+    goalText: 'Two motors wait. The ball starts the first; what the first belt drops has to start the second.',
+    w: 24,
+    h: 16,
+    items: [
+      { type: 'ball', x: 3, y: 1.5, deliver: false },
+      { type: 'crate', x: 8, y: 4.5, deliver: false },
+      { type: 'crate', x: 6, y: 10.5 },
+    ],
+    walls: [[0, 15, 24, 1], [13.5, 9.5, 4, 0.5], [17.5, 7.5, 0.5, 2.5]],
+    danger: [[0, 14, 15.75, 1]],
+    goal: { x: 16, y: 12, w: 4, h: 3, cup: true },
+    fixed: [
+      { id: 'f1', type: 'conveyor', a: [6, 6], b: [13, 6], fixed: true },
+      { id: 'f2', type: 'motor', p: [6, 6], dir: 1, delay: 0, switched: true, fixed: true },
+      { id: 'f3', type: 'conveyor', a: [4, 12], b: [15, 12], fixed: true },
+      { id: 'f4', type: 'motor', p: [4, 12], dir: 1, delay: 0, switched: true, fixed: true },
+    ],
+    parts: { plate: 2, wire: 2 },
+    stars: { parts: 4, time: 6.5 },
+    hint: 'The first crate falls onto the shelf on the right. A plate there can hold the second motor on.',
+    solution: [
+      { id: 's1', type: 'plate', p: [3, 4] },
+      { id: 's2', type: 'wire', a: [3, 4], b: [6, 6] },
+      { id: 's3', type: 'plate', p: [16, 9] },
+      { id: 's4', type: 'wire', a: [16, 9], b: [4, 12] },
     ],
   },
 ];

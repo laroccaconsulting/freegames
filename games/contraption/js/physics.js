@@ -806,7 +806,7 @@ export function step(world, dt = DT) {
     let A = 0;
     let B = t.damping;
     for (const m of t.motors) {
-      if (t0 < (m.delay || 0)) continue;
+      if (t0 < (m.delay || 0) || m.off) continue;
       A += m.k * m.dir * m.stall;
       B += (m.k * m.k * m.stall) / m.speed;
     }

@@ -61,12 +61,17 @@ export function neighbours(parts) {
   // the player sees at once, so it is not a matter of fine tuning.
   const driven = new Set(parts.filter((p) => p.type === 'gear' || p.type === 'motor').map((p) => p.p.join(',')));
   parts.forEach((part, i) => {
+    // wires follow the pin they start or end on
+    const pinOf = (q) => (q.type === 'beam' ? q.a : q.type === 'plate' || q.type === 'motor' ? q.p : null);
     const tweak = (fn) => {
       const c = clone();
+      const before = pinOf(c[i]) ? [...pinOf(c[i])] : null;
       fn(c[i]);
+      const after = before && pinOf(c[i]);
+      if (before) for (const w of c) if (w.type === 'wire') for (const end of ['a', 'b']) if (w[end][0] === before[0] && w[end][1] === before[1]) w[end] = [...after];
       out.push(c);
     };
-    if (part.type === 'gear' || part.type === 'chain') return;
+    if (part.type === 'gear' || part.type === 'chain' || part.type === 'wire') return;
     for (const f of ['a', 'b', 'p']) {
       if (!part[f]) continue;
       if (part.type === 'motor') continue;
