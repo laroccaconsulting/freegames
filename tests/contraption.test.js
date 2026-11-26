@@ -52,3 +52,14 @@ test('a motor geared down by two pushes twice as hard', async () => {
   for (let i = 0; i < 600; i++) P.step(w);
   assert.ok(Math.abs(t.v - (3 * Math.PI) / 2) < 0.01, 'free speed halves');
 });
+
+test('quality gates: slack around every solution and no cheap exploits', async () => {
+  const { slack, exploits, describe } = await import('../scripts/contraption/lib.mjs');
+  for (const level of LEVELS) {
+    const s = slack(level);
+    const need = level.minSlack ?? 0.25;
+    assert.ok(s.slack >= need, `${level.id}: slack ${(s.slack * 100).toFixed(0)}% (${s.won}/${s.tried}) is under ${need * 100}%; reshape the level or pick a more central solution (scripts/contraption/centre.mjs)`);
+    const ex = exploits(level, { stride: 2 });
+    assert.equal(ex.length, 0, `${level.id}: a cheap machine wins: ${ex.length ? describe(ex[0]) : ''}`);
+  }
+});

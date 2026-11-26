@@ -95,6 +95,7 @@ export function drawScene(view, pal, level, parts, opts = {}) {
       drawLever(ctx, view, pal, part, b ? b.angle : undefined);
     } else if (part.type === 'weight') {
       const b = run?.partBodies.get(part.id);
+      if (!b) dropArrow(ctx, view, pal, part.p);
       drawWeight(ctx, view, pal, b ? b.x : part.p[0], b ? b.y : part.p[1], b ? b.angle : 0);
     }
   }
@@ -205,4 +206,25 @@ function drawRatios(view, pal, layout, all) {
       label(ctx, view, pal, `${turnArrow} ${fmtRatio(A.k)}`, A.p[0], A.p[1] + 0.02, { size: 11 });
     }
   }
+}
+
+// A weight waits until Run: a dashed arrow says where it will fall.
+function dropArrow(ctx, view, pal, [x, y]) {
+  ctx.save();
+  ctx.strokeStyle = pal.mid;
+  ctx.fillStyle = pal.mid;
+  ctx.lineWidth = view.px(1.6);
+  ctx.setLineDash([0.15, 0.12]);
+  ctx.beginPath();
+  ctx.moveTo(x, y + 0.55);
+  ctx.lineTo(x, y + 1.55);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(x - 0.2, y + 1.45);
+  ctx.lineTo(x + 0.2, y + 1.45);
+  ctx.lineTo(x, y + 1.75);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
 }
