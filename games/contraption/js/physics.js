@@ -190,14 +190,14 @@ function segmentDistance(p1x, p1y, q1x, q1y, p2x, p2y, q2x, q2y) {
   return { f1, f2, c1x, c1y, c2x, c2y, d2: (c2x - c1x) ** 2 + (c2y - c1y) ** 2 };
 }
 
-function circles(A, B) {
+function circles(A, B, spec = SPECULATIVE) {
   const [ax, ay] = A.verts[0];
   const [bx, by] = B.verts[0];
   const dx = bx - ax;
   const dy = by - ay;
   const d = Math.hypot(dx, dy);
   const sep = d - A.radius - B.radius;
-  if (sep > SPECULATIVE) return null;
+  if (sep > spec) return null;
   const nx = d > 1e-9 ? dx / d : 0;
   const ny = d > 1e-9 ? dy / d : 1;
   const cAx = ax + A.radius * nx;
@@ -208,7 +208,7 @@ function circles(A, B) {
 }
 
 // Polygon A (2+ vertices) against circle B. Normal points from A to B.
-function polyCircle(A, B) {
+function polyCircle(A, B, spec = SPECULATIVE) {
   const [cx, cy] = B.verts[0];
   const radius = A.radius + B.radius;
   let idx = 0;
@@ -222,7 +222,7 @@ function polyCircle(A, B) {
       idx = i;
     }
   }
-  if (separation - radius > SPECULATIVE) return null;
+  if (separation - radius > spec) return null;
   const [v1x, v1y] = A.verts[idx];
   const [v2x, v2y] = A.verts[idx + 1 < A.count ? idx + 1 : 0];
   const u1 = dot(cx - v1x, cy - v1y, v2x - v1x, v2y - v1y);
@@ -237,7 +237,7 @@ function polyCircle(A, B) {
     const dx = cx - vx;
     const dy = cy - vy;
     const d = Math.hypot(dx, dy);
-    if (d - radius > SPECULATIVE) return null;
+    if (d - radius > spec) return null;
     nx = dx / d;
     ny = dy / d;
     cAx = vx + A.radius * nx;
@@ -273,7 +273,7 @@ function maxSeparation(P, Q) {
   return [best, max];
 }
 
-function clipPolygons(A, B, edgeA, edgeB, flip) {
+function clipPolygons(A, B, edgeA, edgeB, flip, spec = SPECULATIVE) {
   const P1 = flip ? B : A;
   const P2 = flip ? A : B;
   const i11 = flip ? edgeB : edgeA;
@@ -317,22 +317,22 @@ function clipPolygons(A, B, edgeA, edgeB, flip) {
   if (!flip) {
     lower.id = i11 * 16 + i22;
     upper.id = i12 * 16 + i21 + 256;
-    if (lower.sep <= SPECULATIVE) points.push(lower);
-    if (upper.sep <= SPECULATIVE) points.push(upper);
+    if (lower.sep <= spec) points.push(lower);
+    if (upper.sep <= spec) points.push(upper);
     return points.length ? { nx, ny, points } : null;
   }
   upper.id = i21 * 16 + i12 + 512;
   lower.id = i22 * 16 + i11 + 768;
-  if (upper.sep <= SPECULATIVE) points.push(upper);
-  if (lower.sep <= SPECULATIVE) points.push(lower);
+  if (upper.sep <= spec) points.push(upper);
+  if (lower.sep <= spec) points.push(lower);
   return points.length ? { nx: -nx, ny: -ny, points } : null;
 }
 
-function polygons(A, B) {
+function polygons(A, B, spec = SPECULATIVE) {
   let [edgeA, sepA] = maxSeparation(A, B);
   let [edgeB, sepB] = maxSeparation(B, A);
   const radius = A.radius + B.radius;
-  if (sepA > SPECULATIVE + radius || sepB > SPECULATIVE + radius) return null;
+  if (sepA > spec + radius || sepB > spec + radius) return null;
   let flip;
   if (sepB > sepA + 0.1 * SLOP) {
     flip = true;
@@ -372,8 +372,8 @@ function polygons(A, B) {
     if (endA && endB) {
       // vertex against vertex: one point along the line between them
       const d = Math.sqrt(r.d2);
-      if (d - radius > SPECULATIVE) return null;
-      if (d < 1e-9) return clipPolygons(A, B, edgeA, edgeB, flip);
+      if (d - radius > spec) return null;
+      if (d < 1e-9) return clipPolygons(A, B, edgeA, edgeB, flip, spec);
       const nx = (r.c2x - r.c1x) / d;
       const ny = (r.c2y - r.c1y) / d;
       const cAx = r.c1x + A.radius * nx;
@@ -385,21 +385,21 @@ function polygons(A, B) {
       return { nx, ny, points: [{ x: (cAx + cBx) / 2, y: (cAy + cBy) / 2, sep: d - radius, id: 1024 + ia * 16 + ib }] };
     }
   }
-  return clipPolygons(A, B, edgeA, edgeB, flip);
+  return clipPolygons(A, B, edgeA, edgeB, flip, spec);
 }
 
 /** Contact manifold between two world shapes (from toWorld/placeShape), normal A→B. */
-export function collide(A, B) {
-  if (A.count === 1 && B.count === 1) return circles(A, B);
-  if (B.count === 1) return polyCircle(A, B);
+export function collide(A, B, spec = SPECULATIVE) {
+  if (A.count === 1 && B.count === 1) return circles(A, B, spec);
+  if (B.count === 1) return polyCircle(A, B, spec);
   if (A.count === 1) {
-    const m = polyCircle(B, A);
+    const m = polyCircle(B, A, spec);
     if (!m) return null;
     m.nx = -m.nx;
     m.ny = -m.ny;
     return m;
   }
-  return polygons(A, B);
+  return polygons(A, B, spec);
 }
 
 /** Deepest overlap between two world shapes (negative = overlapping), or Infinity. */
@@ -587,21 +587,36 @@ function push(s, dx, dy, c, lambda) {
   }
 }
 
+// An upper bound on how fast any point of a body can move.
+function speedBound(b) {
+  const w = b.world;
+  const ext = Math.max(w.maxX - b.x, b.x - w.minX, w.maxY - b.y, b.y - w.minY) * 1.42;
+  if (b.kind === 'dynamic' || b.kind === 'kinematic') return Math.hypot(b.vx, b.vy) + Math.abs(b.w) * ext;
+  if (b.kind === 'rotor') return Math.abs(b.k * b.train.v) * ext;
+  return 0;
+}
+
 function findContacts(world) {
   const { bodies } = world;
   const old = world.cache;
   const fresh = new Map();
   const list = [];
-  for (const b of bodies) if (b.kind !== 'static' || !b.world) toWorld(b);
+  for (const b of bodies) {
+    if (b.kind !== 'static' || !b.world) toWorld(b);
+    b.reach = speedBound(b);
+  }
   for (let i = 0; i < bodies.length; i++) {
     const a = bodies[i];
     const wa = a.world;
     for (let j = i + 1; j < bodies.length; j++) {
       const b = bodies[j];
       const wb = b.world;
-      if (wa.maxX + SPECULATIVE < wb.minX || wb.maxX + SPECULATIVE < wa.minX || wa.maxY + SPECULATIVE < wb.minY || wb.maxY + SPECULATIVE < wa.minY) continue;
+      // look ahead as far as the pair can close in one step, so fast things
+      // never pass through thin ones (speculative contacts)
+      const spec = SPECULATIVE;
+      if (wa.maxX + spec < wb.minX || wb.maxX + spec < wa.minX || wa.maxY + spec < wb.minY || wb.maxY + spec < wa.minY) continue;
       if (!canCollide(a, b)) continue;
-      const m = collide(wa, wb);
+      const m = collide(wa, wb, spec);
       if (!m) continue;
       const friction = Math.sqrt(a.friction * b.friction);
       const restitution = Math.max(a.restitution, b.restitution);

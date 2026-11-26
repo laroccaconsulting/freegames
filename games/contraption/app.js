@@ -302,8 +302,10 @@ function partsRow(entries) {
 
 async function levelCard() {
   const ch = CHAPTERS[level.chapter];
-  const first = LEVELS.find((l) => l.chapter === level.chapter) === level;
-  const newParts = first ? (level.chapter === 1 ? ['lever', 'weight'] : level.chapter === 2 ? ['conveyor', 'motor'] : [ch.part]) : [];
+  // a part is introduced on the first level that offers it
+  const seen = new Set(LEVELS.slice(0, indexOf(level)).flatMap((l) => Object.keys(l.parts || {})));
+  const newParts = PART_TYPES.filter((t) => level.parts?.[t] && !seen.has(t));
+  void ch;
   const rec = progress[level.id];
   const body = el(
     'div',
@@ -799,6 +801,7 @@ function hintFor(part) {
   if (part.a && part.type !== 'chain') return 'Drag the round ends to pegs.';
   if (part.type === 'lever') return `Arms ${part.l1} and ${part.l2}. Drag the ends.`;
   if (part.type === 'motor') return (part.dir || 1) > 0 ? 'Turns clockwise.' : 'Turns counter-clockwise.';
+  if (part.type === 'weight') return 'Hangs here until you press Run, then falls.';
   if (part.type === 'gear') {
     const A = layout?.axles.get(key(part.p));
     const t = A && layout.trains[A.train];

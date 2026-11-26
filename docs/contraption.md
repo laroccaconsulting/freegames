@@ -386,7 +386,12 @@ machines need that turned into repo tooling with gates that tests enforce,
 so that agents (or contributors) can work on many levels in parallel
 without lowering quality.
 
-**Tools (`scripts/contraption/`, plain Node, no dependencies):**
+**Tools (`scripts/contraption/`, plain Node, no dependencies). Built:
+`sim`, `search`, `centre`, `check`; still to come: `shot` levels and the
+builder DSL.**
+- `check`: every gate below for one level or all; exits non-zero on a failure.
+- `centre`: among a family's winners, the machine with the most slack. Use
+  it to choose a level's reference solution.
 - `sim`: run a level with a machine headless. Prints the outcome, the
   time, the failure reason and a sampled trace of each item.
 - `search`: try a family of placements (written as a JS expression) and
@@ -404,9 +409,13 @@ without lowering quality.
 **Gates every level must pass (in `tests/contraption.test.js`):**
 - The reference solution wins within the star targets (true today).
 - An empty machine fails (true today).
-- Slack: at least N winning placements in the level's search family (a
-  per-level threshold, higher for early chapters).
-- No exploit from the `exploit` sweep wins.
+- Slack (built): at least 25% of the solution's one-step neighbours also
+  win (pegs ±1, lever arms ±½, angles ±15°, delays ±½ s where the
+  solution waits). Drive pegs (gears, motors, chains) are not nudged: one
+  peg off there unhooks the drive, a visible mistake rather than fine
+  tuning. A level can lower it with `minSlack`, with a comment saying why.
+- No exploit wins (built): no empty machine, and on levels whose parts
+  target is above one, no single part of any offered type at any peg.
 - Sub-assemblies have their own unit tests (the oscillator period, the
   counter rolling over, a 60:1 train ratio) before a capstone uses them.
 
@@ -427,8 +436,9 @@ judges fairness and fun before merge.
 
 ## 14. Next steps toward this (in order)
 
-1. Move the search and simulate scripts into `scripts/contraption/`,
-   and add the slack and exploit gates to the tests.
+1. ✅ Search and simulate scripts in `scripts/contraption/`; slack and
+   exploit gates in the tests; chapter 2 re-tuned (Tipping point now opens
+   the chapter, Seesaw comes with its lever built and a stop for the ball).
 2. Part registry refactor, versioned save format, golden-machine corpus.
 3. Tooth-count gears (S/M/L kept as 10/20/30 teeth) and scrolling,
    larger boards.
