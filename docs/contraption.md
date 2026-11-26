@@ -252,6 +252,190 @@ fail buzz.
 6. Achievements, sounds, hub card + icon, README/PLAN, offline lists.
 7. Headless checks at 390×780 and 1200×900 (tablet), deploy.
 
-## 12. Later
-- Level editor and share-by-link levels; daily challenge; ropes and pulleys;
-  springs and pistons; marble-run track pieces.
+## 12. Long-term direction: from puzzles to real machines
+
+Where this goes: the toolkit becomes good enough that players **build
+working things** (a clock, a counter, a display, a calculator) from a
+small set of parts on a solid engine, and **share them by link**. The
+game keeps growing in small, frequent updates: new parts, new chapters, and
+featured machines that people made.
+
+The bar is "very few pieces, very deep": every new part has to combine
+with the others in ways that are hard to predict. The model is a universal
+gate (NAND), not a crate of special-purpose gadgets.
+
+### 12.1 Two ways to compute, both kept
+
+1. **Mechanical logic, from the physics alone.** Marbles, levers, gates,
+   ratchets and cams, the way the Digi-Comp toys worked. This is the most
+   impressive to watch, but it is slow and fragile, so it needs the engine
+   work in 12.4. It lives in puzzle chapters and in show-off sandbox builds.
+2. **A signal layer that bridges to the physics.** Parts that sense the
+   physical world, discrete wires and gates that compute, and parts that act
+   back on the physics. This is how big builds (clocks, displays) stay
+   practical. Signals are exact (on/off), so they are also fully
+   deterministic.
+
+Both run in the same machine. A ball crossing a beam can start a counter,
+and the counter can open a gate that lets the next ball through.
+
+### 12.2 The signal toolkit (planned parts, smallest useful set)
+
+| Part | Kind | What it does |
+|---|---|---|
+| Wire | link | Carries on/off from an output to inputs. Drawn behind the board, like chains |
+| Plate | sensor | On while something presses it (a mass threshold) |
+| Beam | sensor | On while something blocks a line between two pegs |
+| Switch | actuator | Gates a motor: the motor runs only while its input is on |
+| Piston | actuator | Pushes out while on (a kinematic slider with a force limit) |
+| NAND | logic | The one universal gate. NOT, AND, OR, XOR and latches are recipes, not parts |
+| Delay | logic | Passes its input on after n ticks (0.1 to 5 s). With a NAND this makes an oscillator, which is the heartbeat of a clock |
+| Pixel | display and state | A cell that shows black or white. "Set" and "clear" inputs make it a one-bit memory and an output. Black/white is exactly right for e-paper |
+| Chip | hierarchy | Wraps a selection into one part with named pins; can be placed many times. Big builds stay readable, and a chip is shared like a machine |
+
+Convenience gates (NOT/AND/OR) can unlock later as shortcuts for NAND
+recipes the player has already built in a teaching level, so the core
+stays tiny.
+
+**Signal rules (fixed now, so they never break shared machines):**
+- Signals update once per physics step (1/120 s), after the physics.
+- Every gate has a one-tick delay, so loops are well defined: no glitches,
+  no order dependence, and a NOT wired to itself oscillates at a known rate.
+- Sensors read the state after the step; actuators apply on the next step.
+- The whole state is integers and booleans, with no floats, so it is
+  bit-for-bit the same on every device.
+
+### 12.3 Capstone: "build a clock"
+
+There are two clocks, as the final challenges of two late chapters:
+- **Mechanical clock.** A pendulum, an escapement (ratchet and pawl) and a
+  gear train geared 60:1 and 12:1 to the hands. This needs gears defined
+  by **tooth count** (10, 12, 15, 20, 24, 30, 36, 40, 45, 60…), so that
+  ratios such as 60:1 = 3·4·5 exist. Today's sizes 1/2/3 only give powers
+  of 2 and 3. Pitch radius = teeth / 10, so the existing S/M/L gears are
+  exactly 10/20/30 teeth and old saves map across with no change.
+- **Digital clock.** A delay oscillator, then counters (pixels used as
+  flip-flops), then a 7-segment decoder chip, then a 4-digit pixel
+  display. This is the showcase for chips and pixels.
+
+Both are verified by tests the same way levels are: "the minute hand turns
+once per 60 turns of the seconds axle", "the display reads 00:01 after
+60 s".
+
+### 12.4 Engine work this needs (in order)
+
+1. **A part registry.** Each part type becomes one module with its schema,
+   placement rules, physics bodies, signal pins, drawing and inspector
+   controls. New parts are then one file each, instead of edits across
+   `machine.js`, `draw.js` and `app.js`. Do this before adding any new part.
+2. **Versioned machines.** Every saved or shared machine records the
+   format version and the engine version. The physics only changes
+   behind a version bump, and there are migrations for old formats.
+3. **Determinism guard.** A corpus of "golden machines" (every level
+   solution plus featured community builds) runs in the tests. Any engine
+   change that alters a result fails CI unless it is a deliberate version
+   bump. Float physics can differ slightly between browsers (Math.sin/cos),
+   so a shared machine's result is always re-checked on the viewer's
+   device, never trusted from the link.
+4. **Scale.** A spatial-grid broadphase, sleeping for bodies at rest, and
+   boards up to about 96×64 with a scrolling camera and a minimap.
+   Fast-forward runs headless in a worker. Target: a 300-part clock at
+   60 fps on a mid phone.
+5. **Mechanical vocabulary.** Tooth-count gears, ratchet and pawl,
+   pendulum bob (a weight bolted to a lever), cam, rack and pinion,
+   springs, rope and pulley. Each one is added only when a level needs it.
+
+### 12.5 Sharing without a server
+
+No accounts and no servers still holds (PLAN.md principles):
+- **A machine in a link.** Parts are packed into bytes (type id, pegs,
+  settings), compressed with the browser's CompressionStream and encoded
+  as base64url in the fragment: `contraption/#m=…`. A 300-part clock
+  should fit in about 2 KB. Opening a link loads the machine (or the
+  player-made level) read-only in the sandbox, with "Run" and "Copy to
+  my sandbox".
+- **Export and import a file** for builds that are too big for a link.
+- **Level editor.** Players make their own levels (walls, goal, items,
+  parts on offer), and the editor requires a working solution before it
+  makes a link, just as our levels do.
+- **Featured machines ship with the game.** Players submit a link through
+  a GitHub issue. A maintainer (or the agent workflow below) checks that it
+  runs, and it lands in an in-game "Gallery" with credit. This is how
+  "people share very impressive machines" works with no server, and it
+  feeds the regular updates.
+
+### 12.6 Frequent updates, visibly
+
+- A "What's new" card on the title screen after each update (new parts,
+  levels, gallery entries), driven by a changelog file in the game folder.
+  The service worker already offers "Reload" when a new version is ready.
+- Content arrives in small drops: a chapter of 5 levels, one new part with
+  its teaching levels, or a handful of gallery machines. Ids stay
+  append-only, so progress always carries over.
+- A weekly challenge picked by date from a list that ships ahead of time,
+  so it works offline: a fixed level with a par in parts and time.
+- Later chapters in order: Signals (sensors, wires, switch), Logic
+  (NAND to everything), Memory (pixels as bits, counters), Displays
+  (chips, 7-segment), Clocks (both capstones), then open-ended "build a…"
+  briefs.
+
+## 13. The agent workflow for levels and machines
+
+Chapters 1–6 were tuned with throwaway search scripts. Bigger levels and
+machines need that turned into repo tooling with gates that tests enforce,
+so that agents (or contributors) can work on many levels in parallel
+without lowering quality.
+
+**Tools (`scripts/contraption/`, plain Node, no dependencies):**
+- `sim`: run a level with a machine headless. Prints the outcome, the
+  time, the failure reason and a sampled trace of each item.
+- `search`: try a family of placements (written as a JS expression) and
+  report the winners, a tally of why the others failed, and the
+  solution's **slack** (the share of nearby placements that also win).
+- `exploit`: brute-force cheap machines (nothing, one part of each type
+  at every peg) and report any that win. A level must not fall to these.
+- `shot`: a PNG of a level, a machine, or a moment in a run, through
+  `scripts/shot.mjs` with `?level=…&machine=…&t=…`, for visual review.
+- `build`: a small builder DSL so machines can be written as code
+  (`gear(10, at(4,5))`, `chip('counter4', at(20,8))`). Agents assemble
+  big contraptions from tested sub-assemblies and emit ordinary machine
+  data.
+
+**Gates every level must pass (in `tests/contraption.test.js`):**
+- The reference solution wins within the star targets (true today).
+- An empty machine fails (true today).
+- Slack: at least N winning placements in the level's search family (a
+  per-level threshold, higher for early chapters).
+- No exploit from the `exploit` sweep wins.
+- Sub-assemblies have their own unit tests (the oscillator period, the
+  counter rolling over, a 60:1 train ratio) before a capstone uses them.
+
+**Loop for one level or machine (one agent each, in parallel):**
+1. Brief: the concept it teaches, the parts on offer, the target
+   difficulty and slack.
+2. Draft the geometry, then `search` for solutions and read the failure
+   tally to see what the physics actually allows.
+3. Reshape until slack and exploit checks pass. Prefer changing the
+   level over hunting for knife-edge answers.
+4. `shot` the build and the key moments of a run, and check them at
+   390×780 and on a 4:3 tablet.
+5. Add the level with its solution, run the tests, then open a PR whose
+   description has the screenshots and numbers.
+
+A reviewer pass (a second agent) replays the gates, plays the level, and
+judges fairness and fun before merge.
+
+## 14. Next steps toward this (in order)
+
+1. Move the search and simulate scripts into `scripts/contraption/`,
+   and add the slack and exploit gates to the tests.
+2. Part registry refactor, versioned save format, golden-machine corpus.
+3. Tooth-count gears (S/M/L kept as 10/20/30 teeth) and scrolling,
+   larger boards.
+4. Machine links, file export and the level editor.
+5. "What's new" card and the in-game Gallery.
+6. The signal layer: wire, plate, beam, switch, then NAND, delay, pixel.
+   Each comes with its teaching levels.
+7. Chips, displays, counters, then the two clocks.
+8. More mechanical parts as levels call for them: ratchet, pendulum,
+   cam, springs, rope and pulley.

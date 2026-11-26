@@ -89,6 +89,13 @@ The short list for the next sessions. Details are in the waves below.
   box pushing and Klotski-style blocks (Slide modes), **9×9 Go**, **Cribbage**,
   **Gin Rummy**, **Dominoes**, Fill-in and the 5×5 mini crossword (Words)
 - **Seasons**: winter, spring and summer looks alongside Hallows (see "Seasons (planned)")
+- **Contraption, toward real machines**: the long-term plan is in
+  `docs/contraption.md` §12–14 (signal layer with NAND, delay and pixels;
+  chips; a mechanical clock and a digital clock as capstones; machines and
+  player-made levels shared by link with no server; a Gallery and "What's
+  new" for frequent updates; an agent workflow with slack and exploit gates).
+  First steps: move the search tools into `scripts/contraption/`, a part
+  registry, a versioned save format, and tooth-count gears
 - Touch-ups: redraw the rough Nonograms pictures (Flower, Watermelon, Glasses,
   Bicycle, Rose, Saturn, Hedgehog; keep their numbers), Word Search custom lists
   shared by link, a chain-rule lesson in Dots and Boxes
