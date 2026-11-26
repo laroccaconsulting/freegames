@@ -9,7 +9,11 @@ import { makeAchievements } from './core/achievements.js';
 import ACHIEVEMENTS from './achievements.js';
 import { DT } from './js/physics.js';
 import { toSave, fromSave } from './js/format.js';
-import { LEVELS, CHAPTERS, levelById } from './js/levels.js';
+import { encodeMachine, decodeMachine, machineFromHash } from './js/share.js';
+import { GALLERY, SUBMIT } from './js/gallery.js';
+import { CHANGES } from './js/changes.js';
+import { DT as _DT, ENGINE } from './js/physics.js';
+import { LEVELS, CHAPTERS, levelById, SANDBOX, ALL_PARTS_SANDBOX } from './js/levels.js';
 import { PARTS, PART_TYPES, PART_INFO, ITEM_INFO, problems, makeRun, key, moverMotion, gearR } from './js/machine.js';
 import { View, PALETTES, drawHandle } from './js/render.js';
 import { drawScene, drawPart, machineLayout, centre } from './js/draw.js';
@@ -66,21 +70,6 @@ let stats = store.get('stats', { runs: 0, fails: 0 });
 const pointers = new Map();
 let demo = null;
 
-const SANDBOX = {
-  id: 'sandbox',
-  chapter: -1,
-  name: 'Sandbox',
-  goalText: 'Anything goes. Get the ball into the cup however you like.',
-  w: 48,
-  h: 32,
-  items: [{ type: 'ball', x: 3, y: 2 }],
-  walls: [[0, 31, 48, 1]],
-  goal: { x: 42, y: 28, w: 4, h: 3, cup: true },
-  parts: {},
-  stars: { parts: 99, time: 99 },
-  timeLimit: 60,
-  solution: [],
-};
 
 // ---------- theme and settings ----------
 
@@ -113,6 +102,7 @@ const fmt = (s) => `${s.toFixed(1)} s`;
 const starText = (n, of = 3) => '★'.repeat(n) + '☆'.repeat(of - n);
 
 function offered(type) {
+  if (level.id.startsWith('gallery:')) return Infinity;
   if (sandbox) return unlockedParts(progress).has(type) ? Infinity : 0;
   return level.parts?.[type] ?? 0;
 }
@@ -172,6 +162,9 @@ function startTitle() {
   $('t-sandbox').setAttribute('aria-label', sbOpen ? 'Sandbox' : 'Sandbox, locked');
   demo = null;
   nextDemo();
+  const returning = Object.keys(progress).length || stats.runs;
+  if (returning && store.get('seenChanges') !== CHANGES[0].id && !machineFromHash(location.hash)) setTimeout(() => screen === 'title' && !document.querySelector('dialog[open]') && whatsNew({ onlyNew: true }), 700);
+  else if (!returning) store.set('seenChanges', CHANGES[0].id);
 }
 
 const DEMOS = ['grand', 'seesaw', 'gear-up', 'ricochet', 'heavy', 'clockwork'];
@@ -265,13 +258,14 @@ function renderLevels() {
 
 // ---------- opening a level ----------
 
-function openLevel(lvl, { card = true } = {}) {
-  sandbox = lvl.id === 'sandbox';
-  if (sandbox) {
+function openLevel(lvl, { card = true, preset = null } = {}) {
+  sandbox = lvl.id === 'sandbox' || lvl.id.startsWith('gallery:');
+  if (lvl.id === 'sandbox') {
     SANDBOX.parts = Object.fromEntries([...unlockedParts(progress)].map((t) => [t, 99]));
   }
-  level = sandbox ? SANDBOX : lvl;
-  parts = fromSave(store.get(`machine:${level.id}`, null)).parts;
+  level = lvl.id === 'sandbox' ? SANDBOX : lvl;
+  const saved = store.get(`machine:${level.id}`, null);
+  parts = saved || !preset ? fromSave(saved).parts : preset.map((p, i) => ({ ...p, id: `g${i}` }));
   selected = null;
   armed = null;
   chainFrom = null;
@@ -943,6 +937,7 @@ function settingsBody() {
     toggle('Sounds', settings.get('sound'), (v) => settings.set('sound', v)),
     toggle('Show the last path', settings.get('trails'), (v) => settings.set('trails', v), 'Dots where things went on the last run'),
     toggle('Show gear ratios', settings.get('ratios'), (v) => settings.set('ratios', v), 'Speed of each axle next to the motor'),
+    el('div', { class: 'menu-list' }, el('button', { class: 'btn', onclick: () => whatsNew() }, "What's new")),
   );
 }
 
@@ -956,12 +951,18 @@ async function playMenu() {
     body: el('div', {}, el('p', {}, level.goalText), settingsBody()),
     actions: [
       ...(sandbox ? [] : [{ label: 'Level card', value: 'card' }]),
+      { label: 'Share link', value: 'share' },
+      { label: 'Save to file', value: 'save' },
+      { label: 'Open file', value: 'open' },
       { label: 'Clear machine', value: 'clear' },
       { label: 'Parts guide', value: 'guide' },
       { label: 'Title', value: 'title' },
     ],
   });
   if (v === 'card') levelCard();
+  else if (v === 'share') shareMachine();
+  else if (v === 'save') saveFile();
+  else if (v === 'open') openFile();
   else if (v === 'clear') clearMachine();
   else if (v === 'guide') partsGuide();
   else if (v === 'title') {
@@ -999,11 +1000,125 @@ function partsGuide() {
   });
 }
 
+// ---------- sharing, files, gallery, what's new ----------
+
+// Shared links name the level; gallery copies and the sandbox share as sandbox.
+const shareLevelId = () => (sandbox ? 'sandbox' : level.id);
+
+async function shareMachine() {
+  if (!parts.length) return toast('Build something first.');
+  const code = await encodeMachine(shareLevelId(), parts);
+  const url = `${location.origin}${location.pathname}#m=${code}`;
+  const title = sandbox ? `My Contraption: ${level.name}` : `My Contraption for ${numberOf(level)} ${level.name}`;
+  try {
+    if (navigator.share) await navigator.share({ title, url });
+    else {
+      await navigator.clipboard.writeText(url);
+      toast('Link copied. Anyone who opens it gets your machine.');
+    }
+  } catch {
+    // the share sheet was closed; show the link so it can be copied by hand
+    openDialog({ title: 'Share link', body: el('div', {}, el('p', {}, 'Copy this link:'), el('textarea', { readonly: true, rows: 4, style: 'width:100%;font:inherit', onfocus: (e) => e.target.select() }, url)) });
+  }
+}
+
+function saveFile() {
+  const data = { ...toSave(parts), level: shareLevelId(), name: level.name };
+  const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+  const a = el('a', { href: URL.createObjectURL(blob), download: `contraption-${shareLevelId()}.json` });
+  document.body.append(a);
+  a.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }, 1000);
+}
+
+function openFile() {
+  const input = el('input', { type: 'file', accept: 'application/json,.json' });
+  input.addEventListener('change', async () => {
+    try {
+      const data = JSON.parse(await input.files[0].text());
+      loadShared({ level: String(data.level || 'sandbox'), engine: data.engine ?? 1, parts: fromSave(data).parts }, 'file');
+    } catch {
+      toast('That file is not a Contraption machine.');
+    }
+  });
+  input.click();
+}
+
+async function loadShared(shared, from = 'link') {
+  const lvl = levelById(shared.level);
+  if (!lvl || !shared.parts.length) return toast('That machine could not be opened.');
+  const v = await openDialog({
+    title: from === 'link' ? 'A shared machine' : 'Open machine',
+    body: el(
+      'div',
+      {},
+      el('p', {}, `${shared.parts.length} part${shared.parts.length === 1 ? '' : 's'} for ${lvl.id === 'sandbox' ? 'the sandbox' : `${numberOf(lvl)} · ${lvl.name}`}.`),
+      el('p', { class: 'muted small' }, lvl.id === 'sandbox' ? 'It replaces your sandbox machine; Undo brings yours back.' : 'It replaces your machine on that level (Undo brings yours back). A solution you did not build counts as a hint: ★★ at most.'),
+      shared.engine > ENGINE ? el('p', { class: 'muted small' }, 'It was made with a newer version of the game. If it misbehaves, reload to update.') : null,
+    ),
+    actions: [{ label: 'Not now', value: null }, { label: 'Open', value: 'open', primary: true }],
+  });
+  if (v !== 'open') return;
+  openLevel(lvl, { card: false });
+  pushUndo();
+  parts = shared.parts.map((p, i) => ({ ...p, id: uid() + i }));
+  if (lvl.id !== 'sandbox') {
+    const rec = (progress[lvl.id] ||= {});
+    rec.hinted = true;
+    save();
+  }
+  saveMachine();
+  buildTray();
+  refresh();
+  toast('Press Run to watch it.', { position: 'top' });
+}
+
+async function openFromHash() {
+  const code = machineFromHash(location.hash);
+  if (!code) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  const shared = await decodeMachine(code);
+  if (!shared) return toast('That link does not hold a machine.');
+  loadShared(shared);
+}
+addEventListener('hashchange', openFromHash);
+
+async function gallery() {
+  const v = await openDialog({
+    title: 'Gallery',
+    body: el(
+      'div',
+      { class: 'gallery' },
+      GALLERY.map((g) => el('div', { class: 'gallery-item' }, el('h3', {}, g.title), el('small', {}, `by ${g.by} · ${g.parts.length} parts`), el('p', {}, g.note), el('button', { class: 'btn btn-primary', onclick: (e) => e.target.closest('dialog').closeWith(g.id) }, 'Open'))),
+      el('p', { class: 'muted small' }, 'Built something worth watching? ', el('a', { href: SUBMIT, target: '_blank', rel: 'noopener' }, 'Send us its link'), ' and it may appear here, with your name.'),
+    ),
+  });
+  const g = GALLERY.find((x) => x.id === v);
+  if (!g) return;
+  const base = g.level === 'sandbox' ? ALL_PARTS_SANDBOX : levelById(g.level);
+  openLevel({ ...base, id: `gallery:${g.id}`, name: g.title, goalText: g.note }, { card: false, preset: g.parts });
+  toast('Press Run to watch it. Change anything: your copy is kept.', { position: 'top', duration: 3500 });
+}
+
+function whatsNew({ onlyNew = false } = {}) {
+  const seen = store.get('seenChanges');
+  const list = onlyNew ? CHANGES.slice(0, Math.max(1, CHANGES.findIndex((c) => c.id === seen))) : CHANGES;
+  store.set('seenChanges', CHANGES[0].id);
+  return openDialog({
+    title: "What's new",
+    body: el('div', { class: 'changes' }, list.flatMap((c) => [el('h3', {}, `${c.title} · ${c.id}`), el('ul', {}, c.items.map((t) => el('li', {}, t)))])),
+    actions: [{ label: 'Play', value: 'ok', primary: true }],
+  });
+}
+
 // ---------- HUD ----------
 
 function updateHud() {
   if (!level) return;
-  $('h-name').textContent = sandbox ? 'Sandbox' : `${numberOf(level)} · ${level.name}`;
+  $('h-name').textContent = sandbox ? level.name : `${numberOf(level)} · ${level.name}`;
   const rec = progress[level.id];
   const used = parts.length;
   const bits = [];
@@ -1033,7 +1148,7 @@ function boardRect() {
   return { x: 0, y: top, w: view.w, h: Math.max(80, bottom - top) };
 }
 
-const MIN_CELL = 20; // px per cell below which pegs get too fiddly to tap
+const MIN_CELL = 14; // px per cell below which pegs get too fiddly to tap (24-wide levels fit a phone)
 
 // Can the whole board be seen at the current zoom?
 function fitsWhole() {
@@ -1212,6 +1327,7 @@ $('t-sandbox').addEventListener('click', () => {
   openLevel(SANDBOX, { card: false });
 });
 $('t-parts').addEventListener('click', partsGuide);
+$('t-gallery').addEventListener('click', gallery);
 $('t-settings').addEventListener('click', openSettings);
 $('l-back').addEventListener('click', () => show('title'));
 $('h-back').addEventListener('click', () => {
@@ -1261,5 +1377,7 @@ if (params.get('solve') && level) {
   parts = level.solution.map((p) => ({ ...p }));
   refresh();
 }
+openFromHash();
 void reducedMotion;
+void _DT;
 requestAnimationFrame(frame);

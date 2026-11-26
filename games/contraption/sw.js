@@ -1,6 +1,6 @@
 // Offline support: every file is cached on install and served cache-first.
 // VERSION and FILES are rewritten by scripts/build-sw.mjs; run it before deploying.
-const VERSION = '9c23ba820bde';
+const VERSION = '71e7592de794';
 const FILES = [
   './',
   './achievements.js',
@@ -27,8 +27,10 @@ const FILES = [
   './icons/icon.svg',
   './icons/maskable-512.png',
   './index.html',
+  './js/changes.js',
   './js/draw.js',
   './js/format.js',
+  './js/gallery.js',
   './js/geom.js',
   './js/levels.js',
   './js/machine.js',
@@ -45,6 +47,7 @@ const FILES = [
   './js/physics.js',
   './js/progress.js',
   './js/render.js',
+  './js/share.js',
   './manifest.webmanifest'
 ];
 

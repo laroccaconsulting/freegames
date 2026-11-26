@@ -622,5 +622,24 @@ export const LEVELS = [
   },
 ];
 
-export const levelById = (id) => LEVELS.find((l) => l.id === id);
+// The sandbox: a big empty board. The game fills in the parts on offer
+// (every part met so far, as many as you like).
+export const SANDBOX = {
+  id: 'sandbox',
+  chapter: -1,
+  name: 'Sandbox',
+  goalText: 'Anything goes. Get the ball into the cup however you like.',
+  w: 48,
+  h: 32,
+  items: [{ type: 'ball', x: 3, y: 2 }],
+  walls: [[0, 31, 48, 1]],
+  goal: { x: 42, y: 28, w: 4, h: 3, cup: true },
+  parts: {},
+  stars: { parts: 99, time: 99 },
+  timeLimit: 60,
+  solution: [],
+};
+export const ALL_PARTS_SANDBOX = { ...SANDBOX, parts: { ramp: 99, lever: 99, weight: 99, conveyor: 99, motor: 99, gear: 99, chain: 99, bouncer: 99 } };
+
+export const levelById = (id) => (id === 'sandbox' ? SANDBOX : LEVELS.find((l) => l.id === id));
 export const levelsIn = (chapter) => LEVELS.filter((l) => l.chapter === chapter);
