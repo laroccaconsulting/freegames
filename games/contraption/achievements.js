@@ -1,0 +1,21 @@
+// Contraption achievements: plain data, also shown on the games list.
+// id is the save key, so never change or reorder one. goal: a count to reach.
+export default [
+  { id: 'first-run', title: 'Press play', desc: 'Run a machine for the first time.' },
+  { id: 'first-solve', title: 'It works', desc: 'Solve a level.' },
+  { id: 'flawless', title: 'First try', desc: 'Solve a level without a single failed run.' },
+  { id: 'slopes-done', title: 'Downhill all the way', desc: 'Finish the Slopes chapter.' },
+  { id: 'levers-done', title: 'A place to stand', desc: 'Finish the Levers chapter.' },
+  { id: 'belts-done', title: 'Conveyed', desc: 'Finish the Belts chapter.' },
+  { id: 'gears-done', title: 'Geared', desc: 'Finish the Gears chapter.' },
+  { id: 'chains-done', title: 'Linked', desc: 'Finish the Chains chapter.' },
+  { id: 'timing-done', title: 'Clockmaker', desc: 'Finish the Timing chapter.' },
+  { id: 'all-stars', title: 'Starry', desc: 'Get three stars on every level of a chapter.' },
+  { id: 'all-levels', title: 'Master builder', desc: 'Solve all thirty levels.', goal: 30 },
+  { id: 'stars-90', title: 'Perfectionist', desc: 'Collect all ninety stars.', goal: 90 },
+  { id: 'long-throw', title: 'Long throw', desc: 'Send something more than twelve cells through the air.' },
+  { id: 'jammed', title: 'Stuck fast', desc: 'Run a gear train that jams.', secret: true },
+  { id: 'tinkerer', title: 'Tinkerer', desc: 'Build a machine of fifteen parts in the sandbox.' },
+  { id: 'no-hints', title: 'On my own', desc: 'Finish a chapter without using a hint.' },
+  { id: 'persistence', title: 'Persistence', desc: 'Fail fifty runs. Every one teaches something.', goal: 50, secret: true },
+];

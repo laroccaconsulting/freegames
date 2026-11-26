@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <title>Contraption — build a machine, press Run. Free, no ads</title>
+    <meta name="description" content="A physics puzzle: snap ramps, levers, belts, gears and chains onto a pegboard, press Run and watch real physics carry the ball home. Thirty levels and a sandbox, drawn in crisp ink for daylight and e-paper screens. Free forever, no ads, no tracking, works offline." />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Contraption" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta property="og:title" content="Contraption — build a machine, press Run" />
+    <meta property="og:description" content="Ramps, levers, belts and gears with real physics. Thirty levels and a sandbox. No ads, no tracking, works offline." />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="core/base.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <canvas id="board" aria-hidden="true"></canvas>
+
+    <!-- Title -->
+    <section class="screen title-screen" id="title" aria-label="Contraption">
+      <header class="topbar title-bar">
+        <h1 class="visually-hidden">Contraption</h1>
+        <span class="spacer"></span>
+        <button class="icon-btn" id="t-settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2.2" /><circle cx="9" cy="17" r="2.2" /></svg></button>
+      </header>
+      <div class="title-card">
+        <p class="wordmark" aria-hidden="true">Contraption</p>
+        <p class="tagline">Build it. Run it. Watch it go.</p>
+        <p class="title-stars" id="title-stars"></p>
+        <div class="title-actions">
+          <button class="btn btn-primary btn-big" id="t-continue">Start</button>
+          <button class="btn" id="t-levels">Levels</button>
+          <button class="btn" id="t-sandbox">Sandbox</button>
+          <button class="btn" id="t-parts">Parts</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Levels -->
+    <section class="screen levels-screen" id="levels" hidden aria-label="Levels">
+      <header class="bar">
+        <button class="hud-btn" id="l-back" aria-label="Back to the title">‹ Back</button>
+        <h2>Levels</h2>
+        <span class="bar-stars" id="levels-stars"></span>
+      </header>
+      <div class="chapters" id="chapters"></div>
+    </section>
+
+    <!-- Playing -->
+    <header class="hud" id="hud" hidden>
+      <button class="hud-btn" id="h-back" aria-label="Levels">‹</button>
+      <div class="hud-title"><b id="h-name"></b><small id="h-info"></small></div>
+      <button class="hud-btn" id="h-hint">Hint</button>
+      <button class="hud-btn" id="h-menu" aria-label="Menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
+    </header>
+
+    <footer class="dock" id="dock" hidden>
+      <div class="inspector" id="inspector" hidden></div>
+      <div class="dock-row">
+        <div class="tray" id="tray" role="toolbar" aria-label="Parts"></div>
+        <div class="dock-actions">
+          <button class="tool" id="d-undo" aria-label="Undo"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5" /><path d="M4 9h10a6 6 0 0 1 0 12h-3" /></svg></button>
+          <button class="run-btn" id="d-run"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor" /></svg><span>Run</span></button>
+        </div>
+      </div>
+    </footer>
+
+    <div class="runbar" id="runbar" hidden>
+      <button class="run-btn stop" id="r-stop"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor" /></svg><span>Stop</span></button>
+      <span class="clock" id="r-clock">0.0 s</span>
+      <div class="speed" role="radiogroup" aria-label="Speed">
+        <button data-speed="0.5">½×</button><button data-speed="1" class="on">1×</button><button data-speed="2">2×</button>
+      </div>
+    </div>
+
+    <p class="visually-hidden" id="announce" aria-live="polite"></p>
+    <noscript><p style="padding: 24px">Contraption needs JavaScript to run.</p></noscript>
+  </body>
+</html>
