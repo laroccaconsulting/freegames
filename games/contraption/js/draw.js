@@ -2,7 +2,7 @@
 // in run mode from the live physics), the last run's path and the overlays.
 // Each part draws itself (js/parts/); this file orders the layers.
 
-import { analyse, key, GEAR_TEETH, partShape, PARTS } from './machine.js';
+import { analyse, key, gearR, partShape, PARTS } from './machine.js';
 import { drawPegs, drawBorder, drawZones, drawWalls, drawDanger, drawGoal, drawItem, drawMover, drawPath, drawAxle, outline, label } from './render.js';
 
 const TAU = Math.PI * 2;
@@ -13,25 +13,30 @@ const TAU = Math.PI * 2;
  */
 export function machineLayout(parts) {
   const { axles, trains } = analyse(parts);
-  const phase = new Map();
+  const phase = new Map(); // gear part → resting angle
+  const teeth = (g) => g.teeth ?? 10;
   for (const t of trains) {
     for (const A of t.axles) {
-      if (!A.gear || phase.has(key(A.p))) continue;
-      phase.set(key(A.p), 0);
-      const queue = [A];
-      while (queue.length) {
-        const P = queue.shift();
-        for (const { to: Q, via } of P.links) {
-          if (via !== 'mesh' || phase.has(key(Q.p))) continue;
-          const nA = GEAR_TEETH[P.gear.size];
-          const nB = GEAR_TEETH[Q.gear.size];
-          const pitchA = TAU / nA;
-          const pitchB = TAU / nB;
-          const c = 0.375;
-          const alpha = Math.atan2(Q.p[1] - P.p[1], Q.p[0] - P.p[0]);
-          const dA = (((alpha - phase.get(key(P.p)) - c * pitchA) % pitchA) + pitchA) % pitchA;
-          phase.set(key(Q.p), alpha + Math.PI + pitchB / 2 - c * pitchB + dA * (nA / nB));
-          queue.push(Q);
+      for (const g0 of A.gears) {
+        if (phase.has(g0)) continue;
+        phase.set(g0, 0);
+        // gears sharing an axle turn together; seed them alike
+        const queue = [A];
+        while (queue.length) {
+          const P = queue.shift();
+          for (const g of P.gears) if (!phase.has(g)) phase.set(g, 0);
+          for (const { to: Q, via, from: ga, into: gb } of P.links) {
+            if (via !== 'mesh' || phase.has(gb)) continue;
+            const nA = teeth(ga);
+            const nB = teeth(gb);
+            const pitchA = TAU / nA;
+            const pitchB = TAU / nB;
+            const c = 0.375;
+            const alpha = Math.atan2(Q.p[1] - P.p[1], Q.p[0] - P.p[0]);
+            const dA = (((alpha - phase.get(ga) - c * pitchA) % pitchA) + pitchA) % pitchA;
+            phase.set(gb, alpha + Math.PI + pitchB / 2 - c * pitchB + dA * (nA / nB));
+            queue.push(Q);
+          }
         }
       }
     }
@@ -62,12 +67,14 @@ export function drawScene(view, pal, level, parts, opts = {}) {
     const t = run.trains[A.train];
     return t ? A.k * t.theta : 0;
   };
-  const live = (part) => ({ turn, all, running: mode === 'run', body: run?.partBodies.get(part.id), phase: part.p ? layout.phase.get(key(part.p)) || 0 : 0 });
+  const live = (part) => ({ turn, all, running: mode === 'run', body: run?.partBodies.get(part.id), phase: layout.phase.get(part) || 0 });
   const layer = (n) => {
     for (const part of all) if (PARTS[part.type].layer === n) PARTS[part.type].draw(view, pal, part, live(part));
   };
 
-  layer(0); // gears
+  // gears: back layer first, then front
+  for (const part of all) if (part.type === 'gear' && !part.plane) PARTS.gear.draw(view, pal, part, live(part));
+  for (const part of all) if (part.type === 'gear' && part.plane) PARTS.gear.draw(view, pal, part, live(part));
   layer(1); // chains
   for (const part of all) if (part.type === 'gear') drawAxle(ctx, view, pal, part.p[0], part.p[1]);
   if (opts.paths) for (const p of opts.paths) drawPath(ctx, view, pal, p);

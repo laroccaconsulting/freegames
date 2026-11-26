@@ -3,7 +3,15 @@
 
 export const MOTOR = { stall: 40, speed: 3 * Math.PI };
 export const DRUM_R = 0.5;
-export const GEAR_TEETH = { 1: 10, 2: 20, 3: 30 };
+export const GEAR_TEETH = { 1: 10, 2: 20, 3: 30 }; // the first release's sizes
+/** Tooth counts on offer. Pitch radius is teeth / 10 cells. */
+export const TEETH = [10, 15, 20, 25, 30, 40];
+export const gearR = (g) => (g.teeth ?? (g.size ?? 1) * 10) / 10;
+/** The gear on a peg in a layer (0 back, 1 front), or the first one there. */
+export const gearOn = (parts, p, plane) => {
+  const here = parts.filter((o) => o.type === 'gear' && o.p[0] === p[0] && o.p[1] === p[1]);
+  return here.find((g) => (g.plane || 0) === (plane ?? 0)) || (plane == null ? here[0] : null) || here[0];
+};
 
 export const ITEM_INFO = {
   ball: { name: 'ball', r: 0.4, density: 1, friction: 0.6, restitution: 0.35 },

@@ -24,7 +24,7 @@ test('an empty machine never wins', () => {
 });
 
 test('gear ratios: meshing flips and scales, chains keep direction, loops that disagree jam', () => {
-  const g = (id, x, y, size) => ({ id, type: 'gear', p: [x, y], size });
+  const g = (id, x, y, size, plane = 0) => ({ id, type: 'gear', p: [x, y], teeth: size * 10, plane });
   let { axles, trains } = analyse([{ id: 'm', type: 'motor', p: [2, 2], dir: 1 }, g('a', 2, 2, 1), g('b', 5, 2, 2), g('c', 5, 8, 1), { id: 'ch', type: 'chain', a: [5, 2], b: [5, 8] }]);
   assert.equal(axles.get('2,2').k, 1);
   assert.equal(axles.get('5,2').k, -0.5);
@@ -39,7 +39,7 @@ test('gearing matters: the heavy crate needs gearing down, the throw needs geari
   const { levelById } = await import('../games/contraption/js/levels.js');
   const direct = simulate(levelById('heavy'), [{ id: 'm', type: 'motor', p: [3, 12], dir: 1 }]);
   assert.notEqual(direct.status, 'win', 'a motor straight on the drum stalls');
-  const half = simulate(levelById('gear-up'), [{ id: 'a', type: 'gear', p: [10, 5], size: 1 }, { id: 'b', type: 'gear', p: [7, 5], size: 2 }, { id: 'c', type: 'motor', p: [7, 5], dir: -1 }]);
+  const half = simulate(levelById('gear-up'), [{ id: 'a', type: 'gear', p: [10, 5], teeth: 10 }, { id: 'b', type: 'gear', p: [7, 5], teeth: 20 }, { id: 'c', type: 'motor', p: [7, 5], dir: -1 }]);
   assert.notEqual(half.status, 'win', '2:1 is not fast enough');
 });
 
@@ -82,4 +82,27 @@ test('saved machines: old bare arrays load, unknown parts are dropped, round tri
   assert.equal(toSave(parts).v, FORMAT);
   assert.deepEqual(fromSave([...parts, { id: 'x', type: 'teleporter' }]).parts, parts);
   assert.deepEqual(fromSave(null).parts, []);
+});
+
+test('compound gears: two gears on one peg, one per layer, multiply ratios to 60:1', () => {
+  const g = (id, x, y, teeth, plane = 0) => ({ id, type: 'gear', p: [x, y], teeth, plane });
+  // 10→30 in the back layer, 10→40 in the front, 15→25 back again: each pair's radii sum to a peg distance
+  const parts = [
+    { id: 'm', type: 'motor', p: [2, 2], dir: 1 },
+    g('a', 2, 2, 10), g('b', 6, 2, 30), // 1:3, distance 4
+    g('c', 6, 2, 10, 1), g('d', 6, 7, 40, 1), // 1:4 in the front layer, distance 5
+    g('e', 6, 7, 15), g('f', 10, 7, 25), // 3:5 in the back layer, distance 4
+  ];
+  const { axles, trains } = analyse(parts);
+  assert.ok(!trains[0].jammed);
+  assert.ok(Math.abs(Math.abs(axles.get('10,7').k) - 1 / 20) < 1e-9, '1/3 × 1/4 × 3/5 = 1/20');
+  // a front-layer gear does not mesh with a back-layer one
+  const { trains: t2 } = analyse([g('x', 2, 2, 10, 0), g('y', 4, 2, 10, 1)]);
+  assert.equal(t2.length, 2);
+});
+
+test('saved machines from before tooth counts load with 10/20/30 teeth', async () => {
+  const { fromSave } = await import('../games/contraption/js/format.js');
+  const old = { v: 1, engine: 1, parts: [{ id: 'g', type: 'gear', p: [3, 3], size: 2 }] };
+  assert.deepEqual(fromSave(old).parts, [{ id: 'g', type: 'gear', p: [3, 3], teeth: 20, plane: 0 }]);
 });

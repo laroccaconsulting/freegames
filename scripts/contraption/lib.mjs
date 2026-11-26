@@ -17,7 +17,7 @@ export const conv = two('conveyor');
 export const lever = (x, y, angle, l1, l2) => ({ type: 'lever', p: [x, y], angle, l1, l2 });
 export const weight = (x, y) => ({ type: 'weight', p: [x, y] });
 export const motor = (x, y, dir = 1, delay = 0) => ({ type: 'motor', p: [x, y], dir, delay });
-export const gear = (x, y, size) => ({ type: 'gear', p: [x, y], size });
+export const gear = (x, y, teeth, plane = 0) => ({ type: 'gear', p: [x, y], teeth: teeth < 5 ? teeth * 10 : teeth, plane });
 export const chain = (a, b) => ({ type: 'chain', a, b });
 /** Every combination of the value lists, passed to make(...values). */
 export function grid(make, ...lists) {
@@ -154,7 +154,7 @@ function singles(type, [x, y]) {
     case 'weight':
       return [weight(x, y)];
     case 'gear':
-      return [gear(x, y, 1)];
+      return [gear(x, y, 10)];
     default:
       return [];
   }
