@@ -67,7 +67,8 @@ export function drawScene(view, pal, level, parts, opts = {}) {
     const t = run.trains[A.train];
     return t ? A.k * t.theta : 0;
   };
-  const live = (part) => ({ turn, all, running: mode === 'run', body: run?.partBodies.get(part.id), phase: layout.phase.get(part) || 0 });
+  const signal = (p) => !!run?.signals?.get(p.id);
+  const live = (part) => ({ turn, all, signal, running: mode === 'run', body: run?.partBodies.get(part.id), phase: layout.phase.get(part) || 0 });
   const layer = (n) => {
     for (const part of all) if (PARTS[part.type].layer === n) PARTS[part.type].draw(view, pal, part, live(part));
   };
@@ -82,6 +83,7 @@ export function drawScene(view, pal, level, parts, opts = {}) {
   drawGoal(ctx, view, level, pal, time, opts.goalGlow || 0);
   layer(3); // levers, weights
   layer(4); // motors
+  layer(5); // wires
 
   (level.movers || []).forEach((m, i) => {
     const b = run?.movers[i];

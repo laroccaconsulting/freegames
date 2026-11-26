@@ -16,6 +16,9 @@
 //   defaults(peg)  candidate parts when dropped on a peg (first legal wins)
 //   distance, handles, drag, move  hit-testing and editing
 //   controls?(part)  inspector controls; hint(part, ctx) one line of help
+//   output?(part) / input?(part)  the peg where a signal leaves or enters
+//   sense?(part, run, body)       a sensor's state after each step
+//   link?  placed by tapping two parts (chain, wire): which pins it joins
 import ramp from './ramp.js';
 import lever from './lever.js';
 import weight from './weight.js';
@@ -24,7 +27,12 @@ import motor from './motor.js';
 import gear from './gear.js';
 import chain from './chain.js';
 import bouncer from './bouncer.js';
+import plate from './plate.js';
+import beam from './beam.js';
+import wire from './wire.js';
+import { PARTS_REF } from './ref.js';
 
-export const PARTS = Object.fromEntries([ramp, lever, weight, conveyor, motor, gear, chain, bouncer].map((p) => [p.type, p]));
+export const PARTS = Object.fromEntries([ramp, lever, weight, conveyor, motor, gear, chain, bouncer, plate, beam, wire].map((p) => [p.type, p]));
+Object.assign(PARTS_REF, PARTS);
 export const PART_TYPES = Object.keys(PARTS);
 export const partOf = (part) => PARTS[part.type];

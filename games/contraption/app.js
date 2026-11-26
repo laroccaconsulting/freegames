@@ -193,6 +193,9 @@ function iconCanvas(type, w = 40, h = 32, palette = pal()) {
     motor: { type: 'motor', p: [1.5, 1.2], dir: 1 },
     gear: { type: 'gear', p: [1.5, 1.2], teeth: 10 },
     chain: null,
+    plate: { type: 'plate', p: [1.5, 1.3] },
+    beam: { type: 'beam', a: [0.5, 1.2], b: [2.5, 1.2] },
+    wire: { type: 'wire', a: [0.5, 1.6], b: [2.5, 0.9] },
   }[type];
   v.s = Math.min(w / 3, h / 2.4);
   v.ox = (w - 3 * v.s) / 2;
@@ -357,6 +360,7 @@ function arm(type) {
       toast(`No ${PART_INFO[armed].name.toLowerCase()}s left. Tap one on the board and delete it to reuse it.`);
       armed = null;
     } else if (armed === 'chain') toast('Tap the first gear, then the second', { position: 'top' });
+    else if (armed === 'wire') toast('Tap a plate or beam lamp, then a motor', { position: 'top' });
     else toast(`Tap a peg to place the ${PART_INFO[armed].name.toLowerCase()}`, { position: 'top', duration: 1800 });
   } else hideToast();
   renderInspector();
@@ -372,7 +376,7 @@ function trayDown(e, type, btn) {
   const start = { x: e.clientX, y: e.clientY };
   btn.setPointerCapture?.(e.pointerId);
   const move = (ev) => {
-    if (Math.hypot(ev.clientX - start.x, ev.clientY - start.y) > 12 && armed !== 'chain') {
+    if (Math.hypot(ev.clientX - start.x, ev.clientY - start.y) > 12 && armed !== 'chain' && armed !== 'wire') {
       const r = $('board').getBoundingClientRect();
       ghostAt(ev.clientX - r.left, ev.clientY - r.top, true);
     }
@@ -418,7 +422,7 @@ function problemOf(part, others) {
 }
 
 function ghostAt(sx, sy, show = true) {
-  if (!armed || armed === 'chain') return;
+  if (!armed || armed === 'chain' || armed === 'wire') return;
   const [wx, wy] = view.toWorld(sx, sy);
   const p = snap(wx, wy);
   ghost = show ? bestPart(armed, p) : null;
@@ -445,21 +449,31 @@ function gearAt(p) {
   return allParts().find((o) => o.type === 'gear' && key(o.p) === key(p));
 }
 
-function chainTap(wx, wy) {
-  const p = snap(wx, wy);
-  const g = allParts().find((o) => o.type === 'gear' && Math.hypot(o.p[0] - wx, o.p[1] - wy) < Math.max(0.8, gearR(o) * 0.7));
-  if (!g) {
-    toast('Tap a gear', { position: 'top', duration: 1500 });
+// Parts placed by tapping two others: a chain joins two gears, a wire runs
+// from a sensor's pin to a motor.
+function linkCandidates(type, stage, wx, wy) {
+  const all = allParts();
+  if (type === 'chain') return all.filter((o) => o.type === 'gear' && Math.hypot(o.p[0] - wx, o.p[1] - wy) < Math.max(0.8, gearR(o) * 0.7)).map((o) => ({ part: o, at: o.p }));
+  const pin = PARTS.wire.link[stage === 0 ? 'first' : 'second'];
+  return all.filter((o) => PARTS[o.type][pin]).map((o) => ({ part: o, at: PARTS[o.type][pin](o) })).filter((c) => Math.hypot(c.at[0] - wx, c.at[1] - wy) < 0.9);
+}
+
+function linkTap(wx, wy) {
+  const type = armed;
+  const words = type === 'chain' ? ['a gear', 'the second gear'] : PARTS.wire.link.words;
+  const hit = linkCandidates(type, chainFrom ? 1 : 0, wx, wy)[0];
+  if (!hit) {
+    toast(`Tap ${chainFrom ? words[1] : words[0]}`, { position: 'top', duration: 1500 });
     return;
   }
   if (!chainFrom) {
-    chainFrom = g.p;
-    chainPlane = g.plane || 0;
-    toast('Now tap the second gear', { position: 'top' });
+    chainFrom = hit.at;
+    chainPlane = hit.part.plane || 0;
+    toast(`Now tap ${words[1]}`, { position: 'top' });
     dirty = true;
     return;
   }
-  const part = { id: uid(), type: 'chain', a: chainFrom, b: g.p, pa: chainPlane, pb: g.plane || 0 };
+  const part = type === 'chain' ? { id: uid(), type, a: chainFrom, b: hit.at, pa: chainPlane, pb: hit.part.plane || 0 } : { id: uid(), type, a: chainFrom, b: hit.at };
   chainFrom = null;
   pushUndo();
   parts.push(part);
@@ -469,8 +483,7 @@ function chainTap(wx, wy) {
   saveMachine();
   refresh();
   const why = problemMap.get(part.id);
-  toast(why || 'Chained', { position: 'top', duration: 1500 });
-  void p;
+  toast(why || (type === 'chain' ? 'Chained' : 'Wired'), { position: 'top', duration: 1500 });
 }
 
 function removePart(id) {
@@ -480,6 +493,8 @@ function removePart(id) {
   parts = parts.filter((p) => p !== part);
   // a chain loses its gear: take the chain off too
   const pl = part.plane || 0;
+  const pins = [PARTS[part.type].output?.(part), PARTS[part.type].input?.(part)].filter(Boolean).map(key);
+  if (pins.length) parts = parts.filter((p) => p.type !== 'wire' || !(pins.includes(key(p.a)) || pins.includes(key(p.b))));
   if (part.type === 'gear') parts = parts.filter((p) => p.type !== 'chain' || !((key(p.a) === key(part.p) && (p.pa ?? 0) === pl) || (key(p.b) === key(part.p) && (p.pb ?? 0) === pl)));
   selected = null;
   sounds.flip();
@@ -548,7 +563,7 @@ canvas.addEventListener('pointerdown', (e) => {
     return;
   }
   const [wx, wy] = view.toWorld(sx, sy);
-  if (armed === 'chain') {
+  if (armed === 'chain' || armed === 'wire') {
     drag = { kind: 'tap', sx, sy };
     return;
   }
@@ -645,7 +660,7 @@ function endPointer(e) {
     placeGhost();
   } else if (d.kind === 'tap') {
     const [wx, wy] = view.toWorld(sx, sy);
-    chainTap(wx, wy);
+    linkTap(wx, wy);
   } else if (d.kind === 'handle' || d.kind === 'move') {
     if (!d.moved) undoStack.pop();
     else sounds.place();
@@ -823,7 +838,7 @@ function onWin() {
   ach.at('stars-90', totalStars(progress));
   const c = level.chapter;
   if (chapterDone(progress, c)) {
-    ach.unlock(['slopes-done', 'levers-done', 'belts-done', 'gears-done', 'chains-done', 'timing-done'][c]);
+    ach.unlock(['slopes-done', 'levers-done', 'belts-done', 'gears-done', 'chains-done', 'timing-done', 'signals-done'][c]);
     const lv = LEVELS.filter((l) => l.chapter === c);
     if (lv.every((l) => progress[l.id].stars === 3)) ach.unlock('all-stars');
     if (lv.every((l) => !progress[l.id].hinted)) ach.unlock('no-hints');
@@ -984,7 +999,7 @@ async function clearMachine() {
 
 function partsGuide() {
   const open = unlockedParts(progress);
-  const intro = { ramp: 1, lever: 2, weight: 2, conveyor: 3, motor: 3, gear: 4, chain: 5, bouncer: 6 };
+  const intro = { ramp: 1, lever: 2, weight: 2, conveyor: 3, motor: 3, gear: 4, chain: 5, bouncer: 6, plate: 7, beam: 7, wire: 7 };
   openDialog({
     title: 'Parts guide',
     body: el(

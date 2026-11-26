@@ -290,8 +290,15 @@ export function build(level, parts, { sandbox = false } = {}) {
     });
     return b;
   });
+  // signals: wired motors start off and wait for their input
+  const all2 = all;
+  const sensors = all2.filter((p) => PARTS[p.type].sense);
+  const wires = all2.filter((p) => p.type === 'wire').map((w) => ({ from: PARTS.wire.source(w, all2), to: PARTS.wire.target(w, all2) })).filter((w) => w.from && w.to);
+  const gated = new Set([...wires.map((w) => w.to), ...all2.filter((p) => p.type === 'motor' && p.switched)]);
+  for (const t of trainObjs) for (const m of t.motors) if (gated.has(m.part)) m.off = true;
+  const signals = new Map();
   settle(world);
-  return { world, items, movers, statics, partBodies, trains: trainObjs, axles, analysis: trains, sandbox };
+  return { sensors, wires, signals, world, items, movers, statics, partBodies, trains: trainObjs, axles, analysis: trains, sandbox };
 }
 
 function moverShape(m) {
@@ -338,6 +345,16 @@ export function moverMotion(m) {
   };
 }
 
+// Sensors read the world after a step; wired motors act on the next step,
+// so a signal takes exactly one step to arrive. On/off only: no floats.
+function updateSignals(run) {
+  if (!run.sensors.length && !run.wires.length) return;
+  for (const p of run.sensors) run.signals.set(p.id, !!PARTS[p.type].sense(p, run, run.partBodies.get(p.id)));
+  const on = new Map();
+  for (const w of run.wires) if (run.signals.get(w.from.id)) on.set(w.to, true);
+  for (const t of run.trains) for (const m of t.motors) if (m.part && (m.part.switched || run.wires.some((w) => w.to === m.part))) m.off = !on.get(m.part);
+}
+
 export const SETTLE_TIME = 0.5;
 export const STUCK_TIME = 2.5;
 
@@ -369,6 +386,8 @@ export function makeRun(level, parts, opts = {}) {
     tick() {
       if (run.status !== 'running') return run.status;
       const contacts = step(world);
+      run.contacts = contacts;
+      updateSignals(run);
       run.steps++;
       run.time = world.time;
       run.impacts = [];
