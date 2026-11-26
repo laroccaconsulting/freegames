@@ -1,8 +1,9 @@
 // Draws a whole board: the level, the machine (in build mode from part data,
 // in run mode from the live physics), the last run's path and the overlays.
+// Each part draws itself (js/parts/); this file orders the layers.
 
-import { analyse, key, GEAR_TEETH, DRUM_R, partShape } from './machine.js';
-import { drawPegs, drawBorder, drawZones, drawWalls, drawDanger, drawGoal, drawGear, drawMotor, drawConveyor, drawRamp, drawBouncer, drawLever, drawWeight, drawChain, drawItem, drawMover, drawPath, drawAxle, outline, label } from './render.js';
+import { analyse, key, GEAR_TEETH, partShape, PARTS } from './machine.js';
+import { drawPegs, drawBorder, drawZones, drawWalls, drawDanger, drawGoal, drawItem, drawMover, drawPath, drawAxle, outline, label } from './render.js';
 
 const TAU = Math.PI * 2;
 
@@ -28,7 +29,7 @@ export function machineLayout(parts) {
           const pitchB = TAU / nB;
           const c = 0.375;
           const alpha = Math.atan2(Q.p[1] - P.p[1], Q.p[0] - P.p[0]);
-          const dA = ((((alpha - phase.get(key(P.p)) - c * pitchA) % pitchA) + pitchA) % pitchA);
+          const dA = (((alpha - phase.get(key(P.p)) - c * pitchA) % pitchA) + pitchA) % pitchA;
           phase.set(key(Q.p), alpha + Math.PI + pitchB / 2 - c * pitchB + dA * (nA / nB));
           queue.push(Q);
         }
@@ -40,12 +41,12 @@ export function machineLayout(parts) {
 
 /**
  * opts: { mode: 'build' | 'run', run, layout, selected, problems (Map),
- * ghost (part), ghostBad, path (array of paths), time, pegs, hintPart }
+ * ghost (part), ghostBad, paths, time, pegs, hintParts, ratios, moverPose }
  */
 export function drawScene(view, pal, level, parts, opts = {}) {
   const ctx = view.ctx;
-  const { mode = 'build', run = null, layout = machineLayout([...(level.fixed || []), ...parts]), time = 0 } = opts;
   const all = [...(level.fixed || []), ...parts];
+  const { mode = 'build', run = null, layout = machineLayout(all), time = 0 } = opts;
   view.begin(pal);
   drawBorder(ctx, view, level, pal);
   drawZones(ctx, view, level, pal);
@@ -61,56 +62,24 @@ export function drawScene(view, pal, level, parts, opts = {}) {
     const t = run.trains[A.train];
     return t ? A.k * t.theta : 0;
   };
+  const live = (part) => ({ turn, all, running: mode === 'run', body: run?.partBodies.get(part.id), phase: part.p ? layout.phase.get(key(part.p)) || 0 : 0 });
+  const layer = (n) => {
+    for (const part of all) if (PARTS[part.type].layer === n) PARTS[part.type].draw(view, pal, part, live(part));
+  };
 
-  // back layer: gears, chains
-  for (const part of all) {
-    if (part.type !== 'gear') continue;
-    const a = (layout.phase.get(key(part.p)) || 0) + turn(part.p);
-    drawGear(ctx, view, pal, part.p[0], part.p[1], part.size, a);
-  }
-  for (const part of all) {
-    if (part.type !== 'chain') continue;
-    const ga = all.find((o) => o.type === 'gear' && key(o.p) === key(part.a));
-    const gb = all.find((o) => o.type === 'gear' && key(o.p) === key(part.b));
-    if (!ga || !gb) continue;
-    drawChain(ctx, view, pal, part.a, ga.size + 0.05, part.b, gb.size + 0.05, turn(part.a) * ga.size);
-  }
+  layer(0); // gears
+  layer(1); // chains
   for (const part of all) if (part.type === 'gear') drawAxle(ctx, view, pal, part.p[0], part.p[1]);
-
   if (opts.paths) for (const p of opts.paths) drawPath(ctx, view, pal, p);
-
-  // front layer: the parts things touch
-  for (const part of all) {
-    if (part.type === 'ramp') drawRamp(ctx, view, pal, part.a, part.b);
-    else if (part.type === 'bouncer') drawBouncer(ctx, view, pal, part.a, part.b);
-    else if (part.type === 'conveyor') {
-      const t = turn(part.a);
-      drawConveyor(ctx, view, pal, part.a, part.b, t * DRUM_R, t);
-    }
-  }
+  layer(2); // ramps, belts, bouncers
   drawGoal(ctx, view, level, pal, time, opts.goalGlow || 0);
-  for (const part of all) {
-    if (part.type === 'lever') {
-      const b = run?.partBodies.get(part.id);
-      drawLever(ctx, view, pal, part, b ? b.angle : undefined);
-    } else if (part.type === 'weight') {
-      const b = run?.partBodies.get(part.id);
-      if (!b) dropArrow(ctx, view, pal, part.p);
-      drawWeight(ctx, view, pal, b ? b.x : part.p[0], b ? b.y : part.p[1], b ? b.angle : 0);
-    }
-  }
-  for (const part of all) {
-    if (part.type === 'motor') drawMotor(ctx, view, pal, part.p[0], part.p[1], part.dir || 1, turn(part.p), part.delay, mode === 'run');
-  }
+  layer(3); // levers, weights
+  layer(4); // motors
 
-  // movers and items
   (level.movers || []).forEach((m, i) => {
     const b = run?.movers[i];
-    if (b) drawMover(ctx, view, pal, m, b.x, b.y, b.angle);
-    else {
-      const p = opts.moverPose ? opts.moverPose(i) : null;
-      if (p) drawMover(ctx, view, pal, m, p.x, p.y, p.angle || 0);
-    }
+    const p = b || (opts.moverPose ? opts.moverPose(i) : null);
+    if (p) drawMover(ctx, view, pal, m, p.x, p.y, p.angle || 0);
   });
   (level.items || []).forEach((it, i) => {
     const b = run?.items[i];
@@ -119,31 +88,26 @@ export function drawScene(view, pal, level, parts, opts = {}) {
   });
 
   // overlays
-  if (opts.hintParts) for (const hp of opts.hintParts) outline(ctx, view, pal, partShape(hp) || chainShape(hp), { width: 2.4, color: pal.mid });
+  if (opts.hintParts) for (const hp of opts.hintParts) outline(ctx, view, pal, partShape(hp), { width: 2.4, color: pal.mid });
   if (opts.problems) {
     for (const part of parts) {
       if (!opts.problems.has(part.id)) continue;
-      outline(ctx, view, pal, partShape(part) || chainShape(part), { width: 2.4 });
+      outline(ctx, view, pal, partShape(part), { width: 2.4 });
       const c = centre(part);
       label(ctx, view, pal, '!', c[0], c[1] - 0.9, { size: 14 });
     }
   }
   if (opts.selected) {
     const s = all.find((p) => p.id === opts.selected);
-    if (s) outline(ctx, view, pal, partShape(s) || chainShape(s), { dash: false, width: 2.6 });
+    if (s) outline(ctx, view, pal, partShape(s), { dash: false, width: 2.6 });
   }
   if (opts.ghost) {
     ctx.globalAlpha = 0.55;
     drawPart(view, pal, opts.ghost, all);
     ctx.globalAlpha = 1;
-    outline(ctx, view, pal, partShape(opts.ghost) || chainShape(opts.ghost), { width: opts.ghostBad ? 2.6 : 1.6 });
+    outline(ctx, view, pal, partShape(opts.ghost), { width: opts.ghostBad ? 2.6 : 1.6 });
   }
-  if (opts.ratios && mode === 'build') drawRatios(view, pal, layout, all);
-}
-
-function chainShape(part) {
-  if (part.type !== 'chain') return null;
-  return { verts: [part.a, part.b], radius: 0.3 };
+  if (opts.ratios && mode === 'build') drawRatios(view, pal, layout);
 }
 
 export function centre(part) {
@@ -153,29 +117,8 @@ export function centre(part) {
 
 /** Draw a single part from its data (ghosts, tray icons). */
 export function drawPart(view, pal, part, all = []) {
-  const ctx = view.ctx;
-  switch (part.type) {
-    case 'ramp':
-      return drawRamp(ctx, view, pal, part.a, part.b);
-    case 'bouncer':
-      return drawBouncer(ctx, view, pal, part.a, part.b);
-    case 'conveyor':
-      return drawConveyor(ctx, view, pal, part.a, part.b);
-    case 'lever':
-      return drawLever(ctx, view, pal, part);
-    case 'weight':
-      return drawWeight(ctx, view, pal, part.p[0], part.p[1]);
-    case 'gear':
-      return drawGear(ctx, view, pal, part.p[0], part.p[1], part.size, 0);
-    case 'motor':
-      return drawMotor(ctx, view, pal, part.p[0], part.p[1], part.dir || 1, 0, 0, false);
-    case 'chain': {
-      const ga = all.find((o) => o.type === 'gear' && key(o.p) === key(part.a));
-      const gb = all.find((o) => o.type === 'gear' && key(o.p) === key(part.b));
-      if (ga && gb) drawChain(ctx, view, pal, part.a, ga.size, part.b, gb.size);
-      return;
-    }
-  }
+  const live = { turn: () => 0, all: all.length ? all : [part], running: false, body: null, phase: 0 };
+  PARTS[part.type].draw(view, pal, part, live);
 }
 
 function fmtRatio(k) {
@@ -189,7 +132,7 @@ function fmtRatio(k) {
   return `${a.toFixed(2)}×`;
 }
 
-function drawRatios(view, pal, layout, all) {
+function drawRatios(view, pal, layout) {
   const ctx = view.ctx;
   for (const t of layout.trains) {
     if (t.jammed) {
@@ -202,29 +145,7 @@ function drawRatios(view, pal, layout, all) {
     for (const A of t.axles) {
       if (A.motor) continue;
       if (!A.gear && !A.drums.length && !A.levers.length) continue;
-      const turnArrow = A.k * dir > 0 ? '↻' : '↺';
-      label(ctx, view, pal, `${turnArrow} ${fmtRatio(A.k)}`, A.p[0], A.p[1] + 0.02, { size: 11 });
+      label(ctx, view, pal, `${A.k * dir > 0 ? '↻' : '↺'} ${fmtRatio(A.k)}`, A.p[0], A.p[1] + 0.02, { size: 11 });
     }
   }
-}
-
-// A weight waits until Run: a dashed arrow says where it will fall.
-function dropArrow(ctx, view, pal, [x, y]) {
-  ctx.save();
-  ctx.strokeStyle = pal.mid;
-  ctx.fillStyle = pal.mid;
-  ctx.lineWidth = view.px(1.6);
-  ctx.setLineDash([0.15, 0.12]);
-  ctx.beginPath();
-  ctx.moveTo(x, y + 0.55);
-  ctx.lineTo(x, y + 1.55);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.beginPath();
-  ctx.moveTo(x - 0.2, y + 1.45);
-  ctx.lineTo(x + 0.2, y + 1.45);
-  ctx.lineTo(x, y + 1.75);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
 }

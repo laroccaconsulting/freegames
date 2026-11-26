@@ -439,7 +439,11 @@ judges fairness and fun before merge.
 1. ✅ Search and simulate scripts in `scripts/contraption/`; slack and
    exploit gates in the tests; chapter 2 re-tuned (Tipping point now opens
    the chapter, Seesaw comes with its lever built and a stop for the ball).
-2. Part registry refactor, versioned save format, golden-machine corpus.
+2. ✅ Part registry (`js/parts/`, one module per part; `parts/index.js`
+   lists what a module provides), versioned save format (`js/format.js`,
+   with migrations from the first release's bare arrays), and the
+   golden-machine corpus (`tests/contraption-golden.json`, written by
+   `scripts/contraption/golden.mjs --write` after a deliberate `ENGINE` bump).
 3. Tooth-count gears (S/M/L kept as 10/20/30 teeth) and scrolling,
    larger boards.
 4. Machine links, file export and the level editor.

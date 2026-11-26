@@ -12,41 +12,16 @@
 // Fixed parts (given by the level) carry fixed: true.
 
 import { makeWorld, addBody, addTrain, settle, step, circle, capsule, box, makeShape, placeShape, overlap, DT } from './physics.js';
+import { MOTOR, DRUM_R, GEAR_TEETH, ITEM_INFO, key, dist, leverEnds, cupWalls } from './geom.js';
+import { PARTS, PART_TYPES, partOf } from './parts/index.js';
 
-export const MOTOR = { stall: 40, speed: 3 * Math.PI };
-export const DRUM_R = 0.5;
-export const GEAR_TEETH = { 1: 10, 2: 20, 3: 30 };
+export { MOTOR, DRUM_R, GEAR_TEETH, ITEM_INFO, key, leverEnds, cupWalls, PARTS, PART_TYPES, partOf };
 
-export const PART_TYPES = ['ramp', 'lever', 'weight', 'conveyor', 'motor', 'gear', 'chain', 'bouncer'];
-
-export const PART_INFO = {
-  ramp: { name: 'Ramp', blurb: 'A fixed plank between two pegs.', physics: 'An inclined plane: the steeper it is, the faster things roll or slide down it.', tip: 'Leave the bottom end pointing up a little and a ball leaves it like a ski jump.' },
-  lever: { name: 'Lever', blurb: 'A bar that turns freely on its fulcrum peg.', physics: 'A lever trades distance for force: the long arm moves farther and faster, the short arm pushes harder.', tip: 'Drop something heavy on the short arm to throw something light off the long one.' },
-  weight: { name: 'Weight', blurb: 'A heavy iron block that falls when the machine starts.', physics: 'Weight is force: a block six times heavier than a crate lands six times harder.', tip: 'Put it above a lever to make a catapult.' },
-  conveyor: { name: 'Conveyor', blurb: 'A belt around two drums. Idle until something turns a drum.', physics: 'Friction carries flat things along the belt. A ball rolls back down a sloped belt: rolling needs no grip.', tip: 'Put a motor on either drum peg.' },
-  motor: { name: 'Motor', blurb: 'Turns whatever shares its peg: a drum, a gear or a lever.', physics: 'Strongest when stalled, weakest at top speed (one and a half turns a second). Gear it down for more push.', tip: 'Tap it to change direction or set a start delay.' },
-  gear: { name: 'Gear', blurb: 'Small, medium or large (radius 1, 2 or 3). Gears whose rims touch mesh.', physics: 'Meshed gears turn opposite ways. Small driving large: half the speed, twice the torque.', tip: 'Gears sit behind the board, so items pass in front of them.' },
-  chain: { name: 'Chain', blurb: 'Links two gears that are apart.', physics: 'A chain keeps the direction and the same ratio as meshing: sizes set the speed.', tip: 'Tap one gear, then the other.' },
-  bouncer: { name: 'Bouncer', blurb: 'A springy pad between two pegs.', physics: 'Hits it hard and it gives back almost all of the speed, mirrored across the pad.', tip: 'Angle it to turn a fall into a throw.' },
-};
-
-export const ITEM_INFO = {
-  ball: { name: 'ball', r: 0.4, density: 1, friction: 0.6, restitution: 0.35 },
-  steel: { name: 'steel ball', r: 0.4, density: 5, friction: 0.4, restitution: 0.15 },
-  egg: { name: 'egg', r: 0.35, density: 0.8, friction: 0.6, restitution: 0.05, breakSpeed: 9 },
-  crate: { name: 'crate', w: 0.9, h: 0.9, density: 0.6, friction: 0.7, restitution: 0.05 },
-  heavy: { name: 'iron crate', w: 0.9, h: 0.9, density: 6, friction: 0.7, restitution: 0.02 },
-  can: { name: 'can', w: 0.55, h: 1.1, density: 0.6, friction: 0.6, restitution: 0.1 },
-};
-
-const LIMITS = { ramp: [1, 10], bouncer: [1, 4], conveyor: [2, 12], chain: [0, 20] };
-const LEVER_ARM = [0.5, 6];
+/** Text for each part type (tray, cards, guide), from the registry. */
+export const PART_INFO = Object.fromEntries(PART_TYPES.map((t) => [t, { name: PARTS[t].name, blurb: PARTS[t].blurb, physics: PARTS[t].physics, tip: PARTS[t].tip }]));
 
 // ---------- geometry helpers ----------
 
-export const key = (p) => `${p[0]},${p[1]}`;
-const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
-const rad = (deg) => (deg * Math.PI) / 180;
 
 export function rectShape([x, y, w, h]) {
   return placeShape(box(w, h), x + w / 2, y + h / 2);
@@ -73,52 +48,9 @@ export function inZone(p, z) {
   return inRect(p, z.rect);
 }
 
-/** Lever end points [left end, right end] in world coordinates. */
-export function leverEnds(part) {
-  const a = rad(part.angle || 0);
-  const c = Math.cos(a);
-  const s = Math.sin(a);
-  const [x, y] = part.p;
-  return [
-    [x - c * part.l1, y - s * part.l1],
-    [x + c * part.l2, y + s * part.l2],
-  ];
-}
-
-/** The cup walls of a goal (left, right, bottom), as rects. */
-export function cupWalls(goal) {
-  if (!goal.cup) return [];
-  const t = 0.25;
-  const { x, y, w, h } = goal;
-  return [
-    [x - t, y, t, h + t],
-    [x + w, y, t, h + t],
-    [x - t, y + h, w + 2 * t, t],
-  ];
-}
-
-/** World-space shape a part occupies on the front layer (or the gear disc). */
+/** World-space shape a part occupies (front layer, or the disc of a back part). */
 export function partShape(part) {
-  switch (part.type) {
-    case 'ramp':
-      return placeShape(capsule(part.a[0], part.a[1], part.b[0], part.b[1], 0.15));
-    case 'bouncer':
-      return placeShape(capsule(part.a[0], part.a[1], part.b[0], part.b[1], 0.2));
-    case 'conveyor':
-      return placeShape(capsule(part.a[0], part.a[1], part.b[0], part.b[1], DRUM_R));
-    case 'lever': {
-      const [e1, e2] = leverEnds(part);
-      return placeShape(capsule(e1[0], e1[1], e2[0], e2[1], 0.14));
-    }
-    case 'weight':
-      return placeShape(box(0.9, 0.9), part.p[0], part.p[1]);
-    case 'gear':
-      return placeShape(circle(part.size), part.p[0], part.p[1]);
-    case 'motor':
-      return placeShape(circle(0.45), part.p[0], part.p[1]);
-    default:
-      return null;
-  }
+  return PARTS[part.type]?.shape(part) ?? null;
 }
 
 export function itemShape(item) {
@@ -128,8 +60,7 @@ export function itemShape(item) {
 
 /** The pegs a part sits on (for moving and hit-testing). */
 export function partPegs(part) {
-  if (part.a) return [part.a, part.b];
-  return [part.p];
+  return PARTS[part.type].pegs(part);
 }
 
 // ---------- axles and trains ----------
@@ -147,15 +78,7 @@ export function analyse(parts) {
     if (!axles.has(k)) axles.set(k, { p, gear: null, motor: null, drums: [], levers: [], links: [], k: 0, train: -1 });
     return axles.get(k);
   };
-  for (const part of parts) {
-    if (part.type === 'gear') axle(part.p).gear = part;
-    else if (part.type === 'motor') axle(part.p).motor = part;
-    else if (part.type === 'lever') axle(part.p).levers.push(part);
-    else if (part.type === 'conveyor') {
-      axle(part.a).drums.push(part);
-      axle(part.b).drums.push(part);
-    }
-  }
+  for (const part of parts) PARTS[part.type].axles?.(part, axle);
   const list = [...axles.values()];
   const link = (A, B, ratio, via) => {
     A.links.push({ to: B, ratio, via });
@@ -170,14 +93,7 @@ export function analyse(parts) {
       if (Math.abs(dist(A.p, B.p) - (A.gear.size + B.gear.size)) < 1e-6) link(A, B, -A.gear.size / B.gear.size, 'mesh');
     }
   }
-  for (const part of parts) {
-    if (part.type === 'conveyor' && key(part.a) !== key(part.b)) link(axles.get(key(part.a)), axles.get(key(part.b)), 1, 'belt');
-    if (part.type === 'chain') {
-      const A = axles.get(key(part.a));
-      const B = axles.get(key(part.b));
-      if (A?.gear && B?.gear && A !== B) link(A, B, A.gear.size / B.gear.size, 'chain');
-    }
-  }
+  for (const part of parts) PARTS[part.type].links?.(part, axles, link);
   // walk each train from a motor if it has one, so motors read as 1×
   const trains = [];
   const order = [...list].sort((a, b) => (b.motor ? 1 : 0) - (a.motor ? 1 : 0));
@@ -235,55 +151,34 @@ function pegOk(level, p) {
  * the machine (fixed parts included).
  */
 export function problem(level, part, others = []) {
-  if (part.type === 'chain') return chainProblem(level, part, others);
-  for (const p of partPegs(part)) {
-    const r = pegOk(level, p);
-    if (r) return r;
+  const def = PARTS[part.type];
+  if (!def) return 'Unknown part';
+  if (!def.free) {
+    for (const p of def.pegs(part)) {
+      const r = pegOk(level, p);
+      if (r) return r;
+    }
   }
-  const z = levelZones(level);
-  if (part.a) {
+  if (def.ends) {
     const len = dist(part.a, part.b);
-    const [lo, hi] = LIMITS[part.type];
+    const [lo, hi] = def.limits;
     if (len < lo - 1e-9) return 'Too short';
     if (len > hi + 1e-9) return 'Too long';
   }
-  if (part.type === 'lever') {
-    for (const l of [part.l1, part.l2]) if (l < LEVER_ARM[0] - 1e-9 || l > LEVER_ARM[1] + 1e-9) return 'Arm length must be ½ to 6';
-    for (const e of leverEnds(part)) if (e[0] < 0 || e[1] < 0 || e[0] > level.w || e[1] > level.h) return 'Off the board';
-  }
-  const shape = partShape(part);
+  const own = def.check?.(level, part, others);
+  if (own) return own;
+  if (def.free) return null;
+  const z = levelZones(level);
+  const shape = def.shape(part);
   if (shape) {
-    const back = part.type === 'gear' || part.type === 'motor';
     const touch = (s) => overlap(shape, s) < -0.02;
     if (z.walls.some(touch)) return 'Hits a wall';
     if (z.noBuild.some(touch)) return 'No building here';
-    if (!back && z.danger.some(touch)) return 'In a danger zone';
-    if (!back && z.items.some(touch)) return 'In the way of the start';
-    if (level.goal && !back && inRect([shape.minX, shape.minY], [level.goal.x, level.goal.y, level.goal.w, level.goal.h]) && inRect([shape.maxX, shape.maxY], [level.goal.x, level.goal.y, level.goal.w, level.goal.h])) return 'Inside the goal';
+    if (def.front && z.danger.some(touch)) return 'In a danger zone';
+    if (def.front && z.items.some(touch)) return 'In the way of the start';
+    const g = level.goal;
+    if (g && def.front && inRect([shape.minX, shape.minY], [g.x, g.y, g.w, g.h]) && inRect([shape.maxX, shape.maxY], [g.x, g.y, g.w, g.h])) return 'Inside the goal';
   }
-  const pk = part.p ? key(part.p) : null;
-  for (const o of others) {
-    if (o === part || o.id === part.id) continue;
-    if (part.type === 'gear' && o.type === 'gear') {
-      const d = dist(part.p, o.p);
-      if (d < 1e-9) return 'A peg holds one gear';
-      if (d < part.size + o.size - 1e-6) return 'Overlaps another gear';
-    }
-    if (part.type === 'motor' && o.type === 'motor' && key(o.p) === pk) return 'A peg holds one motor';
-    if (part.type === 'weight' && o.type === 'weight' && key(o.p) === pk) return 'Already a weight here';
-  }
-  return null;
-}
-
-// A chain runs behind the board between two gears, wherever they are.
-function chainProblem(level, part, others) {
-  const ga = others.find((o) => o.type === 'gear' && key(o.p) === key(part.a));
-  const gb = others.find((o) => o.type === 'gear' && key(o.p) === key(part.b));
-  if (!ga || !gb) return 'A chain needs a gear at each end';
-  if (key(part.a) === key(part.b)) return 'Pick two different gears';
-  if (dist(part.a, part.b) < ga.size + gb.size + 0.5) return 'Too close: those gears mesh or touch';
-  if (dist(part.a, part.b) > LIMITS.chain[1]) return 'Too long';
-  if (others.some((o) => o !== part && o.id !== part.id && o.type === 'chain' && ((key(o.a) === key(part.a) && key(o.b) === key(part.b)) || (key(o.a) === key(part.b) && key(o.b) === key(part.a))))) return 'Already chained';
   return null;
 }
 
@@ -308,8 +203,10 @@ export function usage(level, parts) {
 
 // ---------- building and running ----------
 
-const LEVER_DENSITY = 0.8;
-const GEAR_DENSITY = 0.005;
+// Every part on an axle (each drum counts once per belt, as before).
+function axleParts(a) {
+  return [a.gear, a.motor, ...a.drums, ...a.levers].filter(Boolean);
+}
 
 /**
  * Build a physics world for a level and machine. Returns the world and the
@@ -324,19 +221,22 @@ export function build(level, parts, { sandbox = false } = {}) {
     const motors = [];
     for (const a of t.axles) {
       let I = 0;
-      if (a.gear) {
-        const m = GEAR_DENSITY * Math.PI * a.gear.size ** 2;
-        I += 0.5 * m * a.gear.size ** 2;
-      }
-      I += a.drums.length * 0.01;
-      if (a.motor) {
-        I += 0.05;
-        motors.push({ k: a.k, stall: MOTOR.stall, speed: MOTOR.speed, dir: a.motor.dir || 1, delay: a.motor.delay || 0 });
+      for (const part of axleParts(a)) {
+        const def = PARTS[part.type];
+        I += def.inertia?.(part) ?? 0;
+        const m = def.motor?.(part);
+        if (m) motors.push({ k: a.k, ...m });
       }
       inertia += a.k * a.k * I;
     }
     return addTrain(world, { inertia, motors, damping: motors.length ? 0.2 : 0.03, jammed: t.jammed });
   });
+  const ctx = {
+    axle: (p) => {
+      const A = axles.get(key(p));
+      return { train: trainObjs[A.train], k: A.k };
+    },
+  };
 
   // level geometry
   const statics = [];
@@ -353,18 +253,7 @@ export function build(level, parts, { sandbox = false } = {}) {
   // parts
   const partBodies = new Map();
   for (const part of all) {
-    let b = null;
-    if (part.type === 'ramp') b = addBody(world, { kind: 'static', shape: capsule(...part.a, ...part.b, 0.15), friction: 0.4, restitution: 0.1, tag: 'ramp' });
-    else if (part.type === 'bouncer') b = addBody(world, { kind: 'static', shape: capsule(...part.a, ...part.b, 0.2), friction: 0.3, restitution: 0.85, tag: 'bouncer' });
-    else if (part.type === 'conveyor') {
-      const A = axles.get(key(part.a));
-      b = addBody(world, { kind: 'static', shape: capsule(...part.a, ...part.b, DRUM_R), friction: 1.2, restitution: 0.05, belt: { train: trainObjs[A.train], k: A.k, r: DRUM_R }, tag: 'conveyor' });
-    } else if (part.type === 'lever') {
-      const A = axles.get(key(part.p));
-      b = addBody(world, { kind: 'rotor', shape: capsule(-part.l1, 0, part.l2, 0, 0.14), x: part.p[0], y: part.p[1], base: rad(part.angle || 0), train: trainObjs[A.train], k: A.k, density: LEVER_DENSITY, friction: 0.6, restitution: 0.1, tag: 'lever' });
-    } else if (part.type === 'weight') {
-      b = addBody(world, { kind: 'dynamic', shape: box(0.9, 0.9), x: part.p[0], y: part.p[1], density: 6, friction: 0.6, restitution: 0.02, tag: 'weight' });
-    }
+    const b = PARTS[part.type].body?.(world, part, ctx);
     if (b) {
       b.part = part;
       partBodies.set(part.id, b);

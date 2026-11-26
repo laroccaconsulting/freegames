@@ -19,6 +19,9 @@
 // axle turning at k·θ̇. Contact impulses on a rotor feed back into the train
 // through k, so gearing down really does trade speed for torque.
 
+// Bump ENGINE when a change alters how any machine behaves (tests/contraption-golden.json
+// catches it). Saved and shared machines record the engine they were made on.
+export const ENGINE = 1;
 export const GRAVITY = 40;
 export const DT = 1 / 120;
 const ITERATIONS = 10;

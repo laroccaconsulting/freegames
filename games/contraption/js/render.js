@@ -3,7 +3,7 @@
 // every material has its own pattern, strokes are thick and crisp, and the
 // play path (front layer) is drawn heavier than the drive train behind it.
 
-import { leverEnds, cupWalls, DRUM_R, GEAR_TEETH, ITEM_INFO } from './machine.js';
+import { leverEnds, cupWalls, DRUM_R, GEAR_TEETH, ITEM_INFO } from './geom.js';
 
 export const PALETTES = {
   paper: { paper: '#ffffff', ink: '#111111', mid: '#5c5c5c', back: '#6e6e6e', faint: '#d4d4d4', peg: '#a8a8a8', wall: '#ffffff', flag: '#111111', glow: null },
@@ -440,7 +440,8 @@ export function drawLever(ctx, view, pal, part, angle) {
   ctx.fill();
 }
 
-export function drawWeight(ctx, view, pal, x, y, angle = 0) {
+export function drawWeight(ctx, view, pal, x, y, angle = 0, waiting = false) {
+  if (waiting) dropArrow(ctx, view, pal, x, y);
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle);
@@ -677,3 +678,24 @@ export function label(ctx, view, pal, text, x, y, { size = 13, bold = true, alig
 }
 
 export { leverEnds };
+
+// A weight waits until Run: a dashed arrow says where it will fall.
+function dropArrow(ctx, view, pal, x, y) {
+  ctx.save();
+  ctx.strokeStyle = pal.mid;
+  ctx.fillStyle = pal.mid;
+  ctx.lineWidth = view.px(1.6);
+  ctx.setLineDash([0.15, 0.12]);
+  ctx.beginPath();
+  ctx.moveTo(x, y + 0.55);
+  ctx.lineTo(x, y + 1.55);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(x - 0.2, y + 1.45);
+  ctx.lineTo(x + 0.2, y + 1.45);
+  ctx.lineTo(x, y + 1.75);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}

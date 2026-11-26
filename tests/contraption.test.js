@@ -63,3 +63,23 @@ test('quality gates: slack around every solution and no cheap exploits', async (
     assert.equal(ex.length, 0, `${level.id}: a cheap machine wins: ${ex.length ? describe(ex[0]) : ''}`);
   }
 });
+
+test('determinism: every recorded machine behaves exactly as recorded', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { outcomes } = await import('../scripts/contraption/golden.mjs');
+  const was = JSON.parse(readFileSync(new URL('./contraption-golden.json', import.meta.url), 'utf8'));
+  const now = outcomes();
+  if (now.engine === was.engine) {
+    for (const [id, o] of Object.entries(was.machines)) assert.deepEqual(now.machines[id], o, `${id} changed: bump ENGINE in physics.js on purpose, then node scripts/contraption/golden.mjs --write`);
+  } else assert.fail(`ENGINE is ${now.engine} but the corpus was recorded on ${was.engine}: re-record with node scripts/contraption/golden.mjs --write`);
+});
+
+test('saved machines: old bare arrays load, unknown parts are dropped, round trip is exact', async () => {
+  const { toSave, fromSave, FORMAT } = await import('../games/contraption/js/format.js');
+  const parts = [{ id: 'a', type: 'ramp', a: [1, 2], b: [4, 3] }];
+  assert.deepEqual(fromSave(parts).parts, parts, 'v0 array');
+  assert.deepEqual(fromSave(toSave(parts)).parts, parts);
+  assert.equal(toSave(parts).v, FORMAT);
+  assert.deepEqual(fromSave([...parts, { id: 'x', type: 'teleporter' }]).parts, parts);
+  assert.deepEqual(fromSave(null).parts, []);
+});

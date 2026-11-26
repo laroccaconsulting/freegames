@@ -1,0 +1,30 @@
+// The part registry: one module per part type. To add a part, write its
+// module (see ramp.js for the smallest one), import it here, and give it
+// a level that teaches it. Order here is the tray order.
+//
+// A part module provides:
+//   type, name, blurb, physics, tip      text for the tray, cards and guide
+//   layer        drawing order (0 gears … 4 motors); front: collides with
+//                items, back: drawn behind and may overlap more freely
+//   pegs(part)   the pegs it sits on; shape(part) its world shape for checks
+//   check?(level, part, others)   extra placement rules → reason or null
+//   axles?(part, axle)            its role on the drive train (gear, motor,
+//                                 drum, lever); links?(part, axles, link)
+//   inertia?(part), motor?(part)  what it adds to its train
+//   body?(world, part, ctx)       its physics body
+//   draw(view, pal, part, live)   live: { turn(peg), body, phase, all, running }
+//   defaults(peg)  candidate parts when dropped on a peg (first legal wins)
+//   distance, handles, drag, move  hit-testing and editing
+//   controls?(part)  inspector controls; hint(part, ctx) one line of help
+import ramp from './ramp.js';
+import lever from './lever.js';
+import weight from './weight.js';
+import conveyor from './conveyor.js';
+import motor from './motor.js';
+import gear from './gear.js';
+import chain from './chain.js';
+import bouncer from './bouncer.js';
+
+export const PARTS = Object.fromEntries([ramp, lever, weight, conveyor, motor, gear, chain, bouncer].map((p) => [p.type, p]));
+export const PART_TYPES = Object.keys(PARTS);
+export const partOf = (part) => PARTS[part.type];
