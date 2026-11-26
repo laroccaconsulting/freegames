@@ -7,15 +7,15 @@
 //   { id, type: 'lever', p: [x, y], angle (degrees), l1, l2 }   arms either side of the fulcrum
 //   { id, type: 'weight', p }
 //   { id, type: 'motor', p, dir: 1 (clockwise) | -1, delay (seconds) }
-//   { id, type: 'gear', p, size: 1 | 2 }   size is the pitch radius in cells
+//   { id, type: 'gear', p, teeth (10–40, radius teeth/10), plane: 0 back | 1 front }
 //   { id, type: 'chain', a, b }            between two gears' pegs
 // Fixed parts (given by the level) carry fixed: true.
 
 import { makeWorld, addBody, addTrain, settle, step, circle, capsule, box, makeShape, placeShape, overlap, DT } from './physics.js';
-import { MOTOR, DRUM_R, GEAR_TEETH, ITEM_INFO, key, dist, leverEnds, cupWalls } from './geom.js';
+import { MOTOR, DRUM_R, GEAR_TEETH, ITEM_INFO, key, dist, leverEnds, cupWalls, gearR } from './geom.js';
 import { PARTS, PART_TYPES, partOf } from './parts/index.js';
 
-export { MOTOR, DRUM_R, GEAR_TEETH, ITEM_INFO, key, leverEnds, cupWalls, PARTS, PART_TYPES, partOf };
+export { MOTOR, DRUM_R, GEAR_TEETH, ITEM_INFO, key, leverEnds, cupWalls, gearR, PARTS, PART_TYPES, partOf };
 
 /** Text for each part type (tray, cards, guide), from the registry. */
 export const PART_INFO = Object.fromEntries(PART_TYPES.map((t) => [t, { name: PARTS[t].name, blurb: PARTS[t].blurb, physics: PARTS[t].physics, tip: PARTS[t].tip }]));
@@ -75,22 +75,27 @@ export function analyse(parts) {
   const axles = new Map();
   const axle = (p) => {
     const k = key(p);
-    if (!axles.has(k)) axles.set(k, { p, gear: null, motor: null, drums: [], levers: [], links: [], k: 0, train: -1 });
+    if (!axles.has(k)) axles.set(k, { p, gear: null, gears: [], motor: null, drums: [], levers: [], links: [], k: 0, train: -1 });
     return axles.get(k);
   };
   for (const part of parts) PARTS[part.type].axles?.(part, axle);
   const list = [...axles.values()];
-  const link = (A, B, ratio, via) => {
-    A.links.push({ to: B, ratio, via });
-    B.links.push({ to: A, ratio: 1 / ratio, via });
+  const link = (A, B, ratio, via, ga, gb) => {
+    A.links.push({ to: B, ratio, via, from: ga, into: gb });
+    B.links.push({ to: A, ratio: 1 / ratio, via, from: gb, into: ga });
   };
   // gears in mesh: rims touch exactly
   for (let i = 0; i < list.length; i++) {
     for (let j = i + 1; j < list.length; j++) {
       const A = list[i];
       const B = list[j];
-      if (!A.gear || !B.gear) continue;
-      if (Math.abs(dist(A.p, B.p) - (A.gear.size + B.gear.size)) < 1e-6) link(A, B, -A.gear.size / B.gear.size, 'mesh');
+      const d = dist(A.p, B.p);
+      for (const ga of A.gears) {
+        for (const gb of B.gears) {
+          if ((ga.plane || 0) !== (gb.plane || 0)) continue;
+          if (Math.abs(d - (gearR(ga) + gearR(gb))) < 1e-6) link(A, B, -gearR(ga) / gearR(gb), 'mesh', ga, gb);
+        }
+      }
     }
   }
   for (const part of parts) PARTS[part.type].links?.(part, axles, link);
@@ -205,7 +210,7 @@ export function usage(level, parts) {
 
 // Every part on an axle (each drum counts once per belt, as before).
 function axleParts(a) {
-  return [a.gear, a.motor, ...a.drums, ...a.levers].filter(Boolean);
+  return [...a.gears, a.motor, ...a.drums, ...a.levers].filter(Boolean);
 }
 
 /**

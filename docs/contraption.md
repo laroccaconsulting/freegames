@@ -444,8 +444,12 @@ judges fairness and fun before merge.
    with migrations from the first release's bare arrays), and the
    golden-machine corpus (`tests/contraption-golden.json`, written by
    `scripts/contraption/golden.mjs --write` after a deliberate `ENGINE` bump).
-3. Tooth-count gears (S/M/L kept as 10/20/30 teeth) and scrolling,
-   larger boards.
+3. ✅ Tooth-count gears (10, 15, 20, 25, 30, 40; old S/M/L saves load as
+   10/20/30) on two layers: gears mesh within a layer, and a peg holds one
+   gear per layer, so compound trains multiply (10→30, 10→40, 15→25 is
+   1:20; a test checks it). Chains name the layer at each end. Sandbox is
+   48×32; boards too big to touch comfortably start zoomed on the item,
+   pan with one finger, and show a tappable minimap.
 4. Machine links, file export and the level editor.
 5. "What's new" card and the in-game Gallery.
 6. The signal layer: wire, plate, beam, switch, then NAND, delay, pixel.

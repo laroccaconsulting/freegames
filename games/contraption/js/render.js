@@ -3,7 +3,7 @@
 // every material has its own pattern, strokes are thick and crisp, and the
 // play path (front layer) is drawn heavier than the drive train behind it.
 
-import { leverEnds, cupWalls, DRUM_R, GEAR_TEETH, ITEM_INFO } from './geom.js';
+import { leverEnds, cupWalls, DRUM_R, ITEM_INFO } from './geom.js';
 
 export const PALETTES = {
   paper: { paper: '#ffffff', ink: '#111111', mid: '#5c5c5c', back: '#6e6e6e', faint: '#d4d4d4', peg: '#a8a8a8', wall: '#ffffff', flag: '#111111', glow: null },
@@ -240,29 +240,29 @@ function gearPath(ctx, r, teeth) {
   ctx.closePath();
 }
 
-export function drawGear(ctx, view, pal, x, y, size, angle, faded = false) {
-  const teeth = GEAR_TEETH[size] || 10;
+export function drawGear(ctx, view, pal, x, y, r, angle, teeth = 10, plane = 0) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle);
-  gearPath(ctx, size, teeth);
+  gearPath(ctx, r, teeth);
   ctx.fillStyle = pal.paper;
   ctx.fill();
-  ctx.strokeStyle = faded ? pal.faint : pal.back;
-  ctx.lineWidth = view.px(1.8);
+  // the front layer is drawn heavier so stacked gears read apart
+  ctx.strokeStyle = plane ? pal.ink : pal.back;
+  ctx.lineWidth = view.px(plane ? 2.2 : 1.8);
   ctx.stroke();
   // spokes so the turning is visible
   ctx.beginPath();
-  const spokes = size === 1 ? 3 : size === 2 ? 4 : 6;
+  const spokes = r < 1.4 ? 3 : r < 2.4 ? 4 : 6;
   for (let i = 0; i < spokes; i++) {
     const a = (i / spokes) * TAU;
     ctx.moveTo(Math.cos(a) * 0.22, Math.sin(a) * 0.22);
-    ctx.lineTo(Math.cos(a) * (size - 0.32), Math.sin(a) * (size - 0.32));
+    ctx.lineTo(Math.cos(a) * (r - 0.32), Math.sin(a) * (r - 0.32));
   }
   ctx.lineWidth = view.px(2.2);
   ctx.stroke();
   ctx.beginPath();
-  ctx.arc(0, 0, size - 0.3, 0, TAU);
+  ctx.arc(0, 0, r - 0.3, 0, TAU);
   ctx.lineWidth = view.px(1.2);
   ctx.stroke();
   ctx.restore();

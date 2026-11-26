@@ -134,6 +134,10 @@ body {
 .tool:active {
   background: var(--accent-soft);
 }
+.hud-btn[hidden],
+.tool[hidden] {
+  display: none;
+}
 .hud-btn[disabled],
 .tool[disabled] {
   opacity: 0.35;

@@ -10,7 +10,7 @@ import ACHIEVEMENTS from './achievements.js';
 import { DT } from './js/physics.js';
 import { toSave, fromSave } from './js/format.js';
 import { LEVELS, CHAPTERS, levelById } from './js/levels.js';
-import { PARTS, PART_TYPES, PART_INFO, ITEM_INFO, problems, makeRun, key, moverMotion } from './js/machine.js';
+import { PARTS, PART_TYPES, PART_INFO, ITEM_INFO, problems, makeRun, key, moverMotion, gearR } from './js/machine.js';
 import { View, PALETTES, drawHandle } from './js/render.js';
 import { drawScene, drawPart, machineLayout, centre } from './js/draw.js';
 import { starsFor, scoreFor, record, isOpen, isSolved, chapterOpen, chapterDone, totalStars, nextLevel, unlockedParts } from './js/progress.js';
@@ -46,6 +46,7 @@ let parts = [];
 let selected = null;
 let armed = null;
 let chainFrom = null;
+let chainPlane = 0;
 let problemMap = new Map();
 let layout = null;
 let run = null;
@@ -70,11 +71,11 @@ const SANDBOX = {
   chapter: -1,
   name: 'Sandbox',
   goalText: 'Anything goes. Get the ball into the cup however you like.',
-  w: 32,
-  h: 20,
+  w: 48,
+  h: 32,
   items: [{ type: 'ball', x: 3, y: 2 }],
-  walls: [[0, 19, 32, 1]],
-  goal: { x: 26, y: 16, w: 4, h: 3, cup: true },
+  walls: [[0, 31, 48, 1]],
+  goal: { x: 42, y: 28, w: 4, h: 3, cup: true },
   parts: {},
   stars: { parts: 99, time: 99 },
   timeLimit: 60,
@@ -197,7 +198,7 @@ function iconCanvas(type, w = 40, h = 32, palette = pal()) {
     lever: { type: 'lever', p: [1.5, 1.05], angle: -15, l1: 1.2, l2: 1.2 },
     weight: { type: 'weight', p: [1.5, 1.2] },
     motor: { type: 'motor', p: [1.5, 1.2], dir: 1 },
-    gear: { type: 'gear', p: [1.5, 1.2], size: 1 },
+    gear: { type: 'gear', p: [1.5, 1.2], teeth: 10 },
     chain: null,
   }[type];
   v.s = Math.min(w / 3, h / 2.4);
@@ -206,13 +207,13 @@ function iconCanvas(type, w = 40, h = 32, palette = pal()) {
   const ctx = c.getContext('2d');
   ctx.setTransform(2 * v.s, 0, 0, 2 * v.s, 2 * v.ox, 2 * v.oy);
   if (type === 'chain') {
-    const g1 = { type: 'gear', p: [0.8, 1.2], size: 1 };
-    const g2 = { type: 'gear', p: [2.3, 1.2], size: 1 };
+    const g1 = { type: 'gear', p: [0.8, 1.2], teeth: 6 };
+    const g2 = { type: 'gear', p: [2.3, 1.2], teeth: 6 };
     const s0 = v.s;
     v.s = s0;
     ctx.save();
     ctx.translate(0, 0);
-    drawPart(v, palette, { type: 'chain', a: g1.p, b: g2.p }, [{ ...g1, size: 0.55 }, { ...g2, size: 0.55 }]);
+    drawPart(v, palette, { type: 'chain', a: g1.p, b: g2.p }, [g1, g2]);
     ctx.restore();
   } else if (type === 'gear') {
     ctx.translate(1.5, 1.2);
@@ -411,7 +412,7 @@ function bestPart(type, p) {
   const others = allParts();
   // a gear that would mesh with a neighbour is the most useful default
   if (type === 'gear') {
-    const meshing = list.find((c) => !problemOf(c, others) && others.some((o) => o.type === 'gear' && Math.abs(Math.hypot(o.p[0] - c.p[0], o.p[1] - c.p[1]) - (o.size + c.size)) < 1e-6));
+    const meshing = list.find((c) => !problemOf(c, others) && others.some((o) => o.type === 'gear' && Math.abs(Math.hypot(o.p[0] - c.p[0], o.p[1] - c.p[1]) - (gearR(o) + gearR(c))) < 1e-6 && (o.plane || 0) === (c.plane || 0)));
     if (meshing) return meshing;
   }
   return list.find((c) => !problemOf(c, others)) || list[0];
@@ -452,18 +453,19 @@ function gearAt(p) {
 
 function chainTap(wx, wy) {
   const p = snap(wx, wy);
-  const g = allParts().find((o) => o.type === 'gear' && Math.hypot(o.p[0] - wx, o.p[1] - wy) < Math.max(0.8, o.size * 0.7));
+  const g = allParts().find((o) => o.type === 'gear' && Math.hypot(o.p[0] - wx, o.p[1] - wy) < Math.max(0.8, gearR(o) * 0.7));
   if (!g) {
     toast('Tap a gear', { position: 'top', duration: 1500 });
     return;
   }
   if (!chainFrom) {
     chainFrom = g.p;
+    chainPlane = g.plane || 0;
     toast('Now tap the second gear', { position: 'top' });
     dirty = true;
     return;
   }
-  const part = { id: uid(), type: 'chain', a: chainFrom, b: g.p };
+  const part = { id: uid(), type: 'chain', a: chainFrom, b: g.p, pa: chainPlane, pb: g.plane || 0 };
   chainFrom = null;
   pushUndo();
   parts.push(part);
@@ -483,7 +485,8 @@ function removePart(id) {
   pushUndo();
   parts = parts.filter((p) => p !== part);
   // a chain loses its gear: take the chain off too
-  if (part.type === 'gear') parts = parts.filter((p) => p.type !== 'chain' || (key(p.a) !== key(part.p) && key(p.b) !== key(part.p)));
+  const pl = part.plane || 0;
+  if (part.type === 'gear') parts = parts.filter((p) => p.type !== 'chain' || !((key(p.a) === key(part.p) && (p.pa ?? 0) === pl) || (key(p.b) === key(part.p) && (p.pb ?? 0) === pl)));
   selected = null;
   sounds.flip();
   saveMachine();
@@ -537,6 +540,10 @@ canvas.addEventListener('pointerdown', (e) => {
   canvas.setPointerCapture?.(e.pointerId);
   const [sx, sy] = localXY(e);
   pointers.set(e.pointerId, { x: sx, y: sy });
+  if (pointers.size === 1 && minimapTap(sx, sy)) {
+    pointers.delete(e.pointerId);
+    return;
+  }
   if (pointers.size === 2) {
     const [p1, p2] = [...pointers.values()];
     drag = { kind: 'pinch', d0: Math.hypot(p1.x - p2.x, p1.y - p2.y), s0: view.s, mid: [(p1.x + p2.x) / 2, (p1.y + p2.y) / 2], world: view.toWorld((p1.x + p2.x) / 2, (p1.y + p2.y) / 2) };
@@ -607,9 +614,10 @@ canvas.addEventListener('pointermove', (e) => {
     dirty = true;
   } else if (drag.kind === 'pan') {
     if (Math.hypot(sx - drag.sx, sy - drag.sy) > 6) drag.moved = true;
-    if (drag.moved && userView) {
+    if (drag.moved && !fitsWhole()) {
       view.ox = drag.ox + sx - drag.sx;
       view.oy = drag.oy + sy - drag.sy;
+      clampView(boardRect());
       userView = { s: view.s, ox: view.ox, oy: view.oy };
       dirty = true;
     }
@@ -919,7 +927,7 @@ async function hint() {
     rec.hinted = true;
     save();
     const p = hintParts[hintParts.length - 1];
-    const extra = p.type === 'motor' ? ` (${p.dir > 0 ? 'clockwise' : 'counter-clockwise'}${p.delay ? `, wait ${p.delay}s` : ''})` : p.type === 'gear' ? ` (size ${['S', 'M', 'L'][p.size - 1]})` : '';
+    const extra = p.type === 'motor' ? ` (${p.dir > 0 ? 'clockwise' : 'counter-clockwise'}${p.delay ? `, wait ${p.delay}s` : ''})` : p.type === 'gear' ? ` (${p.teeth} teeth)` : '';
     toast(`${PART_INFO[p.type].name}${extra} goes in the dashed outline`, { position: 'top', duration: 3500 });
     dirty = true;
   }
@@ -1025,11 +1033,98 @@ function boardRect() {
   return { x: 0, y: top, w: view.w, h: Math.max(80, bottom - top) };
 }
 
+const MIN_CELL = 20; // px per cell below which pegs get too fiddly to tap
+
+// Can the whole board be seen at the current zoom?
+function fitsWhole() {
+  const r = boardRect();
+  return level && level.w * view.s <= r.w + 1 && level.h * view.s <= r.h + 1;
+}
+
+// Keep at least part of the board on screen.
+function clampView(r) {
+  const bw = level.w * view.s;
+  const bh = level.h * view.s;
+  const m = 8;
+  // bigger than the screen: no gap past an edge; smaller: keep it on screen
+  if (bw > r.w) view.ox = Math.min(r.x + m, Math.max(r.x + r.w - bw - m, view.ox));
+  else view.ox = Math.min(r.x + r.w - bw, Math.max(r.x, view.ox));
+  if (bh > r.h) view.oy = Math.min(r.y + m, Math.max(r.y + r.h - bh - m, view.oy));
+  else view.oy = Math.min(r.y + r.h - bh, Math.max(r.y, view.oy));
+}
+
+// The overview in the corner when the board is bigger than the screen.
+function minimapRect() {
+  const r = boardRect();
+  const w = Math.min(150, r.w * 0.3);
+  const h = (w * level.h) / level.w;
+  return { x: r.x + 8, y: r.y + r.h - h - 8, w, h, k: w / level.w };
+}
+
+function drawMinimap() {
+  if (fitsWhole()) return;
+  const ctx = view.ctx;
+  const p = pal();
+  const m = minimapRect();
+  ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
+  ctx.fillStyle = p.paper;
+  ctx.fillRect(m.x, m.y, m.w, m.h);
+  ctx.fillStyle = p.ink;
+  for (const z of level.walls || []) if (Array.isArray(z)) ctx.fillRect(m.x + z[0] * m.k, m.y + z[1] * m.k, Math.max(1, z[2] * m.k), Math.max(1, z[3] * m.k));
+  ctx.fillStyle = p.mid;
+  for (const part of allParts()) {
+    const c = centre(part);
+    ctx.fillRect(m.x + c[0] * m.k - 1.5, m.y + c[1] * m.k - 1.5, 3, 3);
+  }
+  if (level.goal) {
+    ctx.strokeStyle = p.ink;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(m.x + level.goal.x * m.k, m.y + level.goal.y * m.k, level.goal.w * m.k, level.goal.h * m.k);
+  }
+  // what is on screen now
+  const r = boardRect();
+  const [x0, y0] = view.toWorld(r.x, r.y);
+  const [x1, y1] = view.toWorld(r.x + r.w, r.y + r.h);
+  ctx.strokeStyle = p.ink;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(m.x + Math.max(0, x0) * m.k, m.y + Math.max(0, y0) * m.k, (Math.min(level.w, x1) - Math.max(0, x0)) * m.k, (Math.min(level.h, y1) - Math.max(0, y0)) * m.k);
+  ctx.lineWidth = 2;
+  ctx.strokeRect(m.x, m.y, m.w, m.h);
+}
+
+// Tap the overview to look there.
+function minimapTap(sx, sy) {
+  if (fitsWhole()) return false;
+  const m = minimapRect();
+  if (sx < m.x || sy < m.y || sx > m.x + m.w || sy > m.y + m.h) return false;
+  const r = boardRect();
+  const wx = (sx - m.x) / m.k;
+  const wy = (sy - m.y) / m.k;
+  view.ox = r.x + r.w / 2 - wx * view.s;
+  view.oy = r.y + r.h / 2 - wy * view.s;
+  clampView(r);
+  userView = { s: view.s, ox: view.ox, oy: view.oy };
+  dirty = true;
+  return true;
+}
+
 function layoutView() {
   view.resize();
   if (screen === 'play' && level) {
     if (userView) Object.assign(view, userView);
-    else view.fit(level.w, level.h, boardRect(), 6);
+    else {
+      const rect = boardRect();
+      view.fit(level.w, level.h, rect, 6);
+      // too small to touch comfortably: start zoomed in on the first item
+      if (view.s < MIN_CELL) {
+        const it = level.items?.[0] || { x: level.w / 2, y: level.h / 2 };
+        view.s = MIN_CELL;
+        view.ox = rect.x + rect.w / 2 - it.x * view.s;
+        view.oy = rect.y + rect.h / 3 - it.y * view.s;
+        clampView(rect);
+        userView = { s: view.s, ox: view.ox, oy: view.oy };
+      }
+    }
   } else if (screen === 'title' && demo) {
     view.fit(demo.level.w, demo.level.h, boardRect(), 10);
   }
@@ -1066,6 +1161,8 @@ function draw(now) {
     moverPose,
     goalGlow: run?.inGoal?.some((v) => v > 0) ? 0.6 : 0,
   });
+  drawMinimap();
+  view.ctx.setTransform(view.dpr * view.s, 0, 0, view.dpr * view.s, view.dpr * view.ox, view.dpr * view.oy);
   if (mode === 'build') {
     const part = parts.find((p) => p.id === selected);
     for (const h of handlesOf(part)) drawHandle(view.ctx, view, pal(), h.at[0], h.at[1], drag?.kind === 'handle' && drag.which === h.which);
@@ -1165,5 +1262,4 @@ if (params.get('solve') && level) {
   refresh();
 }
 void reducedMotion;
-void centre;
 requestAnimationFrame(frame);
