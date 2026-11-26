@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#ffffff"/>
+  <g fill="none" stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <!-- gear -->
+    <g transform="translate(330 300)">
+      <path stroke-width="18" d="M0-118 L22-116 L28-140 L58-130 L52-106 L72-94 L92-112 L112-90 L94-72 L106-52 L130-58 L140-28 L116-22 L118 0 L116 22 L140 28 L130 58 L106 52 L94 72 L112 92 L92 112 L72 94 L52 106 L58 130 L28 140 L22 116 L0 118 L-22 116 L-28 140 L-58 130 L-52 106 L-72 94 L-92 112 L-112 92 L-94 72 L-106 52 L-130 58 L-140 28 L-116 22 L-118 0 L-116 -22 L-140 -28 L-130 -58 L-106 -52 L-94 -72 L-112 -92 L-92 -112 L-72 -94 L-52 -106 L-58 -130 L-28 -140 L-22 -116 Z" fill="#ffffff"/>
+      <circle r="62" stroke-width="14"/>
+      <path stroke-width="16" d="M0-62V62M-54 31L54-31M-54-31L54 31"/>
+      <circle r="16" fill="#111111" stroke-width="0"/>
+    </g>
+    <!-- ramp -->
+    <path stroke-width="34" d="M78 150 L250 232"/>
+  </g>
+  <!-- ball -->
+  <circle cx="132" cy="112" r="46" fill="#ffffff" stroke="#111111" stroke-width="18"/>
+  <path d="M96 112 Q132 140 168 112" fill="none" stroke="#111111" stroke-width="11" stroke-linecap="round"/>
+</svg>
