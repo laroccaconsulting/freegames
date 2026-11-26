@@ -93,6 +93,13 @@ with "Every game has" in PLAN.md), draw `icons/icon.svg`, run
 `site/index.html` / `site/`, add a row to the README table, add a roadmap
 note in PLAN.md. Never use a trademarked name (see "Avoid" in PLAN.md).
 
+**Contraption: add a part or a level.** A part is one module in
+`games/contraption/js/parts/` (see `parts/index.js` for what it provides).
+A level needs a reference solution that passes `node scripts/contraption/check.mjs <id>`
+(slack and exploit gates); `centre.mjs` picks the most forgiving solution.
+If an engine change alters any recorded machine, bump `ENGINE` in `js/physics.js`
+and re-record with `node scripts/contraption/golden.mjs --write`. Details: docs/contraption.md §13.
+
 **Fixed content (e.g. Nonograms pictures).** Progress is saved by index, so
 only append; never reorder or remove.
 

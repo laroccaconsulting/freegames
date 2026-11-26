@@ -8,8 +8,9 @@ import { registerServiceWorker } from './core/pwa.js';
 import { makeAchievements } from './core/achievements.js';
 import ACHIEVEMENTS from './achievements.js';
 import { DT } from './js/physics.js';
+import { toSave, fromSave } from './js/format.js';
 import { LEVELS, CHAPTERS, levelById } from './js/levels.js';
-import { PART_TYPES, PART_INFO, ITEM_INFO, problems, makeRun, leverEnds, key, moverMotion, partShape } from './js/machine.js';
+import { PARTS, PART_TYPES, PART_INFO, ITEM_INFO, problems, makeRun, key, moverMotion } from './js/machine.js';
 import { View, PALETTES, drawHandle } from './js/render.js';
 import { drawScene, drawPart, machineLayout, centre } from './js/draw.js';
 import { starsFor, scoreFor, record, isOpen, isSolved, chapterOpen, chapterDone, totalStars, nextLevel, unlockedParts } from './js/progress.js';
@@ -127,7 +128,7 @@ function refresh() {
 }
 
 function saveMachine() {
-  store.set(`machine:${level.id}`, parts);
+  store.set(`machine:${level.id}`, toSave(parts));
 }
 
 function pushUndo() {
@@ -269,7 +270,7 @@ function openLevel(lvl, { card = true } = {}) {
     SANDBOX.parts = Object.fromEntries([...unlockedParts(progress)].map((t) => [t, 99]));
   }
   level = sandbox ? SANDBOX : lvl;
-  parts = (store.get(`machine:${level.id}`, []) || []).filter((p) => PART_TYPES.includes(p.type));
+  parts = fromSave(store.get(`machine:${level.id}`, null)).parts;
   selected = null;
   armed = null;
   chainFrom = null;
@@ -402,26 +403,7 @@ function snap(wx, wy) {
 }
 
 function candidates(type, p) {
-  const [x, y] = p;
-  const ab = (offs) => offs.map(([dx, dy]) => ({ type, a: [x, y], b: [x + dx, y + dy] }));
-  switch (type) {
-    case 'ramp':
-      return ab([[3, 1], [-3, 1], [3, 2], [-3, 2], [2, 1], [-2, 1], [3, -1], [-3, -1]]);
-    case 'bouncer':
-      return ab([[2, 1], [-2, 1], [2, 0], [-2, 0], [1, 1], [-1, 1]]);
-    case 'conveyor':
-      return ab([[5, 0], [-5, 0], [4, 0], [-4, 0], [3, 0], [-3, 0], [2, 0], [-2, 0]]);
-    case 'lever':
-      return [[2, 2], [1.5, 1.5], [1, 1], [2, 1], [1, 2], [0.5, 0.5]].map(([l1, l2]) => ({ type, p: [x, y], angle: 0, l1, l2 }));
-    case 'weight':
-      return [{ type, p: [x, y] }];
-    case 'motor':
-      return [{ type, p: [x, y], dir: 1, delay: 0 }];
-    case 'gear':
-      return [1, 2, 3].map((size) => ({ type, p: [x, y], size }));
-    default:
-      return [];
-  }
+  return PARTS[type].defaults(p);
 }
 
 function bestPart(type, p) {
@@ -510,36 +492,8 @@ function removePart(id) {
 
 // ---------- hit testing ----------
 
-function segDist(px, py, ax, ay, bx, by) {
-  const dx = bx - ax;
-  const dy = by - ay;
-  const l2 = dx * dx + dy * dy || 1;
-  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l2));
-  return Math.hypot(px - ax - t * dx, py - ay - t * dy);
-}
-
 function partDistance(part, wx, wy) {
-  switch (part.type) {
-    case 'ramp':
-    case 'bouncer':
-      return segDist(wx, wy, ...part.a, ...part.b) - 0.2;
-    case 'conveyor':
-      return segDist(wx, wy, ...part.a, ...part.b) - 0.5;
-    case 'lever': {
-      const [e1, e2] = leverEnds(part);
-      return segDist(wx, wy, ...e1, ...e2) - 0.15;
-    }
-    case 'weight':
-      return Math.max(Math.abs(wx - part.p[0]), Math.abs(wy - part.p[1])) - 0.45;
-    case 'motor':
-      return Math.hypot(wx - part.p[0], wy - part.p[1]) - 0.45 + 0.1; // just behind front parts
-    case 'gear':
-      return Math.hypot(wx - part.p[0], wy - part.p[1]) - part.size * 0.75 + 0.3;
-    case 'chain':
-      return segDist(wx, wy, ...part.a, ...part.b) - 0.15 + 0.3;
-    default:
-      return Infinity;
-  }
+  return PARTS[part.type].distance(part, wx, wy);
 }
 
 function hitPart(wx, wy) {
@@ -557,13 +511,7 @@ function hitPart(wx, wy) {
 }
 
 function handlesOf(part) {
-  if (!part) return [];
-  if (part.a && part.type !== 'chain') return [{ which: 'a', at: part.a }, { which: 'b', at: part.b }];
-  if (part.type === 'lever') {
-    const [e1, e2] = leverEnds(part);
-    return [{ which: 'e1', at: e1 }, { which: 'e2', at: e2 }];
-  }
-  return [];
+  return part ? PARTS[part.type].handles(part) : [];
 }
 
 function hitHandle(wx, wy) {
@@ -674,12 +622,7 @@ canvas.addEventListener('pointermove', (e) => {
     const dy = Math.round(wy - drag.start[1]);
     if (dx || dy || drag.moved) {
       drag.moved = true;
-      const p = drag.part;
-      const o = drag.orig;
-      if (o.a) {
-        p.a = [o.a[0] + dx, o.a[1] + dy];
-        p.b = [o.b[0] + dx, o.b[1] + dy];
-      } else p.p = [o.p[0] + dx, o.p[1] + dy];
+      PARTS[drag.part.type].move(drag.part, drag.orig, dx, dy);
       refresh();
     }
   }
@@ -736,27 +679,7 @@ canvas.addEventListener(
 );
 
 function dragHandle(d, wx, wy) {
-  const p = d.part;
-  if (d.which === 'a' || d.which === 'b') {
-    const q = snap(wx, wy);
-    const cur = p[d.which];
-    if (q[0] !== cur[0] || q[1] !== cur[1]) {
-      p[d.which] = q;
-      d.moved = true;
-      refresh();
-    }
-    return;
-  }
-  // lever end: angle in 15° steps, length in half cells, the other arm stays in line
-  let ang = Math.atan2(wy - p.p[1], wx - p.p[0]);
-  if (d.which === 'e1') ang += Math.PI;
-  let deg = Math.round((ang * 180) / Math.PI / 15) * 15;
-  deg = ((deg + 540) % 360) - 180;
-  const len = Math.max(0.5, Math.min(6, Math.round(Math.hypot(wx - p.p[0], wy - p.p[1]) * 2) / 2));
-  const field = d.which === 'e1' ? 'l1' : 'l2';
-  if (deg !== p.angle || len !== p[field]) {
-    p.angle = deg;
-    p[field] = len;
+  if (PARTS[d.part.type].drag(d.part, d.which, [wx, wy])) {
     d.moved = true;
     refresh();
   }
@@ -780,17 +703,14 @@ function renderInspector() {
   const info = PART_INFO[part.type];
   const why = problemMap.get(part.id);
   const what = el('div', { class: 'what' }, el('b', {}, info.name), why ? el('small', { class: 'problem' }, `⚠ ${why}`) : el('small', {}, hintFor(part)));
-  const controls = [];
-  if (part.type === 'gear') {
-    controls.push(group([1, 2, 3].map((s) => el('button', { class: part.size === s ? 'on' : '', 'aria-label': `Size ${s}`, onclick: () => edit(part, { size: s }) }, ['S', 'M', 'L'][s - 1]))));
-  }
-  if (part.type === 'motor') {
-    controls.push(group([[1, '↻'], [-1, '↺']].map(([dir, lab]) => el('button', { class: (part.dir || 1) === dir ? 'on' : '', 'aria-label': dir > 0 ? 'Clockwise' : 'Counter-clockwise', onclick: () => edit(part, { dir }) }, lab))));
-    controls.push(group([el('button', { 'aria-label': 'Start sooner', onclick: () => edit(part, { delay: Math.max(0, (part.delay || 0) - 0.5) }) }, '−'), el('span', { class: 'val' }, `wait ${part.delay || 0}s`), el('button', { 'aria-label': 'Start later', onclick: () => edit(part, { delay: Math.min(5, (part.delay || 0) + 0.5) }) }, '+')]));
-  }
-  if (part.type === 'lever') {
-    controls.push(group([el('button', { 'aria-label': 'Swap the arms', onclick: () => edit(part, { l1: part.l2, l2: part.l1 }) }, '⇄')]));
-  }
+  const controls = (PARTS[part.type].controls?.(part) || []).map((c) => {
+    if (c.kind === 'choice') return group(c.options.map(([v, lab, aria]) => el('button', { class: c.value === v ? 'on' : '', 'aria-label': aria, onclick: () => edit(part, { [c.field]: v }) }, lab)));
+    if (c.kind === 'stepper') {
+      const set = (v) => edit(part, { [c.field]: Math.min(c.max, Math.max(c.min, Math.round(v * 100) / 100)) });
+      return group([el('button', { 'aria-label': c.aria[0], onclick: () => set(c.value - c.step) }, '−'), el('span', { class: 'val' }, c.label(c.value)), el('button', { 'aria-label': c.aria[1], onclick: () => set(c.value + c.step) }, '+')]);
+    }
+    return group([el('button', { 'aria-label': c.aria, onclick: () => edit(part, c.apply) }, c.label)]);
+  });
   controls.push(el('button', { class: 'tool', 'aria-label': 'Delete', onclick: () => removePart(part.id) }, 'Delete'));
   host.replaceChildren(what, ...controls);
   host.hidden = false;
@@ -798,18 +718,7 @@ function renderInspector() {
 }
 
 function hintFor(part) {
-  if (part.a && part.type !== 'chain') return 'Drag the round ends to pegs.';
-  if (part.type === 'lever') return `Arms ${part.l1} and ${part.l2}. Drag the ends.`;
-  if (part.type === 'motor') return (part.dir || 1) > 0 ? 'Turns clockwise.' : 'Turns counter-clockwise.';
-  if (part.type === 'weight') return 'Hangs here until you press Run, then falls.';
-  if (part.type === 'gear') {
-    const A = layout?.axles.get(key(part.p));
-    const t = A && layout.trains[A.train];
-    if (t?.jammed) return 'Jammed: these gears fight each other.';
-    if (t?.motors.length) return `Turns at ${Math.abs(A.k).toFixed(A.k % 1 ? 2 : 0)}× the motor.`;
-    return 'Drag to move. Rims that touch mesh.';
-  }
-  return 'Drag to move it.';
+  return PARTS[part.type].hint(part, { layout });
 }
 
 function edit(part, changes) {
@@ -1256,6 +1165,5 @@ if (params.get('solve') && level) {
   refresh();
 }
 void reducedMotion;
-void partShape;
 void centre;
 requestAnimationFrame(frame);
