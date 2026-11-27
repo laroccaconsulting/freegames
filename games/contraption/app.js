@@ -404,6 +404,9 @@ function updateTray() {
   }
 }
 
+// 'Ramp' → 'ramp', but 'NAND' stays 'NAND'
+const lowerName = (n) => (n === n.toUpperCase() ? n : n.toLowerCase());
+
 function arm(type) {
   if (type === 'chip' && armed !== 'chip') return pickChip();
   armed = armed === type ? null : type;
@@ -416,22 +419,32 @@ function arm(type) {
       armed = null;
     } else if (armed === 'chain') toast('Tap the first gear, then the second', { position: 'top' });
     else if (armed === 'wire') toast('Tap a plate or beam lamp, then a motor', { position: 'top' });
-    else toast(`Tap a peg to place the ${PART_INFO[armed].name.toLowerCase()}`, { position: 'top', duration: 1800 });
+    else toast(`Tap a peg to place the ${lowerName(PART_INFO[armed].name)}`, { position: 'top', duration: 1800 });
   } else hideToast();
   renderInspector();
   updateTray();
   dirty = true;
 }
 
+// A tray button: a tap arms the part; a drag up onto the board places it;
+// a drag sideways scrolls the tray (touch scrolls natively: the buttons
+// allow pan-x, and the browser cancels the pointer when it takes over).
 function trayDown(e, type, btn) {
   if (mode !== 'build') return;
   e.preventDefault();
-  arm(type);
-  if (!armed) return;
-  const start = { x: e.clientX, y: e.clientY };
+  const tray = $('tray');
+  const start = { x: e.clientX, y: e.clientY, scroll: tray.scrollLeft };
+  let how = null; // 'scroll' or 'drag', once the pointer has moved
   btn.setPointerCapture?.(e.pointerId);
   const move = (ev) => {
-    if (Math.hypot(ev.clientX - start.x, ev.clientY - start.y) > 12 && armed !== 'chain' && armed !== 'wire') {
+    const dx = ev.clientX - start.x;
+    const dy = ev.clientY - start.y;
+    if (!how && Math.hypot(dx, dy) > 8) {
+      how = Math.abs(dx) > Math.abs(dy) ? 'scroll' : 'drag';
+      if (how === 'drag' && armed !== type) arm(type);
+    }
+    if (how === 'scroll') tray.scrollLeft = start.scroll - dx;
+    else if (how === 'drag' && armed === type && armed !== 'chain' && armed !== 'wire' && Math.hypot(dx, dy) > 12) {
       const r = $('board').getBoundingClientRect();
       ghostAt(ev.clientX - r.left, ev.clientY - r.top, true);
     }
@@ -440,14 +453,65 @@ function trayDown(e, type, btn) {
     btn.removeEventListener('pointermove', move);
     btn.removeEventListener('pointerup', up);
     btn.removeEventListener('pointercancel', up);
-    const over = document.elementFromPoint(ev.clientX, ev.clientY);
-    if (ghost && over === $('board')) placeGhost();
+    if (ev.type === 'pointerup' && !how) arm(type);
+    else if (how === 'drag' && ev.type === 'pointerup' && ghost && document.elementFromPoint(ev.clientX, ev.clientY) === $('board')) placeGhost();
     else ghost = null;
     dirty = true;
   };
   btn.addEventListener('pointermove', move);
   btn.addEventListener('pointerup', up);
   btn.addEventListener('pointercancel', up);
+}
+
+// When the tray holds more than fits, arrows at its ends show there is more
+// and scroll it (for a mouse; fingers can swipe). A mouse wheel scrolls it too.
+function trayArrows() {
+  const tray = $('tray');
+  const more = (tray.scrollWidth - tray.clientWidth) > 2;
+  $('tray-left').hidden = !more || tray.scrollLeft <= 2;
+  $('tray-right').hidden = !more || tray.scrollLeft >= tray.scrollWidth - tray.clientWidth - 2;
+}
+function setupTrayScroll() {
+  const tray = $('tray');
+  const page = (dir) => tray.scrollBy({ left: dir * tray.clientWidth * 0.7, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+  $('tray-left').addEventListener('click', () => page(-1));
+  $('tray-right').addEventListener('click', allPartsSheet);
+  tray.addEventListener('scroll', trayArrows, { passive: true });
+  tray.addEventListener('wheel', (e) => {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && tray.scrollWidth > tray.clientWidth) {
+      e.preventDefault();
+      tray.scrollLeft += e.deltaY;
+    }
+  }, { passive: false });
+  addEventListener('resize', trayArrows);
+  new MutationObserver(() => requestAnimationFrame(trayArrows)).observe(tray, { childList: true });
+}
+setupTrayScroll();
+
+// Every button in the tray at once, as a grid: pick one to use it.
+async function allPartsSheet() {
+  const btns = [...$('tray').children];
+  const tiles = btns.map((b, i) => {
+    const copy = b.cloneNode(true);
+    copy.removeAttribute('id');
+    // canvases do not clone their pixels
+    const from = b.querySelectorAll('canvas');
+    copy.querySelectorAll('canvas').forEach((c, k) => c.getContext('2d').drawImage(from[k], 0, 0));
+    copy.addEventListener('click', () => pick(i));
+    return copy;
+  });
+  let pick;
+  const chosen = new Promise((res) => (pick = res));
+  const dialog = openDialog({ title: editing ? 'Tools' : 'Parts', body: el('div', { class: 'parts-grid' }, tiles), actions: [{ label: 'Close', value: null }] });
+  const i = await Promise.race([chosen, dialog]);
+  if (i == null) return;
+  document.querySelector('dialog[open]')?.closeWith?.(null);
+  const b = btns[i];
+  if (b.dataset.type) {
+    if (armed !== b.dataset.type) arm(b.dataset.type);
+  } else b.click();
+  b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'auto' });
+  trayArrows();
 }
 
 // ---------- making and placing parts ----------

@@ -66,7 +66,11 @@
     <footer class="dock" id="dock" hidden>
       <div class="inspector" id="inspector" hidden></div>
       <div class="dock-row">
-        <div class="tray" id="tray" role="toolbar" aria-label="Parts"></div>
+        <div class="tray-wrap">
+          <div class="tray" id="tray" role="toolbar" aria-label="Parts"></div>
+          <button class="tray-more left" id="tray-left" aria-label="More parts to the left" hidden>‹</button>
+          <button class="tray-more right" id="tray-right" aria-label="All parts" hidden><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><g fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></g></svg></button>
+        </div>
         <div class="dock-actions">
           <button class="tool" id="d-undo" aria-label="Undo"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5" /><path d="M4 9h10a6 6 0 0 1 0 12h-3" /></svg></button>
           <button class="run-btn" id="d-run"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor" /></svg><span>Run</span></button>

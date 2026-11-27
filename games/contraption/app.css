@@ -445,9 +445,47 @@ body {
   align-items: stretch;
   gap: 10px;
 }
+.tray-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+.tray-more {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  width: 30px;
+  padding: 0;
+  border: var(--ink-line) solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--hard);
+}
+.tray-more.left {
+  left: 0;
+}
+.tray-more.right {
+  right: 3px;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tray-more[hidden] {
+  display: none;
+}
 .tray {
   flex: 1;
   min-width: 0;
+  padding-bottom: 4px;
   display: flex;
   gap: 8px;
   overflow-x: auto;
@@ -476,7 +514,7 @@ body {
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  touch-action: none;
+  touch-action: pan-x;
 }
 .part-btn canvas {
   width: 40px;
@@ -502,6 +540,9 @@ body {
 }
 .part-btn.armed canvas {
   filter: invert(1);
+}
+.part-btn.armed .count {
+  color: var(--text);
 }
 :root[data-theme='dark'] .part-btn.armed canvas,
 :root[data-theme='hallows'] .part-btn.armed canvas {
@@ -798,4 +839,15 @@ dialog .field {
 dialog .field input,
 dialog select {
   margin-top: 4px;
+}
+/* every part at once (the grid button at the tray's end) */
+.parts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 12px 10px;
+  padding: 8px 4px 4px;
+}
+.parts-grid .part-btn {
+  width: auto;
+  touch-action: manipulation;
 }

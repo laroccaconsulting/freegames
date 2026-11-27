@@ -2,6 +2,14 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-04',
+    title: 'Every part within reach',
+    items: [
+      'When the parts tray holds more than fits, swipe it sideways (dragging a part upwards still places it), or tap the grid button at its end to see every part at once.',
+      'Arrows and the mouse wheel scroll it too.',
+    ],
+  },
+  {
     id: '2026-12-03',
     title: 'More to make levels with',
     items: [
