@@ -6,17 +6,17 @@
 import { FORMAT, fromSave } from './format.js';
 import { ENGINE } from './physics.js';
 
-const b64url = (bytes) => {
+export const b64url = (bytes) => {
   let s = '';
   for (const b of bytes) s += String.fromCharCode(b);
   return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
-const unb64url = (str) => {
+export const unb64url = (str) => {
   const s = atob(str.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((str.length + 3) % 4));
   return Uint8Array.from(s, (c) => c.charCodeAt(0));
 };
 
-async function pipe(bytes, stream) {
+export async function pipe(bytes, stream) {
   const out = new Response(new Blob([bytes]).stream().pipeThrough(stream));
   return new Uint8Array(await out.arrayBuffer());
 }

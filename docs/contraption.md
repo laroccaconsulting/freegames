@@ -489,7 +489,15 @@ judges fairness and fun before merge.
    chips (21 NANDs each: one per digit pattern, one per segment) lighting
    3×5 pixel digits; 138 parts. The test reads the display after every
    beat for two minutes, rollovers included. A beat is 121/120 s: whole
-   steps cannot make exactly one second. Still to do: the mechanical clock
-   (pendulum, escapement, 60:1 train) and the level editor.
+   steps cannot make exactly one second.
+9. ✅ Level editor (`js/editor.js` model, tested; "Make a level" on the
+   title screen once chapter 1 is done): walls, no-build and spike zones by
+   dragging, cup and items by tapping, an eraser, undo; Level settings for
+   name, goal and parts on offer. "Try it" plays the draft; the first win
+   stores the solution and sets the targets (its parts; its time + 20%),
+   and any edit un-solves it. Solved levels share as #lv= links; on opening,
+   the maker's solution is re-run and a level whose solution fails here is
+   flagged. Still to do: movers, fixed parts and signal goals in the
+   editor; the mechanical clock; more Signals, Logic and Memory levels.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.

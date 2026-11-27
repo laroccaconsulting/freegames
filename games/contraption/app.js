@@ -12,6 +12,7 @@ import { toSave, fromSave } from './js/format.js';
 import { encodeMachine, decodeMachine, machineFromHash } from './js/share.js';
 import { GALLERY, SUBMIT } from './js/gallery.js';
 import { CHANGES } from './js/changes.js';
+import * as ED from './js/editor.js';
 import { DT as _DT, ENGINE } from './js/physics.js';
 import { LEVELS, CHAPTERS, levelById, SANDBOX, ALL_PARTS_SANDBOX, BENCH, BIG_BENCH } from './js/levels.js';
 import { PARTS, PART_TYPES, PART_INFO, ITEM_INFO, problems, makeRun, key, moverMotion, gearR } from './js/machine.js';
@@ -52,6 +53,11 @@ let armed = null;
 let chainFrom = null;
 let chainPlane = 0;
 let armedChip = null;
+let editing = false; // the level editor is open
+let draft = null;
+let edTool = 'wall';
+let edRect = null;
+let edUndo = [];
 let selecting = null; // the box being dragged by Make a chip
 let problemMap = new Map();
 let layout = null;
@@ -93,7 +99,7 @@ settings.onChange(() => applySettings());
 
 const save = () => store.set('progress', progress);
 const numberOf = (lvl) => {
-  if (lvl.id === 'sandbox') return '';
+  if (lvl.id === 'sandbox' || lvl.custom) return '';
   const inCh = LEVELS.filter((l) => l.chapter === lvl.chapter);
   return `${lvl.chapter + 1}-${inCh.indexOf(lvl) + 1}`;
 };
@@ -132,6 +138,10 @@ function pushUndo() {
 }
 
 function undo() {
+  if (editing) {
+    if (edUndo.length) editDraft(edUndo.pop(), false);
+    return;
+  }
   if (!undoStack.length || mode !== 'build') return;
   parts = JSON.parse(undoStack.pop());
   if (!parts.some((p) => p.id === selected)) selected = null;
@@ -162,6 +172,7 @@ function startTitle() {
   $('t-continue').textContent = started ? 'Continue' : 'Start';
   const sbOpen = chapterDone(progress, 0);
   $('t-sandbox').classList.toggle('locked', !sbOpen);
+  $('t-editor').classList.toggle('locked', !sbOpen);
   $('t-sandbox').setAttribute('aria-label', sbOpen ? 'Sandbox' : 'Sandbox, locked');
   demo = null;
   nextDemo();
@@ -310,7 +321,7 @@ async function levelCard() {
   const ch = CHAPTERS[level.chapter];
   // a part is introduced on the first level that offers it
   const seen = new Set(LEVELS.slice(0, indexOf(level)).flatMap((l) => Object.keys(l.parts || {})));
-  const newParts = PART_TYPES.filter((t) => level.parts?.[t] && !seen.has(t));
+  const newParts = level.custom ? [] : PART_TYPES.filter((t) => level.parts?.[t] && !seen.has(t));
   void ch;
   const rec = progress[level.id];
   const body = el(
@@ -327,7 +338,7 @@ async function levelCard() {
       rec?.solved ? el('li', {}, `Best: ${starText(rec.stars)} · ${fmt(rec.time)} · ${rec.parts} parts · ${rec.score} points`) : null,
     ),
   );
-  await openDialog({ title: `${numberOf(level)} · ${level.name}`, body, actions: [{ label: 'Build', value: 'go', primary: true }] });
+  await openDialog({ title: level.custom ? level.name : `${numberOf(level)} · ${level.name}`, body, actions: [{ label: 'Build', value: 'go', primary: true }] });
 }
 
 // ---------- tray ----------
@@ -335,6 +346,7 @@ async function levelCard() {
 function buildTray() {
   const tray = $('tray');
   if (!level) return tray.replaceChildren();
+  if (editing) return buildEditTray();
   const types = PART_TYPES.filter((t) => offered(t) > 0);
   tray.replaceChildren(
     ...types.map((t) => {
@@ -347,7 +359,24 @@ function buildTray() {
   updateTray();
 }
 
+const TOOL_LOOK = { wall: ['▦', 'Wall'], nobuild: ['▧', 'No-build'], danger: ['▲', 'Spikes'], cup: ['⊔', 'Cup'], ball: ['●', 'Ball'], crate: ['▣', 'Crate'], steel: ['◉', 'Steel'], egg: ['⬯', 'Egg'], erase: ['⌫', 'Erase'] };
+
+function buildEditTray() {
+  $('tray').replaceChildren(
+    ...ED.TOOLS.map((t) => {
+      const b = el('button', { class: `part-btn ${edTool === t ? 'armed' : ''}`, 'aria-label': TOOL_LOOK[t][1] }, el('span', { class: 'tool-glyph', 'aria-hidden': 'true' }, TOOL_LOOK[t][0]), el('span', {}, TOOL_LOOK[t][1]));
+      b.addEventListener('click', () => {
+        edTool = t;
+        buildEditTray();
+        toast(ED.RECT_TOOLS.has(t) ? `Drag a box to add ${TOOL_LOOK[t][1].toLowerCase()}` : t === 'erase' ? 'Tap something to remove it' : `Tap to place the ${TOOL_LOOK[t][1].toLowerCase()}`, { position: 'top', duration: 1600 });
+      });
+      return b;
+    }),
+  );
+}
+
 function updateTray() {
+  if (editing) return;
   for (const b of $('tray').querySelectorAll('.part-btn')) {
     const t = b.dataset.type;
     const left = offered(t) - usedOf(t);
@@ -577,6 +606,10 @@ canvas.addEventListener('pointerdown', (e) => {
     return;
   }
   const [wx, wy] = view.toWorld(sx, sy);
+  if (editing) {
+    drag = ED.RECT_TOOLS.has(edTool) ? { kind: 'edrect', from: [wx, wy], to: [wx, wy] } : { kind: 'edtap', at: [wx, wy] };
+    return;
+  }
   if (selecting) {
     drag = { kind: 'select', from: [wx, wy], to: [wx, wy] };
     return;
@@ -639,6 +672,10 @@ canvas.addEventListener('pointermove', (e) => {
     view.oy = mid[1] - drag.world[1] * view.s;
     userView = { s: view.s, ox: view.ox, oy: view.oy };
     dirty = true;
+  } else if (drag.kind === 'edrect') {
+    drag.to = [wx, wy];
+    edRect = { from: drag.from, to: drag.to };
+    dirty = true;
   } else if (drag.kind === 'select') {
     drag.to = [wx, wy];
     selecting = { from: drag.from, to: drag.to };
@@ -679,7 +716,12 @@ function endPointer(e) {
   const [sx, sy] = localXY(e);
   const d = drag;
   drag = null;
-  if (d.kind === 'select') {
+  if (d.kind === 'edrect') {
+    edRect = null;
+    editDraft(ED.addRect(draft, edTool, d.from, d.to));
+  } else if (d.kind === 'edtap') {
+    editDraft(edTool === 'erase' ? ED.eraseAt(draft, d.at) : ED.placeAt(draft, edTool, d.at));
+  } else if (d.kind === 'select') {
     selecting = null;
     makeChip(d.from, d.to);
   } else if (d.kind === 'place') {
@@ -776,6 +818,7 @@ function edit(part, changes) {
 // ---------- running ----------
 
 function startRun() {
+  if (editing) return tryDraft();
   if (mode === 'run') return stopRun();
   if (problemMap.size) {
     const [id, why] = [...problemMap][0];
@@ -844,6 +887,17 @@ function onFail() {
 
 function onWin() {
   sfx.win();
+  if (level.fromEditor) {
+    draft = ED.solvedWith(draft, parts, run.time);
+    store.set('draft', draft);
+    setTimeout(async () => {
+      const v = await openDialog({ title: 'Solved: ready to share', body: el('div', {}, el('p', {}, `Your solution sets the targets: ${draft.stars.parts} part${draft.stars.parts === 1 ? '' : 's'}, ${draft.stars.time} s for three stars.`), el('p', { class: 'muted small' }, 'Anyone you send it to gets the level; your solution stays hidden unless they ask for a hint.')), actions: [{ label: 'Back to editor', value: 'edit' }, { label: 'Share level', value: 'share', primary: true }] });
+      stopRun();
+      openEditor();
+      if (v === 'share') shareLevel();
+    }, 650);
+    return;
+  }
   if (sandbox) {
     toast('Delivered!', { position: 'top' });
     failTimer = 2;
@@ -864,7 +918,7 @@ function onWin() {
   ach.at('all-levels', solved);
   ach.at('stars-90', totalStars(progress));
   const c = level.chapter;
-  if (chapterDone(progress, c)) {
+  if (!level.custom && chapterDone(progress, c)) {
     ach.unlock(['slopes-done', 'levers-done', 'belts-done', 'gears-done', 'chains-done', 'timing-done', 'signals-done', 'logic-done', 'memory-done'][c]);
     const lv = LEVELS.filter((l) => l.chapter === c);
     if (lv.every((l) => progress[l.id].stars === 3)) ach.unlock('all-stars');
@@ -876,8 +930,8 @@ function onWin() {
 async function results({ stars, score, win, before }) {
   const best = (v, b, lower = true) => (b == null ? '' : lower ? (v < b - 1e-9 ? ' · best!' : '') : v > b ? ' · best!' : '');
   const i = indexOf(level);
-  const next = LEVELS[i + 1];
-  const chapterFinished = chapterDone(progress, level.chapter) && (!before.solved || !LEVELS.filter((l) => l.chapter === level.chapter).every((l) => l === level || before));
+  const next = level.custom ? null : LEVELS[i + 1];
+  const chapterFinished = !level.custom && chapterDone(progress, level.chapter) && (!before.solved || !LEVELS.filter((l) => l.chapter === level.chapter).every((l) => l === level || before));
   const newCh = next && next.chapter !== level.chapter && !before.solved;
   const body = el(
     'div',
@@ -987,7 +1041,25 @@ function openSettings() {
   openDialog({ title: 'Settings', body: settingsBody() });
 }
 
+async function editorMenu() {
+  const v = await openDialog({
+    title: 'Level editor',
+    body: el('div', {}, el('p', {}, draft.solved ? 'Solved: you can share it.' : 'Try it and solve it once before sharing: your solution sets the star targets.')),
+    actions: [{ label: 'Level settings', value: 'settings' }, ...(draft.solved ? [{ label: 'Share level', value: 'share', primary: true }] : []), { label: 'New level', value: 'new' }, { label: 'Title', value: 'title' }],
+  });
+  if (v === 'settings') levelSettings();
+  else if (v === 'share') shareLevel();
+  else if (v === 'new') {
+    const ok = await openDialog({ title: 'Start a new level?', body: 'The board goes back to the starter. Undo brings this one back.', actions: [{ label: 'Keep', value: null }, { label: 'New', value: 'yes', primary: true }] });
+    if (ok === 'yes') editDraft(ED.newDraft());
+  } else if (v === 'title') {
+    editing = false;
+    show('title');
+  }
+}
+
 async function playMenu() {
+  if (editing) return editorMenu();
   const v = await openDialog({
     title: sandbox ? 'Sandbox' : `${numberOf(level)} · ${level.name}`,
     body: el('div', {}, el('p', {}, level.goalText), settingsBody()),
@@ -1124,6 +1196,11 @@ async function loadShared(shared, from = 'link') {
 }
 
 async function openFromHash() {
+  const lv = ED.levelFromHash(location.hash);
+  if (lv) {
+    history.replaceState(null, '', location.pathname + location.search);
+    return openSharedLevel(lv);
+  }
   const code = machineFromHash(location.hash);
   if (!code) return;
   history.replaceState(null, '', location.pathname + location.search);
@@ -1245,11 +1322,99 @@ async function pickChip() {
   updateTray();
 }
 
+// ---------- level editor ----------
+
+function openEditor() {
+  draft = store.get('draft', null) || ED.newDraft();
+  editing = true;
+  sandbox = false;
+  level = draft;
+  parts = [];
+  selected = null;
+  armed = null;
+  run = null;
+  mode = 'build';
+  userView = null;
+  lastPaths = null;
+  hintParts = [];
+  buildTray();
+  refresh();
+  show('play');
+  if (!store.get('editorSeen')) {
+    store.set('editorSeen', true);
+    toast('Draw walls, spikes and no-build zones, place the cup and items, then Try it. Menu for name and parts.', { position: 'top', duration: 6000 });
+  }
+}
+
+function editDraft(d, undoable = true) {
+  if (d === draft) return;
+  if (undoable) edUndo = [...edUndo.slice(-40), draft];
+  draft = d;
+  store.set('draft', draft);
+  level = draft;
+  refresh();
+}
+
+function tryDraft() {
+  const why = ED.draftProblem(draft);
+  if (why) return toast(why, { position: 'top' });
+  editing = false;
+  openLevel({ ...draft, id: 'draft-try', fromEditor: true }, { card: false });
+  toast(draft.solved ? 'Play it again. A new win updates the targets.' : 'Solve it once: your solution sets the targets.', { position: 'top', duration: 3000 });
+}
+
+async function levelSettings() {
+  const name = el('input', { value: draft.name, maxlength: 40, 'aria-label': 'Level name', style: 'font:inherit;width:100%' });
+  const goal = el('input', { value: draft.goalText, maxlength: 140, 'aria-label': 'Goal', style: 'font:inherit;width:100%' });
+  const counts = {};
+  const rows = PART_TYPES.filter((t) => t !== 'chip').map((t) => {
+    const input = el('input', { type: 'number', min: 0, max: 9, value: draft.parts[t] || 0, 'aria-label': `${PART_INFO[t].name}s on offer`, style: 'font:inherit;width:3.5em' });
+    counts[t] = input;
+    return el('label', { class: 'card-part' }, iconCanvas(t, 36, 28), PART_INFO[t].name, input);
+  });
+  const v = await openDialog({
+    title: 'Level settings',
+    body: el('div', {}, el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Name'), name), el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Goal'), goal), el('p', { class: 'field-label' }, 'Parts on offer'), el('div', { class: 'card-parts' }, rows)),
+    actions: [{ label: 'Cancel', value: null }, { label: 'Save', value: 'ok', primary: true }],
+  });
+  if (v !== 'ok') return;
+  let d = ED.setText(draft, { name: name.value, goalText: goal.value });
+  const offer = Object.fromEntries(Object.entries(counts).map(([t, i]) => [t, Math.max(0, Math.min(9, Math.round(Number(i.value) || 0)))]));
+  if (JSON.stringify(Object.entries(offer).filter(([, n]) => n)) !== JSON.stringify(Object.entries(draft.parts).filter(([, n]) => n))) d = ED.setParts(d, offer);
+  editDraft(d);
+}
+
+async function shareLevel() {
+  if (!draft.solved) return toast('Solve it once first: Try it.');
+  const code = await ED.encodeLevel(draft);
+  const url = `${location.origin}${location.pathname}#lv=${code}`;
+  try {
+    if (navigator.share) await navigator.share({ title: `A Contraption level: ${draft.name}`, url });
+    else {
+      await navigator.clipboard.writeText(url);
+      toast('Link copied. Anyone who opens it can play your level.');
+    }
+  } catch {
+    openDialog({ title: 'Share level', body: el('div', {}, el('p', {}, 'Copy this link:'), el('textarea', { readonly: true, rows: 4, style: 'width:100%;font:inherit', onfocus: (e) => e.target.select() }, url)) });
+  }
+}
+
+async function openSharedLevel(code) {
+  const lvl = await ED.decodeLevel(code);
+  if (!lvl) return toast('That link does not hold a level.');
+  const v = await openDialog({
+    title: 'A level made by a player',
+    body: el('div', {}, el('p', {}, el('b', {}, lvl.name)), el('p', {}, lvl.goalText), lvl.unverified ? el('p', { class: 'muted small' }, 'Its maker\'s solution does not work in this version of the game, so it may not be solvable.') : el('p', { class: 'muted small' }, 'Checked: its maker\'s solution works.')),
+    actions: [{ label: 'Not now', value: null }, { label: 'Play', value: 'play', primary: true }],
+  });
+  if (v === 'play') openLevel(lvl);
+}
+
 // ---------- HUD ----------
 
 function updateHud() {
   if (!level) return;
-  $('h-name').textContent = sandbox ? level.name : `${numberOf(level)} · ${level.name}`;
+  $('h-name').textContent = editing ? 'Level editor' : sandbox || level.custom ? level.name : `${numberOf(level)} · ${level.name}`;
   const rec = progress[level.id];
   const used = parts.length;
   const bits = [];
@@ -1258,8 +1423,9 @@ function updateHud() {
     bits.push(`tries ${rec?.tries || 0}`);
     if (rec?.solved) bits.push(`best ${starText(rec.stars)}`);
   } else bits.push(`${used} parts`);
-  $('h-info').textContent = bits.join(' · ');
-  $('h-hint').hidden = sandbox;
+  $('h-info').textContent = editing ? (draft?.solved ? 'Solved: ready to share' : 'Not solved yet: Try it') : bits.join(' · ');
+  $('h-hint').hidden = sandbox || editing || !!level.fromEditor;
+  $('d-run').querySelector('span').textContent = editing ? 'Try it' : 'Run';
 }
 
 // ---------- layout and drawing ----------
@@ -1413,10 +1579,11 @@ function draw(now) {
     const part = parts.find((p) => p.id === selected);
     for (const h of handlesOf(part)) drawHandle(view.ctx, view, pal(), h.at[0], h.at[1], drag?.kind === 'handle' && drag.which === h.which);
     if (chainFrom) drawHandle(view.ctx, view, pal(), chainFrom[0], chainFrom[1], true);
-    if (selecting?.from) {
+    const box = selecting?.from ? selecting : edRect;
+    if (box) {
       const c = view.ctx;
-      const [x0, y0] = selecting.from;
-      const [x1, y1] = selecting.to;
+      const [x0, y0] = box.from;
+      const [x1, y1] = box.to;
       c.save();
       c.setLineDash([6 / view.s, 4 / view.s]);
       c.strokeStyle = pal().ink;
@@ -1470,10 +1637,19 @@ $('t-sandbox').addEventListener('click', () => {
 });
 $('t-parts').addEventListener('click', partsGuide);
 $('t-gallery').addEventListener('click', gallery);
+$('t-editor').addEventListener('click', () => {
+  if (!chapterDone(progress, 0)) return toast('The level editor opens when you finish chapter 1, Slopes.');
+  openEditor();
+});
 $('t-settings').addEventListener('click', openSettings);
 $('l-back').addEventListener('click', () => show('title'));
 $('h-back').addEventListener('click', () => {
   stopRun();
+  if (level?.fromEditor) return openEditor();
+  if (editing) {
+    editing = false;
+    return show('title');
+  }
   show(sandbox ? 'title' : 'levels');
 });
 $('h-hint').addEventListener('click', hint);

@@ -2,6 +2,15 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-11-30',
+    title: 'Make your own levels',
+    items: [
+      'Make a level (title screen): draw walls, spikes and no-build zones, place the cup, a ball, crates, steel balls or eggs, and choose the parts on offer.',
+      'Try it and solve it once: your solution sets the star targets, and only solved levels can be shared.',
+      'Share a level by link. Whoever opens it can play it; your solution stays hidden unless they ask for a hint.',
+    ],
+  },
+  {
     id: '2026-11-29',
     title: 'Chips and a clock',
     items: [

@@ -281,3 +281,31 @@ test('the digital clock tells the time: every beat for two minutes, rollovers in
   assert.ok(checked >= 124);
   assert.ok(Math.abs(run.time / beats - 1) < 0.01, `a beat is about a second (${(run.time / beats).toFixed(4)} s)`);
 });
+
+test('level editor: edits, solving, and level links that check their own solution', async () => {
+  const E = await import('../games/contraption/js/editor.js');
+  let d = E.newDraft();
+  d = E.addRect(d, 'wall', [5.2, 6.7], [9.9, 7.1]);
+  assert.deepEqual(d.walls.at(-1), [5, 6, 5, 2]);
+  d = E.eraseAt(d, [6, 7]);
+  assert.equal(d.walls.length, 2, 'the eraser takes the wall back out');
+  d = E.placeAt(d, 'crate', [10.3, 3.2]);
+  assert.equal(d.items.at(-1).deliver, false, 'later items are helpers');
+  d = E.eraseAt(d, [10.5, 3]);
+  assert.equal(d.items.length, 1);
+  assert.equal(E.draftProblem(d), null);
+  // solve it with one ramp from the ball towards the hole
+  const ramp = [{ id: 'r', type: 'ramp', a: [2, 3], b: [9, 10] }];
+  const r = simulate(d, ramp);
+  assert.equal(r.status, 'win');
+  d = E.solvedWith(d, ramp, r.time);
+  assert.ok(d.solved && d.stars.parts === 1);
+  const code = await E.encodeLevel(d);
+  const back = await E.decodeLevel(code);
+  assert.ok(back.custom && !back.unverified, 'a solved level round-trips and still verifies');
+  assert.equal(E.levelFromHash(`#lv=${code}`), code);
+  // a tampered level whose solution no longer wins is flagged
+  const bad = await E.decodeLevel(await E.encodeLevel({ ...d, solution: [] }));
+  assert.ok(bad.unverified);
+  assert.equal(await E.decodeLevel('zjunk'), null);
+});
