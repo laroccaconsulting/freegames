@@ -23,7 +23,7 @@ export default {
   tip: 'Three pegs above an escape wheel, its pallets catch the teeth.',
   layer: 3,
   front: true,
-  free: true,
+  swings: true,
   ...onePeg,
   shape: (part) => placeShape(capsule(0, 0, 0, part.l ?? 4.25, BOB), part.p[0], part.p[1]),
   check: (level, part) => {

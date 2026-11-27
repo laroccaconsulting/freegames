@@ -214,6 +214,7 @@ function iconCanvas(type, w = 40, h = 32, palette = pal()) {
     nand: { type: 'nand', p: [1.5, 1.2] },
     delay: { type: 'delay', p: [1.5, 1.0], wait: 1 },
     pixel: { type: 'pixel', p: [1.5, 1.2], mode: 'toggle' },
+    trapdoor: { type: 'trapdoor', p: [0.6, 1.3], l: 1.8, angle: 0, side: 1 },
     escape: { type: 'escape', p: [1.5, 1.2] },
     pendulum: { type: 'pendulum', p: [1.5, -0.2], l: 3.1 },
     dial: { type: 'dial', p: [1.5, 1.2], r: 1.1 },
@@ -1707,7 +1708,8 @@ function layoutView() {
       const rect = boardRect();
       view.fit(level.w, level.h, rect, 6);
       // too small to touch comfortably: start zoomed in on the first item
-      if (view.s < MIN_CELL) {
+      // (a gallery machine is for watching: show all of it, however small)
+      if (view.s < MIN_CELL && !level.id.startsWith('gallery:')) {
         const it = level.items?.[0] || { x: level.w / 2, y: level.h / 2 };
         view.s = MIN_CELL;
         view.ox = rect.x + rect.w / 2 - it.x * view.s;
