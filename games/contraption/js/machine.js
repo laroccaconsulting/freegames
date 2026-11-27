@@ -181,7 +181,8 @@ export function problem(level, part, others = []) {
     if (z.walls.some(touch)) return 'Hits a wall';
     if (z.noBuild.some(touch)) return 'No building here';
     if (def.front && z.danger.some(touch)) return 'In a danger zone';
-    if (def.front && z.items.some(touch)) return 'In the way of the start';
+    // a trapdoor may carry an item from the start: touching is fine, overlapping is not
+    if (def.front && z.items.some(def.carries ? (s) => overlap(shape, s) < -0.12 : touch)) return 'In the way of the start';
     const g = level.goal;
     if (g && def.front && inRect([shape.minX, shape.minY], [g.x, g.y, g.w, g.h]) && inRect([shape.maxX, shape.maxY], [g.x, g.y, g.w, g.h])) return 'Inside the goal';
   }
@@ -237,7 +238,7 @@ export function build(level, parts, { sandbox = false } = {}) {
     }
     // a train with no motor (a free lever, a loose gear) holds still until something touches it
     // a part that swings by itself (a pendulum) is never held
-    const free = t.axles.some((a) => axleParts(a).some((p) => PARTS[p.type].free));
+    const free = t.axles.some((a) => axleParts(a).some((p) => PARTS[p.type].swings));
     return addTrain(world, { inertia, motors, damping: motors.length ? (motors.every((m) => m.spring) ? 0.005 : 0.2) : free ? 0.0005 : 0.03, jammed: t.jammed, held: !motors.length && !free });
   });
   const ctx = {
@@ -384,6 +385,8 @@ function updateSignals(run, settle = false) {
     next.set(g.id, !!PARTS[g.type].logic(g, pins[0] || [], run.logicState.get(g), settle, pins));
   }
   for (const t of run.trains) for (const m of t.motors) if (m.part && (m.part.switched || ins.has(m.part))) m.off = !(ins.get(m.part)?.[0] || []).some(Boolean);
+  // trapdoors (and anything else that lets go on a signal)
+  if (!settle) for (const [part, pins] of ins) if (PARTS[part.type]?.release && (pins[0] || []).some(Boolean)) PARTS[part.type].release(run, part);
   run.signals = next;
 }
 

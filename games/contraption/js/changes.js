@@ -2,6 +2,15 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-06',
+    title: 'Going up',
+    items: [
+      'Cleats: tap a conveyor and choose Cleats. Ribs on the belt carry balls up slopes far too steep for a smooth belt (a ball just rolls back down one). Gear the motor down so they lift instead of bat.',
+      'New part, the Trapdoor (in the sandbox from the Signals chapter): a latched flap. Set a steel ball on it, wire a plate or beam to its hinge, and it drops open on cue.',
+      'Gallery: Trapdoor catapult, Escalator, and The long way round, a Rube Goldberg chain with a zigzag, a beam and a toggle, an escalator, a trapdoor and a catapult.',
+    ],
+  },
+  {
     id: '2026-12-05',
     title: 'Clockwork',
     items: [

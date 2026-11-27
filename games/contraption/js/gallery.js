@@ -3,6 +3,7 @@
 // still work) and land here with credit. Append only: ids are save keys
 // for the copy each player tinkers with.
 import { buildClock, PENDULUM_BOARD, buildGearClock, GEAR_CLOCK_BOARD } from './clock.js';
+import { TRAPDOOR_CATAPULT, ESCALATOR, LONG_WAY } from './showcase.js';
 
 export const SUBMIT = 'https://github.com/laroccaconsulting/freegames/issues/new?labels=contraption-machine&title=Machine%3A+&body=Link%3A+%0A%0AWhat+it+does%3A+';
 
@@ -85,5 +86,32 @@ export const GALLERY = [
     show: 70,
     note: 'A clock with no logic at all: real teeth. A 4-cell pendulum beats about once a second; its anchor lets the 30-tooth escape wheel go one tooth per swing, so the wheel turns once a minute and carries the seconds hand. Gears take that down 60 to 1 for the minutes, and a chain and two more gears 12 to 1 for the hours. It gains about half a minute an hour: lengthen the rod a little to slow it.',
     parts: buildGearClock(),
+  },
+  {
+    id: 'trapdoor-catapult',
+    title: 'Trapdoor catapult',
+    by: 'The Contraption workshop',
+    level: 'bench',
+    board: TRAPDOOR_CATAPULT.board,
+    note: 'A ball rolls over a plate. The plate unlatches a trapdoor, a steel ball drops onto the short arm of a lever, and the long arm throws the crate up and over into a cup on a high shelf. A falling weight is stored energy: the trapdoor decides when it is spent.',
+    parts: TRAPDOOR_CATAPULT.parts,
+  },
+  {
+    id: 'escalator',
+    title: 'Escalator',
+    by: 'The Contraption workshop',
+    level: 'bench',
+    board: ESCALATOR.board,
+    note: 'A ball can\'t ride a smooth belt uphill: it rolls back. Cleats can carry one. This belt climbs at 68°, geared down 2 to 1 so the cleats lift the ball instead of batting it, and tips it out at the top into a cup ten cells up.',
+    parts: ESCALATOR.parts,
+  },
+  {
+    id: 'long-way-round',
+    title: 'The long way round',
+    by: 'The Contraption workshop',
+    level: 'bench',
+    board: LONG_WAY.board,
+    note: 'Down the zigzag, through a beam: a toggle remembers it and starts the escalator, which carries the ball back up to the top. Along the ramp, into the box through a second beam: the trapdoor lets go, the steel ball drops on the catapult, and the crate flies into the cup.',
+    parts: LONG_WAY.parts,
   },
 ];

@@ -142,7 +142,13 @@ test('every gallery machine still does what it says', async () => {
       const run = makeRun(board, parts, { sandbox: true });
       for (let i = 0; i < g.show * 120; i++) run.tick();
       assert.equal(run.status, 'running', `${g.id} keeps running`);
-    } else assert.equal(simulate(level, parts).status, 'win', `${g.id} delivers`);
+    } else {
+      // a gallery machine may take its time: run it as the gallery does
+      const { makeRun } = await import('../games/contraption/js/machine.js');
+      const run = makeRun(board, parts, { sandbox: true });
+      while (run.status === 'running' && run.time < 60) run.tick();
+      assert.equal(run.status, 'win', `${g.id} delivers: ${run.reason}`);
+    }
   }
 });
 
@@ -444,4 +450,22 @@ test('clockwork: an anchor escapement with real teeth keeps time, and gears turn
   assert.ok(Math.abs(turns('16,13') * 60 - turns('4,6')) < 1e-6);
   assert.ok(Math.abs(turns('20,5') * 12 - turns('16,13')) < 1e-9);
   assert.ok(turns('20,5') > 0);
+});
+
+test('cleats carry a ball up a slope a smooth belt cannot; a trapdoor holds until its signal', async () => {
+  const { ESCALATOR, TRAPDOOR_CATAPULT } = await import('../games/contraption/js/showcase.js');
+  const { makeRun } = await import('../games/contraption/js/machine.js');
+  const { BENCH } = await import('../games/contraption/js/levels.js');
+  const go = (board, parts, T = 15) => {
+    const run = makeRun({ ...BENCH, ...board }, parts.map((p, i) => ({ id: `t${i}`, ...p })), { sandbox: true });
+    while (run.status === 'running' && run.time < T) run.tick();
+    return run;
+  };
+  assert.equal(go(ESCALATOR.board, ESCALATOR.parts).status, 'win');
+  const smooth = go(ESCALATOR.board, ESCALATOR.parts.map((p) => (p.type === 'conveyor' ? { ...p, cleats: false } : p)));
+  assert.notEqual(smooth.status, 'win', 'a ball rolls back down a smooth belt');
+  // without the wire the trapdoor never opens: the steel ball stays put
+  const noWire = go(TRAPDOOR_CATAPULT.board, TRAPDOOR_CATAPULT.parts.filter((p) => p.type !== 'wire'), 6);
+  assert.notEqual(noWire.status, 'win');
+  assert.ok(Math.abs(noWire.items[1].y - TRAPDOOR_CATAPULT.board.items[1].y) < 0.1, 'the steel ball is still on the trapdoor');
 });

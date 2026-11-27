@@ -540,5 +540,22 @@ judges fairness and fun before merge.
    hand and a 1:1 chain plus 10:40, 10:30 (12:1) to the hour hand. Two
    layers of gears cannot hold six stages in a row: a big gear always
    fouls the next peg's small one, hence the chain.
+15. ✅ Going up. Cleats (an option on the conveyor): kinematic ribs that
+   ride the belt loop, placed each step from the drum's turn, so they
+   push items with the belt (they do not load the motor). Geared down
+   2:1 or 3:1 they carry balls up slopes to 70°; a smooth belt cannot
+   (a ball rolls back). A notched lift wheel was tried first and dropped:
+   wherever the feed meets the paddles, a paddle can pin a waiting ball
+   against the mouth and stall the train. One belt cannot make a closed
+   marble loop (the ball tips off over the top to the far side, and the
+   way back would cross the belt), so the showpieces are chains.
+   Trapdoor: a flap on a latched train (jammed until a signal reaches its
+   hinge, then free for good); it may carry an item from the start.
+   Gallery: Trapdoor catapult, Escalator, The long way round (zigzag,
+   beam and toggle starting the escalator, beam opening the trapdoor,
+   steel on a catapult, crate into a high cup; 12.5 s). Each was built by
+   running the physics and putting shelves and cups where things land;
+   the Gallery test runs every machine on its own board. Gallery
+   machines open fitted to the screen, however small.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.
