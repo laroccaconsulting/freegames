@@ -779,6 +779,7 @@ canvas.addEventListener('pointermove', (e) => {
   } else if (drag.kind === 'pan') {
     if (Math.hypot(sx - drag.sx, sy - drag.sy) > 6) drag.moved = true;
     if (drag.moved && !fitsWhole()) {
+      if (mode === 'run') follow = false; // the player looks elsewhere: stop following
       view.ox = drag.ox + sx - drag.sx;
       view.oy = drag.oy + sy - drag.sy;
       clampView(boardRect());
@@ -938,6 +939,7 @@ function startRun() {
   selected = null;
   mode = 'run';
   run = makeRun(level, parts, { sandbox });
+  follow = true;
   acc = 0;
   failTimer = 0;
   stats.runs++;
@@ -951,7 +953,41 @@ function startRun() {
   show('play');
 }
 
+// Replay: the same machine again from the start (the physics is
+// deterministic, so it is exactly the run you just saw), at half speed. It
+// counts as nothing: no try, no score, no dialog at the end.
+let replaying = false;
+let speedBefore = 1;
+function replay() {
+  stopRun();
+  replaying = true;
+  speedBefore = speed;
+  setSpeed(0.5);
+  mode = 'run';
+  run = makeRun(level, parts, { sandbox });
+  follow = true;
+  acc = 0;
+  failTimer = 0;
+  renderInspector();
+  updateTray();
+  show('play');
+  toast('Replay at half speed', { position: 'top', duration: 1600 });
+}
+function endReplay() {
+  replaying = false;
+  setSpeed(speedBefore);
+  setTimeout(() => mode === 'run' && !replaying && stopRun(), 900);
+}
+function setSpeed(v) {
+  speed = v;
+  for (const o of document.querySelectorAll('.speed button')) o.classList.toggle('on', Number(o.dataset.speed) === v);
+}
+
 function stopRun() {
+  if (replaying) {
+    replaying = false;
+    setSpeed(speedBefore);
+  }
   if (run) lastPaths = run.paths;
   run = null;
   mode = 'build';
@@ -972,6 +1008,7 @@ function stepRun(dt) {
   }
   $('r-clock').textContent = fmt(run.time);
   if (run.maxThrow > 12) ach.unlock('long-throw');
+  if (replaying && run.status !== 'running') return endReplay();
   if (run.status === 'win') onWin();
   else if (run.status === 'fail') onFail();
 }
@@ -1067,7 +1104,8 @@ async function results({ stars, score, win, before }) {
   else if (v === 'levels') {
     stopRun();
     show('levels');
-  } else stopRun();
+  } else if (v === 'replay') replay();
+  else stopRun();
 }
 
 // ---------- sound ----------
@@ -1633,6 +1671,29 @@ function boardRect() {
 const MIN_CELL = 14; // px per cell below which pegs get too fiddly to tap (24-wide levels fit a phone)
 
 // Can the whole board be seen at the current zoom?
+// On a board bigger than the screen, the view follows the action while a
+// machine runs: the item still to deliver, else whatever moves fastest. It
+// only moves when that leaves the middle of the screen, and eases there.
+let follow = true;
+function followAction(dt) {
+  if (!follow || !run || fitsWhole()) return;
+  const live = run.items.filter((b) => !b.gone);
+  const target = live.find((b) => b.deliver && !run.delivered[b.index]) || live.reduce((m, b) => (!m || Math.hypot(b.vx, b.vy) > Math.hypot(m.vx, m.vy) ? b : m), null);
+  if (!target) return;
+  const r = boardRect();
+  const [sx, sy] = view.toScreen(target.x, target.y);
+  const box = { x0: r.x + r.w * 0.3, x1: r.x + r.w * 0.7, y0: r.y + r.h * 0.3, y1: r.y + r.h * 0.7 };
+  const dx = sx < box.x0 ? box.x0 - sx : sx > box.x1 ? box.x1 - sx : 0;
+  const dy = sy < box.y0 ? box.y0 - sy : sy > box.y1 ? box.y1 - sy : 0;
+  if (!dx && !dy) return;
+  const k = reducedMotion.matches ? 1 : Math.min(1, dt * 5);
+  view.ox += dx * k;
+  view.oy += dy * k;
+  clampView(r);
+  userView = { s: view.s, ox: view.ox, oy: view.oy };
+  dirty = true;
+}
+
 function fitsWhole() {
   const r = boardRect();
   return level && level.w * view.s <= r.w + 1 && level.h * view.s <= r.h + 1;
@@ -1834,6 +1895,7 @@ function frame(now) {
   } else if (screen === 'play' && mode === 'run' && run) {
     animate = true;
     stepRun(dt);
+    followAction(dt);
     if (failTimer > 0 && run && run.status !== 'running') {
       failTimer -= dt;
       if (failTimer <= 0) stopRun();
