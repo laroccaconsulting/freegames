@@ -51,6 +51,8 @@ let selected = null;
 let armed = null;
 let chainFrom = null;
 let chainPlane = 0;
+let armedChip = null;
+let selecting = null; // the box being dragged by Make a chip
 let problemMap = new Map();
 let layout = null;
 let run = null;
@@ -102,6 +104,7 @@ const fmt = (s) => `${s.toFixed(1)} s`;
 const starText = (n, of = 3) => '★'.repeat(n) + '☆'.repeat(of - n);
 
 function offered(type) {
+  if (type === 'chip') return sandbox && chipLibrary().length ? Infinity : 0;
   if (level.id.startsWith('gallery:')) return Infinity;
   if (sandbox) return unlockedParts(progress).has(type) ? Infinity : 0;
   return level.parts?.[type] ?? 0;
@@ -199,6 +202,7 @@ function iconCanvas(type, w = 40, h = 32, palette = pal()) {
     nand: { type: 'nand', p: [1.5, 1.2] },
     delay: { type: 'delay', p: [1.5, 1.0], wait: 1 },
     pixel: { type: 'pixel', p: [1.5, 1.2], mode: 'toggle' },
+    chip: { type: 'chip', p: [0, 0.2], def: { name: '', parts: [], links: [], inputs: ['a'], outputs: ['a'] } },
   }[type];
   v.s = Math.min(w / 3, h / 2.4);
   v.ox = (w - 3 * v.s) / 2;
@@ -354,6 +358,7 @@ function updateTray() {
 }
 
 function arm(type) {
+  if (type === 'chip' && armed !== 'chip') return pickChip();
   armed = armed === type ? null : type;
   chainFrom = null;
   selected = null;
@@ -405,6 +410,7 @@ function snap(wx, wy) {
 }
 
 function candidates(type, p) {
+  if (type === 'chip') return armedChip ? [{ type: 'chip', p, def: armedChip }] : [];
   return PARTS[type].defaults(p);
 }
 
@@ -566,6 +572,10 @@ canvas.addEventListener('pointerdown', (e) => {
     return;
   }
   const [wx, wy] = view.toWorld(sx, sy);
+  if (selecting) {
+    drag = { kind: 'select', from: [wx, wy], to: [wx, wy] };
+    return;
+  }
   if (armed === 'chain' || armed === 'wire') {
     drag = { kind: 'tap', sx, sy };
     return;
@@ -624,6 +634,10 @@ canvas.addEventListener('pointermove', (e) => {
     view.oy = mid[1] - drag.world[1] * view.s;
     userView = { s: view.s, ox: view.ox, oy: view.oy };
     dirty = true;
+  } else if (drag.kind === 'select') {
+    drag.to = [wx, wy];
+    selecting = { from: drag.from, to: drag.to };
+    dirty = true;
   } else if (drag.kind === 'pan') {
     if (Math.hypot(sx - drag.sx, sy - drag.sy) > 6) drag.moved = true;
     if (drag.moved && !fitsWhole()) {
@@ -642,7 +656,9 @@ canvas.addEventListener('pointermove', (e) => {
     const dy = Math.round(wy - drag.start[1]);
     if (dx || dy || drag.moved) {
       drag.moved = true;
+      const before = pinPegs(drag.part);
       PARTS[drag.part.type].move(drag.part, drag.orig, dx, dy);
+      carryWires(before, pinPegs(drag.part));
       refresh();
     }
   }
@@ -658,7 +674,10 @@ function endPointer(e) {
   const [sx, sy] = localXY(e);
   const d = drag;
   drag = null;
-  if (d.kind === 'place') {
+  if (d.kind === 'select') {
+    selecting = null;
+    makeChip(d.from, d.to);
+  } else if (d.kind === 'place') {
     ghostAt(sx, sy);
     placeGhost();
   } else if (d.kind === 'tap') {
@@ -969,6 +988,7 @@ async function playMenu() {
     body: el('div', {}, el('p', {}, level.goalText), settingsBody()),
     actions: [
       ...(sandbox ? [] : [{ label: 'Level card', value: 'card' }]),
+      ...(sandbox ? [{ label: 'Make a chip', value: 'chip' }] : []),
       { label: 'Share link', value: 'share' },
       { label: 'Save to file', value: 'save' },
       { label: 'Open file', value: 'open' },
@@ -979,6 +999,10 @@ async function playMenu() {
   });
   if (v === 'card') levelCard();
   else if (v === 'share') shareMachine();
+  else if (v === 'chip') {
+    selecting = { from: null, to: null };
+    toast('Drag a box around the gates, delays and pixels to wrap', { position: 'top', duration: 0 });
+  }
   else if (v === 'save') saveFile();
   else if (v === 'open') openFile();
   else if (v === 'clear') clearMachine();
@@ -1130,6 +1154,90 @@ function whatsNew({ onlyNew = false } = {}) {
     body: el('div', { class: 'changes' }, list.flatMap((c) => [el('h3', {}, `${c.title} · ${c.id}`), el('ul', {}, c.items.map((t) => el('li', {}, t)))])),
     actions: [{ label: 'Play', value: 'ok', primary: true }],
   });
+}
+
+// ---------- chips ----------
+
+const LOGIC = new Set(['nand', 'delay', 'pixel']);
+const chipLibrary = () => store.get('chips', []);
+
+// Every peg a part has a pin on (signal in or out).
+function pinPegs(part) {
+  const def = PARTS[part.type];
+  return [...(def.outputs?.(part) || (def.output ? [def.output(part)] : [])), ...(def.inputs?.(part) || (def.input ? [def.input(part)] : []))].map((q) => [...q]);
+}
+
+// After a part moves, wires that ended on its old pins follow to the new ones.
+function carryWires(before, after) {
+  before.forEach((old, i) => {
+    const now = after[i];
+    if (!now || (old[0] === now[0] && old[1] === now[1])) return;
+    for (const w of parts) {
+      if (w.type !== 'wire') continue;
+      for (const end of ['a', 'b']) if (w[end][0] === old[0] && w[end][1] === old[1]) w[end] = [...now];
+    }
+  });
+}
+
+async function makeChip(from, to) {
+  hideToast();
+  const [x0, x1] = [Math.min(from[0], to[0]), Math.max(from[0], to[0])];
+  const [y0, y1] = [Math.min(from[1], to[1]), Math.max(from[1], to[1])];
+  const inner = parts.filter((p) => LOGIC.has(p.type) && p.p[0] >= x0 && p.p[0] <= x1 && p.p[1] >= y0 && p.p[1] <= y1);
+  if (!inner.length) return toast('No gates, delays or pixels in that box.');
+  const all = allParts();
+  const ends = parts.filter((p) => p.type === 'wire').map((w) => ({ w, from: PARTS.wire.source(w, all)?.part, to: PARTS.wire.target(w, all)?.part }));
+  const isIn = (p) => inner.includes(p);
+  const internal = ends.filter((e) => isIn(e.from) && isIn(e.to));
+  const incoming = ends.filter((e) => !isIn(e.from) && isIn(e.to));
+  const outgoing = ends.filter((e) => isIn(e.from) && !isIn(e.to));
+  const order = (a, b) => a.p[1] - b.p[1] || a.p[0] - b.p[0];
+  const inputs = [...new Set(incoming.map((e) => e.to))].sort(order);
+  const outputs = [...new Set(outgoing.map((e) => e.from))].sort(order);
+  if (!inputs.length && !outputs.length) return toast('Nothing is wired in or out of that box, so the chip would have no pins.');
+  const field = el('input', { maxlength: 6, value: 'CHIP', 'aria-label': 'Chip name', style: 'font:inherit;font-weight:800;text-transform:uppercase;width:8em' });
+  const v = await openDialog({
+    title: 'Make a chip',
+    body: el('div', {}, el('p', {}, `${inner.length} parts, ${inputs.length} in, ${outputs.length} out. Wires crossing the box become its pins.`), el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Name'), field)),
+    actions: [{ label: 'Cancel', value: null }, { label: 'Make it', value: 'ok', primary: true }],
+  });
+  if (v !== 'ok') return;
+  const def = {
+    name: (field.value.trim() || 'CHIP').toUpperCase().slice(0, 6),
+    parts: inner.map(({ p, ...q }) => ({ ...q })),
+    links: internal.map((e) => [e.from.id, e.to.id]),
+    inputs: inputs.map((p) => p.id),
+    outputs: outputs.map((p) => p.id),
+  };
+  pushUndo();
+  const chip = { id: uid(), type: 'chip', p: [Math.floor(x0), Math.floor(y0)], def };
+  const pinIn = PARTS.chip.inputs(chip);
+  const pinOut = PARTS.chip.outputs(chip);
+  for (const e of incoming) e.w.b = [...pinIn[inputs.indexOf(e.to)]];
+  for (const e of outgoing) e.w.a = [...pinOut[outputs.indexOf(e.from)]];
+  parts = parts.filter((p) => !isIn(p) && !internal.some((e) => e.w === p));
+  parts.push(chip);
+  selected = chip.id;
+  const lib = chipLibrary().filter((d) => d.name !== def.name);
+  store.set('chips', [def, ...lib].slice(0, 30));
+  saveMachine();
+  buildTray();
+  refresh();
+  toast(`Chip ${def.name} made. Find it in the tray to place more.`, { position: 'top' });
+}
+
+async function pickChip() {
+  const lib = chipLibrary();
+  if (!lib.length) return toast('Make a chip first: menu, Make a chip.');
+  const v = await openDialog({
+    title: 'Chips',
+    body: el('div', { class: 'gallery' }, lib.map((d, i) => el('div', { class: 'gallery-item' }, el('h3', {}, d.name), el('small', {}, `${d.parts.length} parts · ${d.inputs.length} in, ${d.outputs.length} out`), el('p', {}), el('button', { class: 'btn btn-primary', onclick: (e) => e.target.closest('dialog').closeWith(String(i)) }, 'Place')))),
+  });
+  if (v == null) return;
+  armedChip = lib[Number(v)];
+  armed = 'chip';
+  toast(`Tap a peg to place ${armedChip.name}`, { position: 'top', duration: 1800 });
+  updateTray();
 }
 
 // ---------- HUD ----------
@@ -1300,6 +1408,17 @@ function draw(now) {
     const part = parts.find((p) => p.id === selected);
     for (const h of handlesOf(part)) drawHandle(view.ctx, view, pal(), h.at[0], h.at[1], drag?.kind === 'handle' && drag.which === h.which);
     if (chainFrom) drawHandle(view.ctx, view, pal(), chainFrom[0], chainFrom[1], true);
+    if (selecting?.from) {
+      const c = view.ctx;
+      const [x0, y0] = selecting.from;
+      const [x1, y1] = selecting.to;
+      c.save();
+      c.setLineDash([6 / view.s, 4 / view.s]);
+      c.strokeStyle = pal().ink;
+      c.lineWidth = view.px(2.4);
+      c.strokeRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0));
+      c.restore();
+    }
   }
 }
 
@@ -1372,6 +1491,8 @@ addEventListener('keydown', (e) => {
   } else if ((e.key === 'z' || e.key === 'Z') && (e.ctrlKey || e.metaKey || mode === 'build')) undo();
   else if ((e.key === 'Delete' || e.key === 'Backspace') && selected) removePart(selected);
   else if (e.key === 'Escape') {
+    if (selecting) hideToast();
+    selecting = null;
     armed = null;
     selected = null;
     ghost = null;

@@ -3,7 +3,20 @@ import { PARTS_REF } from './ref.js';
 
 // A wire carries a signal from a sensor's peg to a motor's peg. A motor
 // with a wire runs only while one of its wires is on.
-const at = (others, p, pin) => others.find((o) => PARTS_REF[o.type]?.[pin] && key(PARTS_REF[o.type][pin](o)) === key(p));
+// The part (and pin number, for chips) whose pin sits on peg p.
+const pinsOf = (o, pin) => {
+  const def = PARTS_REF[o.type];
+  if (def?.[`${pin}s`]) return def[`${pin}s`](o);
+  return def?.[pin] ? [def[pin](o)] : [];
+};
+const find = (others, p, pin) => {
+  for (const o of others) {
+    const i = pinsOf(o, pin).findIndex((q) => key(q) === key(p));
+    if (i >= 0) return { part: o, pin: i };
+  }
+  return null;
+};
+const at = (others, p, pin) => find(others, p, pin)?.part;
 
 export default {
   type: 'wire',
@@ -25,12 +38,13 @@ export default {
     if (others.some((o) => o !== part && o.id !== part.id && o.type === 'wire' && same(o))) return 'Already wired';
     return null;
   },
-  source: (part, others) => at(others, part.a, 'output'),
-  target: (part, others) => at(others, part.b, 'input'),
+  source: (part, others) => find(others, part.a, 'output'),
+  target: (part, others) => find(others, part.b, 'input'),
+  pinsOf,
   draw: (view, pal, part, live) => {
     const ctx = view.ctx;
-    const src = at(live.all, part.a, 'output');
-    const on = src && live.signal?.(src);
+    const hit = find(live.all, part.a, 'output');
+    const on = hit && (hit.part.type === 'chip' ? live.signalId?.(`${hit.part.id}/${hit.part.def.outputs[hit.pin]}`) : live.signal?.(hit.part));
     const [ax, ay] = part.a;
     const [bx, by] = part.b;
     // a gentle sag so wires read apart from belts and chains

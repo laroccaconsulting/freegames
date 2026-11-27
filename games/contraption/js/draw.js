@@ -68,7 +68,8 @@ export function drawScene(view, pal, level, parts, opts = {}) {
     return t ? A.k * t.theta : 0;
   };
   const signal = (p) => !!run?.signals?.get(p.id);
-  const live = (part) => ({ turn, all, signal, running: mode === 'run', body: run?.partBodies.get(part.id), phase: layout.phase.get(part) || 0 });
+  const signalId = (id) => !!run?.signals?.get(id);
+  const live = (part) => ({ turn, all, signal, signalId, running: mode === 'run', body: run?.partBodies.get(part.id), phase: layout.phase.get(part) || 0 });
   const layer = (n) => {
     for (const part of all) if (PARTS[part.type].layer === n) PARTS[part.type].draw(view, pal, part, live(part));
   };

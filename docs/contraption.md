@@ -477,6 +477,12 @@ judges fairness and fun before merge.
    "Memory": Count to two, Count to three (signal goals can require the
    lamp to stay dark until a time, so lighting on the wrong count fails).
    Still to do: more Signals, Logic and Memory levels.
-7. Chips, displays, counters, then the two clocks.
+7. ✅ Chips (`js/parts/chip.js`): Make a chip (sandbox menu) wraps the
+   logic parts in a box; wires crossing it become input pins (left) and
+   output pins (right). The definition travels inside the part (saves and
+   links carry it) and a library keeps up to 30 for the tray. At run time a
+   chip is unpacked into its gates, so it behaves exactly like them (tested
+   with a wrapped NOT and a wrapped 2-bit counter). Still to do: displays
+   (a 7-segment decoder chip) and the two clocks.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.
