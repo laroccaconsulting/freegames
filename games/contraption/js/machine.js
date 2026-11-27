@@ -315,7 +315,8 @@ export function build(level, parts, { sandbox = false } = {}) {
   for (const t of trainObjs) for (const m of t.motors) if (gated.has(m.part)) m.off = true;
   const signals = new Map();
   settle(world);
-  return { sensors, logic, logicState: new Map(), wires, signals, world, items, movers, statics, partBodies, trains: trainObjs, axles, analysis: trains, sandbox };
+  const followers = all2.filter((p) => PARTS[p.type].follow);
+  return { sensors, logic, logicState: new Map(), wires, signals, world, items, movers, statics, partBodies, trains: trainObjs, axles, analysis: trains, sandbox, followers };
 }
 
 function moverShape(m) {
@@ -366,7 +367,7 @@ export function moverMotion(m) {
 // so a signal takes exactly one step to arrive. On/off only: no floats.
 function updateSignals(run, settle = false) {
   const { sensors, wires, logic } = run;
-  if (!sensors.length && !wires.length && !logic.length) return;
+  if (!sensors.length && !wires.length && !logic.length && !run.followers?.length) return;
   const prev = run.signals;
   const next = new Map();
   for (const p of sensors) next.set(p.id, settle ? false : !!PARTS[p.type].sense(p, run, run.partBodies.get(p.id)));
@@ -387,6 +388,8 @@ function updateSignals(run, settle = false) {
   for (const t of run.trains) for (const m of t.motors) if (m.part && (m.part.switched || ins.has(m.part))) m.off = !(ins.get(m.part)?.[0] || []).some(Boolean);
   // trapdoors (and anything else that lets go on a signal)
   if (!settle) for (const [part, pins] of ins) if (PARTS[part.type]?.release && (pins[0] || []).some(Boolean)) PARTS[part.type].release(run, part);
+  // parts that follow their signal every step (a gate's pins)
+  if (!settle) for (const part of run.followers) PARTS[part.type].follow(run, part, (ins.get(part)?.[0] || []).some(Boolean));
   run.signals = next;
 }
 

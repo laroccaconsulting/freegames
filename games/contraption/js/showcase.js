@@ -48,11 +48,12 @@ export const LONG_WAY = {
 };
 
 
-// An endless marble machine: a cleated belt with a scoop lifts two balls,
-// they run down and back under the belt into the scoop, for ever; a beam
-// on the way down counts the laps in binary.
+// An endless marble machine: a cleated belt with a scoop lifts the balls,
+// they run down and back under the belt to queue at a gate; each ball that
+// reaches the top lets the next one go (so the scoop never crowds), and the
+// same beam counts the laps in binary.
 export const MARBLE_MACHINE = {
-  board: {w: 24, h: 16, walls: [[0, 15, 24, 1], [19.15, 3, 0.5, 5]], items: [{type: 'ball', x: 12.5, y: 5.11, deliver: false}, {type: 'ball', x: 15, y: 8.29, deliver: false}]},
+  board: {w: 24, h: 16, walls: [[0, 15, 24, 1], [19.15, 3, 0.5, 5]], items: [{type: 'ball', x: 12.0, y: 8.94, deliver: false}, {type: 'ball', x: 14.5, y: 8.38, deliver: false}, {type: 'ball', x: 15.35, y: 8.19, deliver: false}, {type: 'ball', x: 16.2, y: 8.0, deliver: false}, {type: 'ball', x: 17.05, y: 7.81, deliver: false}]},
   parts: [
     {type: 'conveyor', a: [5, 12], b: [9, 4], cleats: true, scoop: true},
     {type: 'gear', p: [9, 4], teeth: 20, plane: 0},
@@ -60,7 +61,6 @@ export const MARBLE_MACHINE = {
     {type: 'motor', p: [6, 4], dir: -1},
     {type: 'ramp', a: [10, 5], b: [17, 7]},
     {type: 'ramp', a: [19, 8], b: [10, 10]},
-    {type: 'beam', a: [14, 7], b: [14, 9]},
     {type: 'pixel', p: [21, 12], mode: 'toggle'},
     {type: 'pixel', p: [19, 12], mode: 'toggle'},
     {type: 'pixel', p: [17, 12], mode: 'toggle'},
@@ -68,12 +68,15 @@ export const MARBLE_MACHINE = {
     {type: 'nand', p: [21, 14]},
     {type: 'nand', p: [19, 14]},
     {type: 'nand', p: [17, 14]},
-    {type: 'wire', a: [14, 7], b: [21, 12]},
     {type: 'wire', a: [21, 12], b: [21, 14]},
     {type: 'wire', a: [21, 14], b: [19, 12]},
     {type: 'wire', a: [19, 12], b: [19, 14]},
     {type: 'wire', a: [19, 14], b: [17, 12]},
     {type: 'wire', a: [17, 12], b: [17, 14]},
     {type: 'wire', a: [17, 14], b: [15, 12]},
+    {type: 'beam', a: [11, 3], b: [11, 5]},
+    {type: 'gate', p: [14, 9], side: -1},
+    {type: 'wire', a: [11, 3], b: [14, 9]},
+    {type: 'wire', a: [11, 3], b: [21, 12]},
   ],
 };

@@ -39,9 +39,10 @@ import escape from './escape.js';
 import pendulum from './pendulum.js';
 import dial from './dial.js';
 import trapdoor from './trapdoor.js';
+import gate from './gate.js';
 import { PARTS_REF } from './ref.js';
 
-export const PARTS = Object.fromEntries([ramp, lever, weight, conveyor, motor, gear, chain, bouncer, trapdoor, plate, beam, wire, nand, delay, pixel, escape, pendulum, dial, chip].map((p) => [p.type, p]));
+export const PARTS = Object.fromEntries([ramp, lever, weight, conveyor, motor, gear, chain, bouncer, trapdoor, gate, plate, beam, wire, nand, delay, pixel, escape, pendulum, dial, chip].map((p) => [p.type, p]));
 Object.assign(PARTS_REF, PARTS);
 export const PART_TYPES = Object.keys(PARTS);
 export const partOf = (part) => PARTS[part.type];
