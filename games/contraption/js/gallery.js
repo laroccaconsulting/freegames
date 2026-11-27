@@ -2,7 +2,7 @@
 // GitHub issue (see SUBMIT); good ones are checked by the tests (they must
 // still work) and land here with credit. Append only: ids are save keys
 // for the copy each player tinkers with.
-import { buildClock } from './clock.js';
+import { buildClock, PENDULUM_BOARD } from './clock.js';
 
 export const SUBMIT = 'https://github.com/laroccaconsulting/freegames/issues/new?labels=contraption-machine&title=Machine%3A+&body=Link%3A+%0A%0AWhat+it+does%3A+';
 
@@ -65,5 +65,15 @@ export const GALLERY = [
     show: 70,
     note: 'Minutes and seconds from 138 parts: a NAND-and-delay heartbeat, four counter chips (each clears itself at 10 or 6 and passes a carry on) and four 7-segment decoder chips made of 21 NANDs each, lighting pixel digits. Open the chips: it is all NANDs, delays and pixels.',
     parts: buildClock().parts,
+  },
+  {
+    id: 'pendulum-clock',
+    title: 'Pendulum clock',
+    by: 'The Contraption workshop',
+    level: 'bench-big',
+    board: PENDULUM_BOARD,
+    show: 70,
+    note: 'Here the physics keeps the time. A rod 5¾ cells long swings on a free peg (a ball resting on its tip sets it going), and every swing through the beam is one second for the counter and display chips. A pendulum keeps nearly the same beat as it slows; this one drifts by about a second a minute.',
+    parts: buildClock({ pendulum: true }).parts,
   },
 ];

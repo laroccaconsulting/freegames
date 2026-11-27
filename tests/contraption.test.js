@@ -135,10 +135,11 @@ test('every gallery machine still does what it says', async () => {
     const { BIG_BENCH } = await import('../games/contraption/js/levels.js');
     const level = g.level === 'sandbox' ? ALL_PARTS_SANDBOX : g.level === 'bench' ? BENCH : g.level === 'bench-big' ? BIG_BENCH : levelById(g.level);
     const parts = g.parts.map((p, i) => ({ ...p, id: `g${i}` }));
-    assert.equal(problems(level, parts).size, 0, `${g.id} is placeable ${JSON.stringify([...problems(level, parts)])}`);
+    const board = { ...level, ...(g.board || {}) };
+    assert.equal(problems(board, parts).size, 0, `${g.id} is placeable ${JSON.stringify([...problems(board, parts)])}`);
     if (g.show) {
       const { makeRun } = await import('../games/contraption/js/machine.js');
-      const run = makeRun(level, parts);
+      const run = makeRun(board, parts, { sandbox: true });
       for (let i = 0; i < g.show * 120; i++) run.tick();
       assert.equal(run.status, 'running', `${g.id} keeps running`);
     } else assert.equal(simulate(level, parts).status, 'win', `${g.id} delivers`);
@@ -308,4 +309,28 @@ test('level editor: edits, solving, and level links that check their own solutio
   const bad = await E.decodeLevel(await E.encodeLevel({ ...d, solution: [] }));
   assert.ok(bad.unverified);
   assert.equal(await E.decodeLevel('zjunk'), null);
+});
+
+test('the pendulum clock: the physics keeps time to within a few percent', async () => {
+  const { buildClock, readClock, PENDULUM_BOARD } = await import('../games/contraption/js/clock.js');
+  const { makeRun } = await import('../games/contraption/js/machine.js');
+  const { BIG_BENCH } = await import('../games/contraption/js/levels.js');
+  const { parts, display } = buildClock({ pendulum: true });
+  const board = { ...BIG_BENCH, ...PENDULUM_BOARD };
+  const run = makeRun(board, parts, { sandbox: true });
+  const fmt = (n) => `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
+  let beats = 0;
+  let was = false;
+  let since = -1;
+  while (run.time < 75) {
+    run.tick();
+    const on = run.signals.get('beat');
+    if (on && !was) {
+      beats++;
+      since = 0;
+    } else if (since >= 0) since++;
+    was = on;
+    if (since === 30) assert.equal(readClock(run.signals, display), fmt(beats), `after ${beats} swings`);
+  }
+  assert.ok(Math.abs(beats / 75 - 1) < 0.03, `${beats} swings in 75 s`);
 });

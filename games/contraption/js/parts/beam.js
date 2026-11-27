@@ -9,7 +9,7 @@ export default {
   type: 'beam',
   name: 'Beam',
   blurb: 'A light beam between two pegs. It is on while something crosses it.',
-  physics: 'It feels nothing and stops nothing: it only sees. The signal leaves from the end with the lamp.',
+  physics: 'It feels nothing and stops nothing: it only sees, items and swinging levers alike. The signal leaves from the end with the lamp.',
   tip: 'Put it where the ball will pass, and wire the lamp end to a motor.',
   layer: 2,
   back: true,
@@ -17,7 +17,8 @@ export default {
   output: (part) => part.a,
   sense: (part, run) => {
     const beam = placeShape(capsule(part.a[0], part.a[1], part.b[0], part.b[1], 0.05));
-    return run.world.bodies.some((b) => b.kind === 'dynamic' && !b.gone && b.world.maxX >= beam.minX && b.world.minX <= beam.maxX && b.world.maxY >= beam.minY && b.world.minY <= beam.maxY && overlap(b.world, beam) < 0);
+    // items, weights and swinging levers all break the beam
+    return run.world.bodies.some((b) => (b.kind === 'dynamic' || b.kind === 'rotor') && !b.gone && b.world.maxX >= beam.minX && b.world.minX <= beam.maxX && b.world.maxY >= beam.minY && b.world.minY <= beam.maxY && overlap(b.world, beam) < 0);
   },
   draw: (view, pal, part, live) => {
     const ctx = view.ctx;

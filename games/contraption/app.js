@@ -1223,7 +1223,7 @@ async function gallery() {
   const g = GALLERY.find((x) => x.id === v);
   if (!g) return;
   const base = g.level === 'sandbox' ? ALL_PARTS_SANDBOX : g.level === 'bench' ? BENCH : g.level === 'bench-big' ? BIG_BENCH : levelById(g.level);
-  openLevel({ ...base, id: `gallery:${g.id}`, name: g.title, goalText: g.note }, { card: false, preset: g.parts });
+  openLevel({ ...base, ...(g.board || {}), id: `gallery:${g.id}`, name: g.title, goalText: g.note }, { card: false, preset: g.parts });
   toast('Press Run to watch it. Change anything: your copy is kept.', { position: 'top', duration: 3500 });
 }
 
