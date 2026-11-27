@@ -2,7 +2,7 @@
 // GitHub issue (see SUBMIT); good ones are checked by the tests (they must
 // still work) and land here with credit. Append only: ids are save keys
 // for the copy each player tinkers with.
-import { buildClock, PENDULUM_BOARD } from './clock.js';
+import { buildClock, PENDULUM_BOARD, buildGearClock, GEAR_CLOCK_BOARD } from './clock.js';
 
 export const SUBMIT = 'https://github.com/laroccaconsulting/freegames/issues/new?labels=contraption-machine&title=Machine%3A+&body=Link%3A+%0A%0AWhat+it+does%3A+';
 
@@ -75,5 +75,15 @@ export const GALLERY = [
     show: 70,
     note: 'Here the physics keeps the time. A rod 5¾ cells long swings on a free peg (a ball resting on its tip sets it going), and every swing through the beam is one second for the counter and display chips. A pendulum keeps nearly the same beat as it slows; this one drifts by about a second a minute.',
     parts: buildClock({ pendulum: true }).parts,
+  },
+  {
+    id: 'gear-clock',
+    title: 'Clockwork',
+    by: 'The Contraption workshop',
+    level: 'bench',
+    board: GEAR_CLOCK_BOARD,
+    show: 70,
+    note: 'A clock with no logic at all: real teeth. A 4-cell pendulum beats about once a second; its anchor lets the 30-tooth escape wheel go one tooth per swing, so the wheel turns once a minute and carries the seconds hand. Gears take that down 60 to 1 for the minutes, and a chain and two more gears 12 to 1 for the hours. It gains about half a minute an hour: lengthen the rod a little to slow it.',
+    parts: buildGearClock(),
   },
 ];

@@ -408,3 +408,40 @@ test('editor: lamp goals, fixed parts and movers, solved and shared by link', as
   m = ED.eraseAt(m, [10, 4]);
   assert.equal(m.movers.length, 1);
 });
+
+test('clockwork: an anchor escapement with real teeth keeps time, and gears turn the hands', async () => {
+  const { buildGearClock, GEAR_CLOCK_BOARD } = await import('../games/contraption/js/clock.js');
+  const { makeRun } = await import('../games/contraption/js/machine.js');
+  const { BENCH } = await import('../games/contraption/js/levels.js');
+  const board = { ...BENCH, ...GEAR_CLOCK_BOARD };
+  const parts = buildGearClock().map((p, i) => ({ id: `c${i}`, ...p }));
+  const run = makeRun(board, parts, { sandbox: true });
+  const turns = (peg) => {
+    const A = run.axles.get(peg);
+    return (run.trains[A.train].theta * A.k) / (2 * Math.PI);
+  };
+  const pend = run.partBodies.get(parts.find((p) => p.type === 'pendulum').id).train;
+  let swings = 0;
+  let last = 0;
+  let widest = 0;
+  while (run.time < 120) {
+    run.tick();
+    const s = Math.sign(pend.v);
+    if (s && s !== last) {
+      if (last) swings++;
+      last = s;
+    }
+    if (run.time > 100) widest = Math.max(widest, Math.abs(pend.theta));
+  }
+  assert.equal(run.status, 'running');
+  // the seconds hand: once a minute, within 2%
+  assert.ok(Math.abs(turns('4,6') / 2 - 1) < 0.02, `seconds hand turned ${turns('4,6').toFixed(3)} times in 2 minutes`);
+  // one tooth per swing there and back: the wheel is never let slip
+  assert.ok(Math.abs(turns('4,6') * 30 - swings / 2) < 1.5, `${(turns('4,6') * 30).toFixed(1)} teeth for ${swings} swings`);
+  // the pendulum keeps swinging (the teeth keep pushing it)
+  assert.ok(widest > 0.08, `still swinging ${widest.toFixed(3)} rad after 100 s`);
+  // the hands: 60 to 1, then 12 to 1, all clockwise
+  assert.ok(Math.abs(turns('16,13') * 60 - turns('4,6')) < 1e-6);
+  assert.ok(Math.abs(turns('20,5') * 12 - turns('16,13')) < 1e-9);
+  assert.ok(turns('20,5') > 0);
+});

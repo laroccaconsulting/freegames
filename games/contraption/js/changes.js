@@ -2,6 +2,15 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-05',
+    title: 'Clockwork',
+    items: [
+      'Three new parts, in the sandbox once the Memory chapter is open: the Escape wheel (thirty real teeth on a spring), the Pendulum and the Dial.',
+      'Put a pendulum three pegs straight above an escape wheel and its pallets catch the teeth: the wheel goes one tooth per swing, and each tooth gives the swing a little push to keep it going. That is how a real clock keeps time.',
+      'Gallery: Clockwork, a clock with seconds, minute and hour hands and no logic at all. Gears take the escape wheel down 60 to 1 for the minutes, and a chain and two more gears 12 to 1 for the hours.',
+    ],
+  },
+  {
     id: '2026-12-04',
     title: 'Every part within reach',
     items: [

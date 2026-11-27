@@ -76,7 +76,7 @@ export function analyse(parts) {
   const axles = new Map();
   const axle = (p) => {
     const k = key(p);
-    if (!axles.has(k)) axles.set(k, { p, gear: null, gears: [], motor: null, drums: [], levers: [], links: [], k: 0, train: -1 });
+    if (!axles.has(k)) axles.set(k, { p, gear: null, gears: [], motor: null, drums: [], levers: [], extra: [], links: [], k: 0, train: -1 });
     return axles.get(k);
   };
   for (const part of parts) PARTS[part.type].axles?.(part, axle);
@@ -211,7 +211,7 @@ export function usage(level, parts) {
 
 // Every part on an axle (each drum counts once per belt, as before).
 function axleParts(a) {
-  return [...a.gears, a.motor, ...a.drums, ...a.levers].filter(Boolean);
+  return [...a.gears, a.motor, ...a.drums, ...a.levers, ...a.extra].filter(Boolean);
 }
 
 /**
@@ -236,7 +236,9 @@ export function build(level, parts, { sandbox = false } = {}) {
       inertia += a.k * a.k * I;
     }
     // a train with no motor (a free lever, a loose gear) holds still until something touches it
-    return addTrain(world, { inertia, motors, damping: motors.length ? 0.2 : 0.03, jammed: t.jammed, held: !motors.length });
+    // a part that swings by itself (a pendulum) is never held
+    const free = t.axles.some((a) => axleParts(a).some((p) => PARTS[p.type].free));
+    return addTrain(world, { inertia, motors, damping: motors.length ? (motors.every((m) => m.spring) ? 0.005 : 0.2) : free ? 0.0005 : 0.03, jammed: t.jammed, held: !motors.length && !free });
   });
   const ctx = {
     axle: (p) => {

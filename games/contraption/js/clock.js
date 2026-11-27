@@ -162,3 +162,38 @@ const ROD = { c: Math.cos(Math.PI / 3), s: Math.sin(Math.PI / 3) };
 export const PENDULUM_BOARD = {
   items: [{ type: 'ball', x: 8 + 5.25 * ROD.c + 0.6 * ROD.s, y: 21 + 5.25 * ROD.s - 0.6 * ROD.c, deliver: false }],
 };
+
+/**
+ * A mechanical clock: an anchor escapement (a 4-cell pendulum three pegs
+ * above a 30-tooth escape wheel) beats about once a second, so the wheel
+ * turns once a minute and carries the seconds hand. Gears 15:25, 10:30,
+ * 10:40, 10:30 take it down 60 to 1 for the minute hand; a 1:1 chain and
+ * 10:40, 10:30 take that down 12 to 1 for the hour hand. Two layers of
+ * gears cannot hold six stages side by side without a big gear fouling
+ * the next peg's small one, hence the chain.
+ */
+export const GEAR_CLOCK_BOARD = { w: 26, h: 17 };
+export function buildGearClock() {
+  const g = (p, teeth, plane) => ({ type: 'gear', p, teeth, plane });
+  return [
+    { type: 'escape', p: [4, 6] },
+    { type: 'pendulum', p: [4, 3], l: 4 },
+    { type: 'dial', p: [4, 6], r: 1.25 },
+    g([4, 6], 15, 0),
+    g([8, 6], 25, 0),
+    g([8, 6], 10, 1),
+    g([8, 10], 30, 1),
+    g([8, 10], 10, 0),
+    g([12, 13], 40, 0),
+    g([12, 13], 10, 1),
+    g([16, 13], 30, 1),
+    { type: 'dial', p: [16, 13], r: 2.5 },
+    g([23, 13], 30, 1),
+    { type: 'chain', a: [16, 13], b: [23, 13], pa: 1, pb: 1 },
+    g([23, 13], 10, 0),
+    g([20, 9], 40, 0),
+    g([20, 9], 10, 1),
+    g([20, 5], 30, 1),
+    { type: 'dial', p: [20, 5], r: 2.5 },
+  ];
+}
