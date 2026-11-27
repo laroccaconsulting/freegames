@@ -587,5 +587,11 @@ judges fairness and fun before merge.
    scoop does not crowd it (that takes minutes of looping), so it stays a
    sandbox and Gallery part. "Stopped short" now waits until every item
    is still, helpers included.
+19. ✅ Curve (an arc between two pegs, bend in half cells; built from 12
+   straight pieces, a convex outline for the placement rules; a quarter-
+   pipe turns a straight drop into a roll about three times faster
+   across than a straight ramp) and Pusher (a Scotch yoke: a kinematic
+   paddle placed from its peg's turn, like cleats, so it never stalls;
+   it only reaches what is within its stroke). Gallery: Kick and curve.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.

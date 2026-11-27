@@ -2,6 +2,15 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-10',
+    title: 'Curves and kicks',
+    items: [
+      'New part, the Curve (in the sandbox from the start): a curved track between two pegs. Tap it to bend it into a dip, a quarter-pipe or a hump. It turns a fall into a fast roll without a bump.',
+      'New part, the Pusher (in the sandbox from the Belts chapter): a crank on its peg works a paddle out and back. Put a motor on its peg and it kicks, once a turn.',
+      'Gallery: Kick and curve.',
+    ],
+  },
+  {
     id: '2026-12-09',
     title: 'Chapter 10: Machines',
     items: [

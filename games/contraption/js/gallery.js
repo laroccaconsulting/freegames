@@ -3,7 +3,7 @@
 // still work) and land here with credit. Append only: ids are save keys
 // for the copy each player tinkers with.
 import { buildClock, PENDULUM_BOARD, buildGearClock, GEAR_CLOCK_BOARD } from './clock.js';
-import { TRAPDOOR_CATAPULT, ESCALATOR, LONG_WAY, MARBLE_MACHINE } from './showcase.js';
+import { TRAPDOOR_CATAPULT, ESCALATOR, LONG_WAY, MARBLE_MACHINE, KICK_AND_CURVE } from './showcase.js';
 
 export const SUBMIT = 'https://github.com/laroccaconsulting/freegames/issues/new?labels=contraption-machine&title=Machine%3A+&body=Link%3A+%0A%0AWhat+it+does%3A+';
 
@@ -123,5 +123,14 @@ export const GALLERY = [
     show: 120,
     note: 'It never stops. Five balls queue at a gate. A cleated belt carries one up and tips it over the top, through a beam: that lets the next ball go, and counts the lap in binary on four pixels. The balls run down and back under the belt into its scoop, a curved trough round the bottom drum (a bucket elevator\'s boot), where the cleats pick them up again.',
     parts: MARBLE_MACHINE.parts,
+  },
+  {
+    id: 'kick-and-curve',
+    title: 'Kick and curve',
+    by: 'The Contraption workshop',
+    level: 'bench',
+    board: KICK_AND_CURVE.board,
+    note: 'A motor waits a second, then its crank works a pusher that kicks the ball off the shelf. A curve catches the fall and bends it into a fast sideways roll: the ball leaves the curve going three times as fast across as a straight ramp would send it, and sails into the cup.',
+    parts: KICK_AND_CURVE.parts,
   },
 ];

@@ -1,6 +1,6 @@
 // Offline support: every file is cached on install and served cache-first.
 // VERSION and FILES are rewritten by scripts/build-sw.mjs; run it before deploying.
-const VERSION = 'e0628a3b3e9d';
+const VERSION = 'e3b3ff4eb6f3';
 const FILES = [
   './',
   './achievements.js',
@@ -44,6 +44,7 @@ const FILES = [
   './js/parts/chain.js',
   './js/parts/chip.js',
   './js/parts/conveyor.js',
+  './js/parts/curve.js',
   './js/parts/delay.js',
   './js/parts/dial.js',
   './js/parts/escape.js',
@@ -56,6 +57,7 @@ const FILES = [
   './js/parts/pendulum.js',
   './js/parts/pixel.js',
   './js/parts/plate.js',
+  './js/parts/pusher.js',
   './js/parts/ramp.js',
   './js/parts/ref.js',
   './js/parts/trapdoor.js',
