@@ -557,5 +557,14 @@ judges fairness and fun before merge.
    running the physics and putting shelves and cups where things land;
    the Gallery test runs every machine on its own board. Gallery
    machines open fitted to the screen, however small.
+16. ✅ Endless loops. The Scoop (a cleated belt's option): a fixed trough
+   round the a-end drum from the return side round to the carrying side,
+   like a bucket elevator's boot, so the way back passes under the belt.
+   Shaped as a spiral (2.4 at the mouth, 1.6 round the drum) with a funnel
+   lip: a ball waiting its turn sits out of the cleats' reach, which is
+   what made two balls jam; a return ramp that touches the belt wedges the
+   ball, so it must stop short. Gallery: Marble machine, two balls (three
+   jam the scoop: that is the one-at-a-time gate's job) and a 4-bit lap
+   counter; tested for 3 minutes, checked for 10 (124 laps).
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.

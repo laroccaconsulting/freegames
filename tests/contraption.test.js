@@ -469,3 +469,28 @@ test('cleats carry a ball up a slope a smooth belt cannot; a trapdoor holds unti
   assert.notEqual(noWire.status, 'win');
   assert.ok(Math.abs(noWire.items[1].y - TRAPDOOR_CATAPULT.board.items[1].y) < 0.1, 'the steel ball is still on the trapdoor');
 });
+
+test('the marble machine loops for ever: both balls keep lapping and the counter keeps count', async () => {
+  const { MARBLE_MACHINE } = await import('../games/contraption/js/showcase.js');
+  const { makeRun } = await import('../games/contraption/js/machine.js');
+  const { BENCH } = await import('../games/contraption/js/levels.js');
+  const parts = MARBLE_MACHINE.parts.map((p, i) => ({ id: `m${i}`, ...p }));
+  const run = makeRun({ ...BENCH, ...MARBLE_MACHINE.board }, parts, { sandbox: true });
+  const beam = parts.find((p) => p.type === 'beam').id;
+  const bits = parts.filter((p) => p.type === 'pixel').map((p) => p.id);
+  let laps = 0;
+  let was = false;
+  const tops = run.items.map(() => 0);
+  while (run.time < 180) {
+    run.tick();
+    const on = !!run.signals.get(beam);
+    if (on && !was) laps++;
+    was = on;
+    run.items.forEach((b, i) => b.y < 4.5 && (tops[i] = run.time));
+  }
+  for (let i = 0; i < 4; i++) run.tick();
+  assert.ok(laps >= 30, `${laps} laps in 3 minutes`);
+  // both balls are still going round: each was at the top of the belt in the last 20 s
+  for (const t of tops) assert.ok(t > 160, `a ball last reached the top at ${t.toFixed(1)} s`);
+  assert.equal(bits.reduce((v, id, i) => v + (run.signals.get(id) ? 1 << i : 0), 0), laps % 16);
+});

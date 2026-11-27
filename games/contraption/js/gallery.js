@@ -3,7 +3,7 @@
 // still work) and land here with credit. Append only: ids are save keys
 // for the copy each player tinkers with.
 import { buildClock, PENDULUM_BOARD, buildGearClock, GEAR_CLOCK_BOARD } from './clock.js';
-import { TRAPDOOR_CATAPULT, ESCALATOR, LONG_WAY } from './showcase.js';
+import { TRAPDOOR_CATAPULT, ESCALATOR, LONG_WAY, MARBLE_MACHINE } from './showcase.js';
 
 export const SUBMIT = 'https://github.com/laroccaconsulting/freegames/issues/new?labels=contraption-machine&title=Machine%3A+&body=Link%3A+%0A%0AWhat+it+does%3A+';
 
@@ -113,5 +113,15 @@ export const GALLERY = [
     board: LONG_WAY.board,
     note: 'Down the zigzag, through a beam: a toggle remembers it and starts the escalator, which carries the ball back up to the top. Along the ramp, into the box through a second beam: the trapdoor lets go, the steel ball drops on the catapult, and the crate flies into the cup.',
     parts: LONG_WAY.parts,
+  },
+  {
+    id: 'marble-machine',
+    title: 'Marble machine',
+    by: 'The Contraption workshop',
+    level: 'bench',
+    board: MARBLE_MACHINE.board,
+    show: 120,
+    note: 'It never stops. A cleated belt carries the balls up and tips them over the top; they run down two ramps and back under the belt into its scoop, a curved trough round the bottom drum (a bucket elevator\'s boot), where the cleats pick them up again. A beam on the way down counts every lap in binary on four pixels.',
+    parts: MARBLE_MACHINE.parts,
   },
 ];
