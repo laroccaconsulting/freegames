@@ -6,9 +6,9 @@
 import { leverEnds, cupWalls, DRUM_R, ITEM_INFO } from './geom.js';
 
 export const PALETTES = {
-  paper: { paper: '#ffffff', ink: '#111111', mid: '#5c5c5c', back: '#6e6e6e', faint: '#d4d4d4', peg: '#a8a8a8', wall: '#ffffff', flag: '#111111', glow: null },
-  ink: { paper: '#121212', ink: '#f2f2f2', mid: '#a8a8a8', back: '#9a9a9a', faint: '#3a3a3a', peg: '#5a5a5a', wall: '#121212', flag: '#f2f2f2', glow: null },
-  hallows: { paper: '#170f26', ink: '#f6e3b4', mid: '#b49a74', back: '#a08a6a', faint: '#3b2b52', peg: '#5e4a78', wall: '#170f26', flag: '#f08a24', glow: '#f08a24' },
+  paper: { paper: '#ffffff', ink: '#111111', mid: '#5c5c5c', back: '#6e6e6e', faint: '#d4d4d4', mat: '#e2e2e2', peg: '#a8a8a8', wall: '#ffffff', flag: '#111111', glow: null },
+  ink: { paper: '#121212', ink: '#f2f2f2', mid: '#a8a8a8', back: '#9a9a9a', faint: '#3a3a3a', mat: '#262626', peg: '#5a5a5a', wall: '#121212', flag: '#f2f2f2', glow: null },
+  hallows: { paper: '#170f26', ink: '#f6e3b4', mid: '#b49a74', back: '#a08a6a', faint: '#3b2b52', mat: '#2a1d40', peg: '#5e4a78', wall: '#170f26', flag: '#f08a24', glow: '#f08a24' },
 };
 
 const TAU = Math.PI * 2;
@@ -123,9 +123,34 @@ export function drawPegs(ctx, view, level, pal) {
   }
 }
 
+/**
+ * The board is a sheet of paper on a cutting mat: a faint cell grid fills the
+ * screen (heavier every four cells), and the sheet sits on it with a hard ink
+ * shadow. No soft shading, so it stays crisp on e-paper.
+ */
 export function drawBorder(ctx, view, level, pal) {
-  ctx.strokeStyle = pal.faint;
-  ctx.lineWidth = view.px(1.5);
+  const { s } = view;
+  if (s >= 8 && view.w) {
+    const x0 = Math.floor(-view.ox / s) - 1;
+    const x1 = Math.ceil((view.w - view.ox) / s) + 1;
+    const y0 = Math.floor(-view.oy / s) - 1;
+    const y1 = Math.ceil((view.h - view.oy) / s) + 1;
+    ctx.strokeStyle = pal.mat || pal.faint;
+    for (const major of [false, true]) {
+      ctx.beginPath();
+      for (let x = x0; x <= x1; x++) if ((x % 4 === 0) === major) ctx.moveTo(x, y0), ctx.lineTo(x, y1);
+      for (let y = y0; y <= y1; y++) if ((y % 4 === 0) === major) ctx.moveTo(x0, y), ctx.lineTo(x1, y);
+      ctx.lineWidth = view.px(major ? 1.2 : 0.6, 0.6);
+      ctx.stroke();
+    }
+  }
+  const d = Math.min(5, Math.max(2, s * 0.15)) / s;
+  ctx.fillStyle = pal.ink;
+  ctx.fillRect(d, d, level.w, level.h);
+  ctx.fillStyle = pal.paper;
+  ctx.fillRect(0, 0, level.w, level.h);
+  ctx.strokeStyle = pal.ink;
+  ctx.lineWidth = view.px(1.6);
   ctx.strokeRect(0, 0, level.w, level.h);
 }
 
