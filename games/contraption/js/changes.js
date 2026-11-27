@@ -2,6 +2,15 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-11',
+    title: 'Springs and winches',
+    items: [
+      'New part, the Spring (in the sandbox from the Signals chapter): a cocked plunger. A signal at its peg, or with no wire its delay, lets it fly out; power 3 throws a ball nine cells up. It re-cocks and fires again on the next signal.',
+      'New part, the Winch (in the sandbox from the Belts chapter): a drum winds a rope and lifts a bucket, which tips over its lip at the top onto a chute.',
+      'Gallery: Winch.',
+    ],
+  },
+  {
     id: '2026-12-10',
     title: 'Curves and kicks',
     items: [

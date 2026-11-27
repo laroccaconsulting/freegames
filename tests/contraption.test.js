@@ -537,3 +537,34 @@ test('a curve turns a drop into a faster sideways roll than a straight ramp', as
   };
   assert.ok(across(1) > 2 * across(0), `curved ${across(1).toFixed(2)} vs straight ${across(0).toFixed(2)} (across per down)`);
 });
+
+test('a spring fires at its delay, or on each signal once re-cocked', async () => {
+  const { makeRun } = await import('../games/contraption/js/machine.js');
+  const { BENCH } = await import('../games/contraption/js/levels.js');
+  const lvl = { ...BENCH, w: 24, h: 16, walls: [[0, 15, 24, 1]], items: [{ type: 'ball', x: 6, y: 12.15, deliver: false }] };
+  const run = makeRun(lvl, [{ id: 's', type: 'spring', p: [6, 14], dir: 270, power: 3, delay: 1 }], { sandbox: true });
+  const b = run.items[0];
+  let liftAt = null;
+  let top = 99;
+  while (run.time < 4) {
+    run.tick();
+    if (liftAt == null && b.y < 11.9) liftAt = run.time;
+    top = Math.min(top, b.y);
+  }
+  assert.ok(liftAt > 0.95 && liftAt < 1.2, `fired at ${liftAt}`);
+  assert.ok(12.15 - top > 7, `threw the ball ${(12.15 - top).toFixed(1)} cells up`);
+  // wired to a heartbeat: it fires again on later beats, never faster than it re-cocks
+  const parts = [
+    { id: 's', type: 'spring', p: [6, 14], dir: 270, power: 1 },
+    { id: 'n', type: 'nand', p: [10, 10] }, { id: 'd', type: 'delay', p: [10, 13], wait: 1 },
+    { id: 'w1', type: 'wire', a: [10, 10], b: [10, 13] }, { id: 'w2', type: 'wire', a: [10, 13], b: [10, 10] }, { id: 'w3', type: 'wire', a: [10, 10], b: [6, 14] },
+  ];
+  const run2 = makeRun({ ...lvl, items: [] }, parts, { sandbox: true });
+  const sp = run2.partBodies.get('s').spring;
+  const fires = new Set();
+  while (run2.time < 7) {
+    run2.tick();
+    if (sp.st.fired != null) fires.add(sp.st.fired.toFixed(3));
+  }
+  assert.ok(fires.size >= 3, `fired ${fires.size} times on a 2-second heartbeat over 7 s`);
+});

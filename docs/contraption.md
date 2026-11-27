@@ -593,5 +593,13 @@ judges fairness and fun before merge.
    across than a straight ramp) and Pusher (a Scotch yoke: a kinematic
    paddle placed from its peg's turn, like cleats, so it never stalls;
    it only reaches what is within its stroke). Gallery: Kick and curve.
+20. ✅ Spring (a kinematic plunger: out at 10/15/21 cells a second by power,
+   holds, re-cocks; fires on each rising signal, or unwired at its delay;
+   power 3 throws a ball about 9 cells up) and Winch (a kinematic bucket
+   whose rope length follows its peg's turn; at the top it tips over its
+   pouring lip, like a skip, onto a built-in chute beside its path: tipped
+   about the rope instead, the ball went back down the far side). Rope
+   with real tension (a pulley and a counterweight) still needs a
+   constraint the engine does not have. Gallery: Winch.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.
