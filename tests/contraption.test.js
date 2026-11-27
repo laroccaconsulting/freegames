@@ -524,3 +524,16 @@ test('a gate lets exactly one ball through per signal', async () => {
   }
   assert.ok(passed.length >= 3, `${passed.length} balls through`);
 });
+
+test('a curve turns a drop into a faster sideways roll than a straight ramp', async () => {
+  const { makeRun } = await import('../games/contraption/js/machine.js');
+  const { BENCH } = await import('../games/contraption/js/levels.js');
+  const across = (bend) => {
+    const lvl = { ...BENCH, w: 24, h: 16, walls: [[0, 15, 24, 1]], items: [{ type: 'ball', x: 5.35, y: 0.6, deliver: false }] };
+    const run = makeRun(lvl, [{ id: 'c', type: 'curve', a: [5, 3], b: [9, 7], bend }], { sandbox: true });
+    const b = run.items[0];
+    while (run.time < 2 && !(b.y > 6 && b.x > 9.2)) run.tick();
+    return b.vx / Math.max(0.1, Math.abs(b.vy));
+  };
+  assert.ok(across(1) > 2 * across(0), `curved ${across(1).toFixed(2)} vs straight ${across(0).toFixed(2)} (across per down)`);
+});

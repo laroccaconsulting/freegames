@@ -80,3 +80,14 @@ export const MARBLE_MACHINE = {
     {type: 'wire', a: [11, 3], b: [21, 12]},
   ],
 };
+
+// A pusher kicks the ball off a shelf; a curve turns its fall into a fast
+// sideways roll that carries it into the cup.
+export const KICK_AND_CURVE = {
+  board: {w: 24, h: 16, walls: [[0, 15, 24, 1], [2, 6, 4.5, 0.5]], items: [{type: 'ball', x: 5, y: 5.6}], goal: {x: 14.5, y: 12.5, w: 4.5, h: 2.5, cup: true}},
+  parts: [
+    {type: 'pusher', p: [3, 5], dir: 0, r: 1},
+    {type: 'motor', p: [3, 5], dir: 1, delay: 1},
+    {type: 'curve', a: [7, 8], b: [11, 12], bend: 1},
+  ],
+};

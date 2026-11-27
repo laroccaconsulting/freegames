@@ -201,6 +201,8 @@ function iconCanvas(type, w = 40, h = 32, palette = pal()) {
   v.h = h;
   const sample = {
     ramp: { type: 'ramp', a: [0.4, 2], b: [2.6, 0.6] },
+    curve: { type: 'curve', a: [0.4, 0.7], b: [2.6, 0.7], bend: 1.2 },
+    pusher: { type: 'pusher', p: [0.5, 1.2], dir: 0, r: 0.6 },
     bouncer: { type: 'bouncer', a: [0.4, 1.7], b: [2.6, 0.9] },
     conveyor: { type: 'conveyor', a: [0.7, 1.2], b: [2.3, 1.2] },
     lever: { type: 'lever', p: [1.5, 1.05], angle: -15, l1: 1.2, l2: 1.2 },
