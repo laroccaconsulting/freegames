@@ -476,7 +476,6 @@ judges fairness and fun before merge.
    4-bit binary counter on the Workbench (an item-free board). Chapter 9
    "Memory": Count to two, Count to three (signal goals can require the
    lamp to stay dark until a time, so lighting on the wrong count fails).
-   Still to do: more Signals, Logic and Memory levels.
 7. ✅ Chips (`js/parts/chip.js`): Make a chip (sandbox menu) wraps the
    logic parts in a box; wires crossing it become input pins (left) and
    output pins (right). The definition travels inside the part (saves and
@@ -505,7 +504,14 @@ judges fairness and fun before merge.
    after every swing for 75 s, within 3% of real time. A geared
    escapement clock is still open: it needs toothed contact shapes the
    engine does not have yet.
-Still to do: movers, fixed parts and signal goals in the editor; a fifth
-level for Signals, Logic and Memory.
+11. ✅ Every chapter has five levels. New: Ride along (Signals: a beam is
+   only on while the crate is in it, so stretch it along the belt), One,
+   not both (Logic: exclusive or from four NANDs), Keep it going, Set and
+   reset and Count to four (Memory: a toggle drives a motor; a toggle's
+   clear pin; three toggles count to four). Signal goals can now ask the
+   lamp to light, then go dark and stay dark (`darkHold`).
+12. ✅ A fresh look: each board is a sheet of paper on a cutting-mat grid
+   with a hard ink shadow; buttons, cards and tiles have solid ink shadows.
+Still to do: movers, fixed parts and signal goals in the editor.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.
