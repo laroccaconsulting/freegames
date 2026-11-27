@@ -2,6 +2,8 @@
 // GitHub issue (see SUBMIT); good ones are checked by the tests (they must
 // still work) and land here with credit. Append only: ids are save keys
 // for the copy each player tinkers with.
+import { buildClock } from './clock.js';
+
 export const SUBMIT = 'https://github.com/laroccaconsulting/freegames/issues/new?labels=contraption-machine&title=Machine%3A+&body=Link%3A+%0A%0AWhat+it+does%3A+';
 
 export const GALLERY = [
@@ -54,5 +56,14 @@ export const GALLERY = [
       { type: 'wire', a: [13, 4], b: [13, 7] },
       { type: 'wire', a: [13, 7], b: [10, 4] },
     ],
+  },
+  {
+    id: 'digital-clock',
+    title: 'Digital clock',
+    by: 'The Contraption workshop',
+    level: 'bench-big',
+    show: 70,
+    note: 'Minutes and seconds from 138 parts: a NAND-and-delay heartbeat, four counter chips (each clears itself at 10 or 6 and passes a carry on) and four 7-segment decoder chips made of 21 NANDs each, lighting pixel digits. Open the chips: it is all NANDs, delays and pixels.',
+    parts: buildClock().parts,
   },
 ];

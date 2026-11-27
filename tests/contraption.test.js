@@ -132,7 +132,8 @@ test('every gallery machine still does what it says', async () => {
     assert.ok(!ids.has(g.id), `${g.id} unique`);
     ids.add(g.id);
     const { BENCH } = await import('../games/contraption/js/levels.js');
-    const level = g.level === 'sandbox' ? ALL_PARTS_SANDBOX : g.level === 'bench' ? BENCH : levelById(g.level);
+    const { BIG_BENCH } = await import('../games/contraption/js/levels.js');
+    const level = g.level === 'sandbox' ? ALL_PARTS_SANDBOX : g.level === 'bench' ? BENCH : g.level === 'bench-big' ? BIG_BENCH : levelById(g.level);
     const parts = g.parts.map((p, i) => ({ ...p, id: `g${i}` }));
     assert.equal(problems(level, parts).size, 0, `${g.id} is placeable ${JSON.stringify([...problems(level, parts)])}`);
     if (g.show) {
@@ -249,4 +250,34 @@ test('chips: wrapped logic behaves exactly like the gates inside it', async () =
   for (let i = 0; i < 6; i++) r.tick();
   const v = (r.signals.get('k/b0') ? 1 : 0) + (r.signals.get('k/b1') ? 2 : 0);
   assert.equal(v, rises % 4, `chip counter shows ${v} after ${rises} beats`);
+});
+
+test('the digital clock tells the time: every beat for two minutes, rollovers included', async () => {
+  const { buildClock, readClock } = await import('../games/contraption/js/clock.js');
+  const { makeRun } = await import('../games/contraption/js/machine.js');
+  const { BIG_BENCH } = await import('../games/contraption/js/levels.js');
+  const { parts, display } = buildClock();
+  assert.equal(problems(BIG_BENCH, parts).size, 0);
+  const run = makeRun(BIG_BENCH, parts);
+  const fmt = (n) => `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
+  let beats = 0;
+  let was = run.signals.get('beat');
+  let since = -1;
+  let checked = 0;
+  while (beats < 125) {
+    run.tick();
+    const on = run.signals.get('beat');
+    if (on && !was) {
+      beats++;
+      since = 0;
+    } else if (since >= 0) since++;
+    was = on;
+    // read it a quarter second after each beat, once the ripple has settled
+    if (since === 30) {
+      assert.equal(readClock(run.signals, display), fmt(beats), `after ${beats} beats`);
+      checked++;
+    }
+  }
+  assert.ok(checked >= 124);
+  assert.ok(Math.abs(run.time / beats - 1) < 0.01, `a beat is about a second (${(run.time / beats).toFixed(4)} s)`);
 });

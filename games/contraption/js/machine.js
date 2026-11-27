@@ -298,9 +298,14 @@ export function build(level, parts, { sandbox = false } = {}) {
   const sensors = all2.filter((p) => PARTS[p.type].sense);
   const logic = [...all2.filter((p) => PARTS[p.type].logic), ...chips.inner];
   // a wire to or from a chip pin goes to the gate behind that pin
-  const end = (hit, dir) => (hit?.part.type === 'chip' ? chips.pin.get(`${hit.part.id}:${dir}:${hit.pin}`) : hit?.part);
+  // { part, pin } behind a wire end: a chip pin leads to the gate (and its pin) inside
+  const end = (hit, dir) => (hit?.part.type === 'chip' ? chips.pin.get(`${hit.part.id}:${dir}:${hit.pin}`) : hit && { part: hit.part, pin: dir === 'in' ? hit.pin : 0 });
   const wires = [
-    ...all2.filter((p) => p.type === 'wire').map((w) => ({ from: end(PARTS.wire.source(w, all2), 'out'), to: end(PARTS.wire.target(w, all2), 'in') })),
+    ...all2.filter((p) => p.type === 'wire').map((w) => {
+      const a = end(PARTS.wire.source(w, all2), 'out');
+      const b = end(PARTS.wire.target(w, all2), 'in');
+      return { from: a?.part, to: b?.part, toPin: b?.pin || 0 };
+    }),
     ...chips.links,
   ].filter((w) => w.from && w.to);
   const gated = new Set([...wires.map((w) => w.to), ...all2.filter((p) => p.type === 'motor' && p.switched)]);
@@ -364,16 +369,19 @@ function updateSignals(run, settle = false) {
   for (const p of sensors) next.set(p.id, settle ? false : !!PARTS[p.type].sense(p, run, run.partBodies.get(p.id)));
   // sensors are read now; gates answer one step late, so loops are well defined
   const val = (p) => (PARTS[p.type].sense ? next.get(p.id) : prev.get(p.id)) || false;
+  // inputs per part, per pin: pins[0] is the main input, pins[1] a second pin (a toggle's clear)
   const ins = new Map();
   for (const w of wires) {
-    if (!ins.has(w.to)) ins.set(w.to, []);
-    ins.get(w.to).push(val(w.from));
+    if (!ins.has(w.to)) ins.set(w.to, [[]]);
+    const pins = ins.get(w.to);
+    (pins[w.toPin] ||= []).push(val(w.from));
   }
   for (const g of logic) {
     if (!run.logicState.has(g)) run.logicState.set(g, {});
-    next.set(g.id, !!PARTS[g.type].logic(g, ins.get(g) || [], run.logicState.get(g), settle));
+    const pins = ins.get(g) || [[]];
+    next.set(g.id, !!PARTS[g.type].logic(g, pins[0] || [], run.logicState.get(g), settle, pins));
   }
-  for (const t of run.trains) for (const m of t.motors) if (m.part && (m.part.switched || ins.has(m.part))) m.off = !(ins.get(m.part) || []).some(Boolean);
+  for (const t of run.trains) for (const m of t.motors) if (m.part && (m.part.switched || ins.has(m.part))) m.off = !(ins.get(m.part)?.[0] || []).some(Boolean);
   run.signals = next;
 }
 

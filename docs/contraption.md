@@ -482,7 +482,14 @@ judges fairness and fun before merge.
    output pins (right). The definition travels inside the part (saves and
    links carry it) and a library keeps up to 30 for the tray. At run time a
    chip is unpacked into its gates, so it behaves exactly like them (tested
-   with a wrapped NOT and a wrapped 2-bit counter). Still to do: displays
-   (a 7-segment decoder chip) and the two clocks.
+   with a wrapped NOT and a wrapped 2-bit counter).
+8. ✅ Digital clock (`js/clock.js`, in the Gallery): a NAND-and-delay
+   heartbeat, four counter chips (toggles in a ripple chain; a NAND spots
+   10 or 6 and drives every bit's new clear pin) and four 7-segment decoder
+   chips (21 NANDs each: one per digit pattern, one per segment) lighting
+   3×5 pixel digits; 138 parts. The test reads the display after every
+   beat for two minutes, rollovers included. A beat is 121/120 s: whole
+   steps cannot make exactly one second. Still to do: the mechanical clock
+   (pendulum, escapement, 60:1 train) and the level editor.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.
