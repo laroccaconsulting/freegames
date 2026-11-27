@@ -8,6 +8,7 @@ export const CHANGES = [
       'Make a level (title screen): draw walls, spikes and no-build zones, place the cup, a ball, crates, steel balls or eggs, and choose the parts on offer.',
       'Try it and solve it once: your solution sets the star targets, and only solved levels can be shared.',
       'Share a level by link. Whoever opens it can play it; your solution stays hidden unless they ask for a hint.',
+      'Two new levels: One switch, two belts (Signals) and Both home (Logic).',
     ],
   },
   {
