@@ -3,7 +3,7 @@
 // still work) and land here with credit. Append only: ids are save keys
 // for the copy each player tinkers with.
 import { buildClock, PENDULUM_BOARD, buildGearClock, GEAR_CLOCK_BOARD } from './clock.js';
-import { TRAPDOOR_CATAPULT, ESCALATOR, LONG_WAY, MARBLE_MACHINE, KICK_AND_CURVE } from './showcase.js';
+import { TRAPDOOR_CATAPULT, ESCALATOR, LONG_WAY, MARBLE_MACHINE, KICK_AND_CURVE, WINCH_LIFT } from './showcase.js';
 
 export const SUBMIT = 'https://github.com/laroccaconsulting/freegames/issues/new?labels=contraption-machine&title=Machine%3A+&body=Link%3A+%0A%0AWhat+it+does%3A+';
 
@@ -132,5 +132,14 @@ export const GALLERY = [
     board: KICK_AND_CURVE.board,
     note: 'A motor waits a second, then its crank works a pusher that kicks the ball off the shelf. A curve catches the fall and bends it into a fast sideways roll: the ball leaves the curve going three times as fast across as a straight ramp would send it, and sails into the cup.',
     parts: KICK_AND_CURVE.parts,
+  },
+  {
+    id: 'winch',
+    title: 'Winch',
+    by: 'The Contraption workshop',
+    level: 'bench',
+    board: WINCH_LIFT.board,
+    note: 'The ball rolls into the bucket and waits. Then a motor, geared down three to one, winds the drum: the rope shortens, the bucket climbs nine cells, tips over its lip at the top and pours the ball down the chute into the cup.',
+    parts: WINCH_LIFT.parts,
   },
 ];

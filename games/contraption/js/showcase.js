@@ -91,3 +91,17 @@ export const KICK_AND_CURVE = {
     {type: 'curve', a: [7, 8], b: [11, 12], bend: 1},
   ],
 };
+
+// A ball rolls into the bucket; after five seconds a geared motor winds the
+// winch, the bucket rises nine cells, tips over its lip onto the chute, and
+// the ball rolls into the cup.
+export const WINCH_LIFT = {
+  board: { w: 24, h: 16, walls: [[0, 15, 24, 1], [12.75, 8.5, 4.5, 0.5]], goal: { x: 13, y: 6, w: 4, h: 2.5, cup: true }, items: [{ type: 'ball', x: 2, y: 10.5 }] },
+  parts: [
+    { type: 'ramp', a: [1, 11], b: [9, 12] },
+    { type: 'winch', p: [10, 3], l: 10, side: 1 },
+    { type: 'gear', p: [10, 3], teeth: 30, plane: 0 },
+    { type: 'gear', p: [6, 3], teeth: 10, plane: 0 },
+    { type: 'motor', p: [6, 3], dir: -1, delay: 5 },
+  ],
+};
