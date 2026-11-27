@@ -416,6 +416,11 @@ export default {
       "id": "memory-done",
       "title": "Counting machine",
       "desc": "Finish the Memory chapter."
+    },
+    {
+      "id": "machines-done",
+      "title": "Rube Goldberg",
+      "desc": "Finish the Machines chapter."
     }
   ],
   "corridors": [

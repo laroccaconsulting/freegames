@@ -1020,7 +1020,7 @@ function onWin() {
   ach.at('stars-90', totalStars(progress));
   const c = level.chapter;
   if (!level.custom && chapterDone(progress, c)) {
-    ach.unlock(['slopes-done', 'levers-done', 'belts-done', 'gears-done', 'chains-done', 'timing-done', 'signals-done', 'logic-done', 'memory-done'][c]);
+    ach.unlock(['slopes-done', 'levers-done', 'belts-done', 'gears-done', 'chains-done', 'timing-done', 'signals-done', 'logic-done', 'memory-done', 'machines-done'][c]);
     const lv = LEVELS.filter((l) => l.chapter === c);
     if (lv.every((l) => progress[l.id].stars === 3)) ach.unlock('all-stars');
     if (lv.every((l) => !progress[l.id].hinted)) ach.unlock('no-hints');

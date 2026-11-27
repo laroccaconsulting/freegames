@@ -21,4 +21,5 @@ export default [
   { id: 'signals-done', title: 'Switched on', desc: 'Finish the Signals chapter.' },
   { id: 'logic-done', title: 'Logician', desc: 'Finish the Logic chapter.' },
   { id: 'memory-done', title: 'Counting machine', desc: 'Finish the Memory chapter.' },
+  { id: 'machines-done', title: 'Rube Goldberg', desc: 'Finish the Machines chapter.' },
 ];
