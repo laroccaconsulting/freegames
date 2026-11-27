@@ -577,5 +577,15 @@ judges fairness and fun before merge.
    Marble machine now runs five balls: the beam at the top both releases
    the next ball and counts the lap, so only one ball is ever in the
    scoop; checked for 10 minutes.
+18. ✅ Chapter 10, Machines: Hold that thought (trapdoor and beam; a
+   mover guards the throw for three seconds, so dropping at once fails),
+   Up the down slope (cleats and gearing: a smooth belt and a direct
+   motor both fail), Back under (the scoop), Metronome (5 blinks in 3.5 s:
+   a 3-cell rod wins, the standard 4 fails) and The long way round (the
+   Gallery chain, built by the player; a mover guards against dropping
+   the steel at once). The gate has no level: one pass of balls through a
+   scoop does not crowd it (that takes minutes of looping), so it stays a
+   sandbox and Gallery part. "Stopped short" now waits until every item
+   is still, helpers included.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.

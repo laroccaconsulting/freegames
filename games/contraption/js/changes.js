@@ -2,6 +2,14 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-09',
+    title: 'Chapter 10: Machines',
+    items: [
+      'Five new levels: Hold that thought (a trapdoor and its trigger), Up the down slope (cleats, geared down), Back under (the scoop), Metronome (a shorter pendulum swings faster) and The long way round, all of it at once.',
+      'A machine only counts as stuck once everything has stopped: a trigger ball still on its way may yet set things going.',
+    ],
+  },
+  {
     id: '2026-12-08',
     title: 'One at a time',
     items: [

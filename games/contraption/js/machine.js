@@ -505,7 +505,8 @@ export function makeRun(level, parts, opts = {}) {
       }
       // every undelivered item has come to rest: it is not going anywhere
       const waiting = run.trains.some((t) => t.motors.some((m) => world.time < (m.delay || 0)));
-      const still = !waiting && items.every((b) => !b.deliver || run.delivered[b.index] || (Math.hypot(b.vx, b.vy) < 0.08 && Math.abs(b.w) < 0.3));
+      // stuck only once everything has stopped: a helper still rolling (a trigger on its way) may yet set things going
+      const still = !waiting && items.every((b) => (b.deliver && run.delivered[b.index]) || b.gone || (Math.hypot(b.vx, b.vy) < 0.08 && Math.abs(b.w) < 0.3));
       // the sandbox has no 'stopped short': a machine there runs until you stop it
       run.still = still && !level.signalGoal && !opts.sandbox && items.some((b) => b.deliver) ? run.still + DT : 0;
       if (run.still >= STUCK_TIME) {
