@@ -21,7 +21,7 @@
 
 // Bump ENGINE when a change alters how any machine behaves (tests/contraption-golden.json
 // catches it). Saved and shared machines record the engine they were made on.
-export const ENGINE = 1;
+export const ENGINE = 2; // 2: free levers hold still until something touches them
 export const GRAVITY = 40;
 export const DT = 1 / 120;
 const ITERATIONS = 10;
@@ -483,8 +483,8 @@ export function addBody(world, opts) {
  * extra inertia of gears, drums and motor rotors). motors: [{ k, stall,
  * speed, dir, delay }]. jammed trains never move.
  */
-export function addTrain(world, { inertia = 0, motors = [], damping = 0.02, jammed = false } = {}) {
-  const t = { id: world.trains.length, inertia, motors, damping, jammed, theta: 0, v: 0, invI: 0, torque: 0 };
+export function addTrain(world, { inertia = 0, motors = [], damping = 0.02, jammed = false, held = false } = {}) {
+  const t = { id: world.trains.length, inertia, motors, damping, jammed, held, theta: 0, v: 0, invI: 0, torque: 0 };
   world.trains.push(t);
   return t;
 }
@@ -494,7 +494,7 @@ function finishTrains(world) {
     let I = t.inertia;
     for (const b of world.bodies) if (b.kind === 'rotor' && b.train === t) I += b.k * b.k * b.I;
     t.I = Math.max(I, 1e-3);
-    t.invI = t.jammed ? 0 : 1 / t.I;
+    t.invI = t.jammed || t.held ? 0 : 1 / t.I;
   }
   world.ready = true;
 }
@@ -776,6 +776,16 @@ export function step(world, dt = DT) {
 
   const contacts = findContacts(world);
 
+  // a held train (a free lever) stays put until something moving touches it
+  for (const c of contacts) {
+    for (const [r, o] of [[c.a, c.b], [c.b, c.a]]) {
+      if (r.kind === 'rotor' && r.train.held && o.kind === 'dynamic') {
+        r.train.held = false;
+        r.train.invI = r.train.jammed ? 0 : 1 / r.train.I;
+      }
+    }
+  }
+
   // forces
   for (const b of bodies) {
     if (b.kind !== 'dynamic') continue;
@@ -787,7 +797,7 @@ export function step(world, dt = DT) {
     b.w *= ad;
   }
   for (const t of trains) {
-    if (t.jammed) {
+    if (t.jammed || t.held) {
       t.v = 0;
       continue;
     }

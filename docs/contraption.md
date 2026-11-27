@@ -130,7 +130,7 @@ Title ──► Chapters ──► Level card ──► Build ⇄ Run ──► 
 | Part | Unlock | Snap | Physics |
 |---|---|---|---|
 | Ramp | Ch 1 | two pegs (any angle, up to 9 cells) | static plank; items slide or roll |
-| Lever | Ch 2 | fulcrum on a peg; arms 0.5–6 cells each, 15° steps | rigid bar free to rotate about the fulcrum; its own mass; torques from weight and contacts |
+| Lever | Ch 2 | fulcrum on a peg; arms 0.5–6 cells each, 15° steps (handles or inspector steppers) | rigid bar on the fulcrum; holds its set angle until something moving touches it (engine 2), then turns freely; light, so what lands on it decides the tip |
 | Weight | Ch 2 | a peg (sits there until Run) | heavy iron block (dynamic) for counterweights and drops |
 | Conveyor | Ch 3 | two drums on pegs (up to 10 cells, any angle) | belt surface moves at drum ω × r; idle unless driven |
 | Motor | Ch 3 | a peg (stacks with a drum, gear or lever) | torque falls linearly from stall torque (40) to zero at top speed (1.5 turns/s), solved inside the contact solver; direction; delay |

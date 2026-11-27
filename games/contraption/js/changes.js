@@ -2,6 +2,16 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-11-28',
+    title: 'Friendlier levers',
+    items: [
+      'A lever now stays exactly as you set it until something touches it, then it swings freely. What you build is what you get.',
+      'Set a lever precisely: tap it for left arm, right arm and angle buttons.',
+      'Levers are lighter, so whatever lands on one decides which way it tips.',
+      'Tipping point and Seesaw are reworked to match.',
+    ],
+  },
+  {
     id: '2026-11-27',
     title: 'Bigger machines',
     items: [
