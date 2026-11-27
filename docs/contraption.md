@@ -512,6 +512,14 @@ judges fairness and fun before merge.
    lamp to light, then go dark and stay dark (`darkHold`).
 12. ✅ A fresh look: each board is a sheet of paper on a cutting-mat grid
    with a hard ink shadow; buttons, cards and tiles have solid ink shadows.
-Still to do: movers, fixed parts and signal goals in the editor.
+13. ✅ Editor, part two: a Lamp tool (the goal becomes a lamp: stay lit,
+   blink N times, or light then go dark, with an optional "dark until";
+   items are all helpers), movers (drag for a slider between two points,
+   tap for a spinning arm; a settings dialog picks platform, gate, block
+   or arm, period or speed, waits, start offset and spikes; at most four),
+   and Machine (the ordinary build tools with every part; Done makes them
+   the level's fixed parts, and a fixed motor can be set to wait for a
+   signal). Level settings has a time limit. All of it is in level links;
+   lists from a link are capped to what the editor makes.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.
