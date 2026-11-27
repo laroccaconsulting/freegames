@@ -334,3 +334,22 @@ test('the pendulum clock: the physics keeps time to within a few percent', async
   }
   assert.ok(Math.abs(beats / 75 - 1) < 0.03, `${beats} swings in 75 s`);
 });
+
+test('lamps that must light, then go dark, and memory that must hold', async () => {
+  const { levelById } = await import('../games/contraption/js/levels.js');
+  const ids = (ps) => ps.map((p, i) => ({ id: `t${i}`, ...p }));
+  // One, not both: AND (lit once both are home, never dark again) fails
+  const and = ids([
+    { type: 'plate', p: [3, 8] }, { type: 'plate', p: [7, 9] }, { type: 'nand', p: [12, 12] }, { type: 'nand', p: [15, 12] },
+    { type: 'wire', a: [3, 8], b: [12, 12] }, { type: 'wire', a: [7, 9], b: [12, 12] }, { type: 'wire', a: [12, 12], b: [15, 12] }, { type: 'wire', a: [15, 12], b: [20, 11] },
+  ]);
+  const r1 = simulate(levelById('one-not-both'), and);
+  assert.equal(r1.status, 'fail');
+  assert.match(r1.reason, /go dark/);
+  // Set and reset: without the clear wire the lamp never goes out
+  const noClear = levelById('set-reset').solution.filter((p) => !(p.type === 'wire' && p.b[1] === 6));
+  assert.equal(simulate(levelById('set-reset'), noClear).status, 'fail');
+  // Ride along and Keep it going: a short beam straight to the motor stops the belt
+  assert.equal(simulate(levelById('ride-along'), ids([{ type: 'beam', a: [10, 8], b: [12, 8] }, { type: 'wire', a: [10, 8], b: [9, 9] }])).status, 'fail');
+  assert.equal(simulate(levelById('hold-the-door'), ids([{ type: 'beam', a: [3, 1], b: [3, 15] }, { type: 'wire', a: [3, 1], b: [8, 9] }])).status, 'fail');
+});

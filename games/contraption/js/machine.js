@@ -478,7 +478,15 @@ export function makeRun(level, parts, opts = {}) {
         if (lit && !run.lampWas) run.blinks = (run.blinks || 0) + 1;
         run.lampWas = lit;
         run.litFor = lit ? (run.litFor || 0) + DT : 0;
-        if ((sg.blinks && (run.blinks || 0) >= sg.blinks) || (sg.hold && run.litFor >= sg.hold)) {
+        // darkHold: light for hold seconds, then go dark and stay dark
+        if (sg.darkHold) {
+          if (sg.hold && run.litFor >= sg.hold) run.litDone = true;
+          run.darkFor = run.litDone && !lit ? (run.darkFor || 0) + DT : 0;
+          if (run.darkFor >= sg.darkHold) {
+            run.status = 'win';
+            return run.status;
+          }
+        } else if ((sg.blinks && (run.blinks || 0) >= sg.blinks) || (sg.hold && run.litFor >= sg.hold)) {
           run.status = 'win';
           return run.status;
         }
@@ -499,6 +507,7 @@ export function makeRun(level, parts, opts = {}) {
       if (run.time >= limit) {
         const sg = level.signalGoal;
         if (sg?.blinks) return run.fail('time', null, `The lamp blinked ${run.blinks || 0} of ${sg.blinks} times`);
+        if (sg?.darkHold) return run.fail('time', null, run.litDone ? `The lamp has to go dark and stay dark for ${sg.darkHold} s` : `The lamp has to stay lit for ${sg.hold} s, then go dark`);
         if (sg?.hold) return run.fail('time', null, `The lamp has to stay lit for ${sg.hold} s`);
         return run.fail('time', null, 'Out of time');
       }

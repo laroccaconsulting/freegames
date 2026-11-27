@@ -2,6 +2,16 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-02',
+    title: 'Five new levels',
+    items: [
+      'Every chapter now has five levels.',
+      'Signals: Ride along. A beam is only on while something is in it, so where you put it matters.',
+      'Logic: One, not both. Light the lamp while exactly one ball is home.',
+      'Memory: Keep it going, Set and reset, and Count to four.',
+    ],
+  },
+  {
     id: '2026-12-01',
     title: 'A fresh look',
     items: [
