@@ -234,7 +234,8 @@ export function build(level, parts, { sandbox = false } = {}) {
       }
       inertia += a.k * a.k * I;
     }
-    return addTrain(world, { inertia, motors, damping: motors.length ? 0.2 : 0.03, jammed: t.jammed });
+    // a train with no motor (a free lever, a loose gear) holds still until something touches it
+    return addTrain(world, { inertia, motors, damping: motors.length ? 0.2 : 0.03, jammed: t.jammed, held: !motors.length });
   });
   const ctx = {
     axle: (p) => {
