@@ -470,7 +470,7 @@ test('cleats carry a ball up a slope a smooth belt cannot; a trapdoor holds unti
   assert.ok(Math.abs(noWire.items[1].y - TRAPDOOR_CATAPULT.board.items[1].y) < 0.1, 'the steel ball is still on the trapdoor');
 });
 
-test('the marble machine loops for ever: both balls keep lapping and the counter keeps count', async () => {
+test('the marble machine loops for ever: every ball keeps lapping, one at a time through the gate, and the counter keeps count', async () => {
   const { MARBLE_MACHINE } = await import('../games/contraption/js/showcase.js');
   const { makeRun } = await import('../games/contraption/js/machine.js');
   const { BENCH } = await import('../games/contraption/js/levels.js');
@@ -489,8 +489,38 @@ test('the marble machine loops for ever: both balls keep lapping and the counter
     run.items.forEach((b, i) => b.y < 4.5 && (tops[i] = run.time));
   }
   for (let i = 0; i < 4; i++) run.tick();
-  assert.ok(laps >= 30, `${laps} laps in 3 minutes`);
-  // both balls are still going round: each was at the top of the belt in the last 20 s
-  for (const t of tops) assert.ok(t > 160, `a ball last reached the top at ${t.toFixed(1)} s`);
+  assert.ok(laps >= 15, `${laps} laps in 3 minutes`);
+  // every ball is still going round: each was at the top of the belt in the last minute
+  for (const t of tops) assert.ok(t > 120, `a ball last reached the top at ${t.toFixed(1)} s`);
   assert.equal(bits.reduce((v, id, i) => v + (run.signals.get(id) ? 1 << i : 0), 0), laps % 16);
+});
+
+test('a gate lets exactly one ball through per signal', async () => {
+  const { makeRun } = await import('../games/contraption/js/machine.js');
+  const { BENCH } = await import('../games/contraption/js/levels.js');
+  const on = (x) => ({ type: 'ball', x, y: 4 + (x - 2) * 0.2 - 0.62, deliver: false });
+  const lvl = { ...BENCH, w: 24, h: 16, walls: [[0, 15, 24, 1]], items: [on(3.3), on(4.15), on(5.0), on(5.85)] };
+  const parts = [
+    { id: 'r', type: 'ramp', a: [2, 4], b: [12, 6] },
+    { id: 'g', type: 'gate', p: [7, 5], side: 1 },
+    { id: 'n', type: 'nand', p: [4, 10] },
+    { id: 'd', type: 'delay', p: [4, 13], wait: 1 },
+    { id: 'w1', type: 'wire', a: [4, 10], b: [4, 13] },
+    { id: 'w2', type: 'wire', a: [4, 13], b: [4, 10] },
+    { id: 'w3', type: 'wire', a: [4, 10], b: [7, 5] },
+  ];
+  const run = makeRun(lvl, parts, { sandbox: true });
+  const pulses = [];
+  let was = false;
+  const passed = [];
+  while (run.time < 9.5) {
+    run.tick();
+    const s = !!run.signals.get('n');
+    if (s && !was) pulses.push(run.time);
+    was = s;
+    run.items.forEach((b, i) => b.x > 7.8 && !passed.includes(i) && passed.push(i));
+    // never more balls through than pulses so far
+    assert.ok(passed.length <= pulses.length, `${passed.length} balls through after ${pulses.length} pulses at ${run.time.toFixed(2)} s`);
+  }
+  assert.ok(passed.length >= 3, `${passed.length} balls through`);
 });

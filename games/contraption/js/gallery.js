@@ -121,7 +121,7 @@ export const GALLERY = [
     level: 'bench',
     board: MARBLE_MACHINE.board,
     show: 120,
-    note: 'It never stops. A cleated belt carries the balls up and tips them over the top; they run down two ramps and back under the belt into its scoop, a curved trough round the bottom drum (a bucket elevator\'s boot), where the cleats pick them up again. A beam on the way down counts every lap in binary on four pixels.',
+    note: 'It never stops. Five balls queue at a gate. A cleated belt carries one up and tips it over the top, through a beam: that lets the next ball go, and counts the lap in binary on four pixels. The balls run down and back under the belt into its scoop, a curved trough round the bottom drum (a bucket elevator\'s boot), where the cleats pick them up again.',
     parts: MARBLE_MACHINE.parts,
   },
 ];

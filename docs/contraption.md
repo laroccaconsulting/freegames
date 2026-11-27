@@ -566,5 +566,16 @@ judges fairness and fun before merge.
    ball, so it must stop short. Gallery: Marble machine, two balls (three
    jam the scoop: that is the one-at-a-time gate's job) and a 4-bit lap
    counter; tested for 3 minutes, checked for 10 (124 laps).
+17. ✅ The Gate: two kinematic pins one ball apart that pop up through a
+   track. No signal: front up, back down. Signal: front down, back up. So
+   one ball per signal, however long it lasts; once opened it stays open
+   0.4 s, so a ball flashing through a beam is enough (a shorter pulse let
+   the pins half-move and deadlocked the queue). The back pin sits a
+   little upstream of where two queued balls touch (gap 1.0, balls 0.8):
+   a pin rising exactly at the contact wedges both balls up. Parts that
+   follow a signal every step use a `follow(run, part, on)` hook. The
+   Marble machine now runs five balls: the beam at the top both releases
+   the next ball and counts the lap, so only one ball is ever in the
+   scoop; checked for 10 minutes.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.

@@ -2,6 +2,14 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-08',
+    title: 'One at a time',
+    items: [
+      'New part, the Gate (in the sandbox from the Signals chapter): two pins one ball apart. Each signal lets exactly one ball through, however long it lasts; the rest wait their turn.',
+      'The Marble machine now runs five balls: each one that reaches the top lets the next one go, so the scoop never crowds.',
+    ],
+  },
+  {
     id: '2026-12-07',
     title: 'Round and round',
     items: [
