@@ -601,5 +601,13 @@ judges fairness and fun before merge.
    about the rope instead, the ball went back down the far side). Rope
    with real tension (a pulley and a counterweight) still needs a
    constraint the engine does not have. Gallery: Winch.
+21. ✅ Polish: the view follows the action on boards bigger than the
+   screen (the item still to deliver, else the fastest; only when it
+   leaves the middle 40%, eased; dragging stops it), and Replay re-runs
+   the machine at half speed without counting (deterministic, so it is the
+   same run). Performance: physics runs 125–980 times faster than real time
+   here for every Gallery machine; drawing at a 6x CPU slowdown gives
+   18–27 frames a second (Clockwork, with its gear teeth and dial ticks,
+   is the slowest) while machine time keeps up with real time.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.

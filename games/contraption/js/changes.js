@@ -2,6 +2,14 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-12',
+    title: 'Watch it again',
+    items: [
+      'On boards bigger than the screen, the view now follows the action while your machine runs. Drag to look elsewhere and it stops following.',
+      'Replay (after a win) runs your machine again from the start at half speed. It is exactly the same run: the physics never rolls dice. It counts as nothing: no try, no score.',
+    ],
+  },
+  {
     id: '2026-12-11',
     title: 'Springs and winches',
     items: [
