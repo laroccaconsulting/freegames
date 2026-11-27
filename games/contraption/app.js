@@ -205,7 +205,7 @@ function iconCanvas(type, w = 40, h = 32, palette = pal()) {
     lever: { type: 'lever', p: [1.5, 1.05], angle: -15, l1: 1.2, l2: 1.2 },
     weight: { type: 'weight', p: [1.5, 1.2] },
     motor: { type: 'motor', p: [1.5, 1.2], dir: 1 },
-    gear: { type: 'gear', p: [1.5, 1.2], teeth: 10 },
+    gear: { type: 'gear', p: [1.5, 1.2], teeth: 10, plane: 1 },
     chain: null,
     plate: { type: 'plate', p: [1.5, 1.3] },
     beam: { type: 'beam', a: [0.5, 1.2], b: [2.5, 1.2] },
@@ -238,6 +238,17 @@ function iconCanvas(type, w = 40, h = 32, palette = pal()) {
   return c;
 }
 
+// A small padlock in ink (the emoji one is in colour).
+function lockGlyph() {
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('viewBox', '0 0 16 16');
+  s.setAttribute('width', '13');
+  s.setAttribute('height', '13');
+  s.setAttribute('aria-hidden', 'true');
+  s.innerHTML = '<rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/>';
+  return s;
+}
+
 function renderLevels() {
   $('levels-stars').textContent = `★ ${totalStars(progress)} / ${LEVELS.length * 3}`;
   const next = nextLevel(progress);
@@ -250,7 +261,7 @@ function renderLevels() {
       return el(
         'section',
         { class: `chapter ${open ? '' : 'locked'}` },
-        el('div', { class: 'chapter-head' }, iconCanvas(ch.part, 56, 56), el('div', {}, el('h3', {}, `${c + 1}. ${ch.name}`), el('p', {}, open ? `${ch.blurb} ★ ${stars}/${lvls.length * 3}` : `Locked: finish chapter ${c} to open.`))),
+        el('div', { class: 'chapter-head' }, iconCanvas(ch.part, 56, 56), el('div', {}, el('small', { class: 'kicker' }, `Chapter ${c + 1}`), el('h3', {}, ch.name), el('p', {}, open ? `${ch.blurb} ★ ${stars}/${lvls.length * 3}` : `Locked: finish chapter ${c} to open.`))),
         el(
           'div',
           { class: 'tiles' },
@@ -268,7 +279,7 @@ function renderLevels() {
               },
               rec?.flawless ? el('span', { class: 'flag', 'aria-hidden': 'true' }, '⚑') : null,
               el('span', {}, numberOf(l).split('-')[1]),
-              el('small', {}, rec?.solved ? starText(rec.stars) : can ? '' : '🔒'),
+              rec?.solved ? el('small', {}, starText(rec.stars)) : can ? el('small', {}, 'Play') : lockGlyph(),
             );
           }),
         ),

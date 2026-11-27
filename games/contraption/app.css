@@ -13,8 +13,11 @@
   --accent-soft: rgba(0, 0, 0, 0.08);
   --chrome-bg: #ffffff;
   --chrome-text: #111111;
-  --shadow-lg: 0 0 0 2px #111111;
+  --shadow-lg: 6px 6px 0 #111111;
   --ink-line: 2px;
+  --hard: 3px 3px 0 var(--border);
+  --hard-sm: 1px 1px 0 var(--border);
+  --grid: #ececec;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,7 +33,8 @@
     --accent-soft: rgba(255, 255, 255, 0.12);
     --chrome-bg: #121212;
     --chrome-text: #f2f2f2;
-    --shadow-lg: 0 0 0 2px #f2f2f2;
+    --shadow-lg: 6px 6px 0 #f2f2f2;
+    --grid: #1f1f1f;
   }
 }
 
@@ -46,7 +50,8 @@
   --accent-soft: rgba(255, 255, 255, 0.12);
   --chrome-bg: #121212;
   --chrome-text: #f2f2f2;
-  --shadow-lg: 0 0 0 2px #f2f2f2;
+  --shadow-lg: 6px 6px 0 #f2f2f2;
+  --grid: #1f1f1f;
 }
 
 /* Hallows: bone ink on a night-purple board, pumpkin flags */
@@ -61,7 +66,8 @@
   --accent-contrast: #170f26;
   --chrome-bg: #170f26;
   --chrome-text: #f6e3b4;
-  --shadow-lg: 0 0 0 2px #f6e3b4, 0 0 40px -10px rgba(240, 138, 36, 0.4);
+  --shadow-lg: 6px 6px 0 #f6e3b4, 0 0 40px -10px rgba(240, 138, 36, 0.4);
+  --grid: #231839;
 }
 
 html,
@@ -96,7 +102,7 @@ body {
   border: var(--ink-line) solid var(--border);
   background: var(--surface);
   color: var(--text);
-  box-shadow: none;
+  box-shadow: var(--hard);
   font-weight: 700;
 }
 .btn-primary {
@@ -104,8 +110,14 @@ body {
   color: var(--accent-contrast);
   border-color: var(--accent);
 }
-.btn:active {
-  transform: translateY(1px);
+.btn:active,
+.hud-btn:active,
+.tool:active,
+.run-btn:active,
+.part-btn:active,
+.tile:not(:disabled):active {
+  transform: translate(2px, 2px);
+  box-shadow: var(--hard-sm);
 }
 .dialog-panel {
   border: var(--ink-line) solid var(--border);
@@ -129,10 +141,7 @@ body {
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-}
-.hud-btn:active,
-.tool:active {
-  background: var(--accent-soft);
+  box-shadow: var(--hard);
 }
 .hud-btn[hidden],
 .tool[hidden] {
@@ -141,6 +150,7 @@ body {
 .hud-btn[disabled],
 .tool[disabled] {
   opacity: 0.35;
+  box-shadow: none;
 }
 
 /* ---------- screens ---------- */
@@ -182,6 +192,7 @@ body {
   border: 3px solid var(--border);
   border-radius: 18px;
   background: var(--surface);
+  box-shadow: 6px 6px 0 var(--border);
   text-align: center;
 }
 .wordmark {
@@ -190,6 +201,14 @@ body {
   font-weight: 900;
   letter-spacing: -0.02em;
   line-height: 1;
+}
+.wordmark::after {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 6px;
+  margin: 12px auto 0;
+  background: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 10px);
 }
 :root[data-theme='hallows'] .wordmark {
   font-family: var(--font-display, serif);
@@ -232,12 +251,15 @@ body {
 .title-actions .btn.locked {
   border-style: dashed;
   color: var(--text-muted);
+  box-shadow: none;
 }
 
 /* ---------- level select ---------- */
 
 .levels-screen {
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 .bar {
   display: flex;
@@ -245,6 +267,7 @@ body {
   gap: 12px;
   padding: calc(var(--safe-top) + 10px) calc(var(--safe-right) + 12px) 10px calc(var(--safe-left) + 12px);
   border-bottom: var(--ink-line) solid var(--border);
+  background: var(--bg);
 }
 .bar h2 {
   margin: 0;
@@ -269,9 +292,19 @@ body {
   border-radius: 16px;
   padding: 12px;
   background: var(--surface);
+  box-shadow: 5px 5px 0 var(--border);
 }
 .chapter.locked {
   border-style: dashed;
+  color: var(--text-muted);
+  box-shadow: none;
+}
+.chapter-head .kicker {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--text-muted);
 }
 .chapter-head {
@@ -289,7 +322,8 @@ body {
 }
 .chapter-head h3 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  line-height: 1.15;
 }
 .chapter-head p {
   margin: 2px 0 0;
@@ -320,22 +354,30 @@ body {
   cursor: pointer;
   padding: 0;
 }
+.tile {
+  box-shadow: var(--hard);
+}
 .tile small {
   font-size: 0.72rem;
   letter-spacing: 1px;
 }
-.tile.solved {
+.tile.next {
   background: var(--accent);
   color: var(--accent-contrast);
 }
-.tile.next {
-  outline: 3px solid var(--border);
-  outline-offset: 2px;
+.tile.next small {
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.tile:not(.next):not(.solved) small {
+  color: var(--text-muted);
 }
 .tile:disabled {
   border-style: dashed;
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: default;
+  box-shadow: none;
 }
 .tile .flag {
   position: absolute;
@@ -425,6 +467,7 @@ body {
   border-radius: 12px;
   background: var(--surface);
   color: var(--text);
+  box-shadow: var(--hard);
   font: inherit;
   font-size: 0.72rem;
   font-weight: 700;
@@ -467,6 +510,11 @@ body {
 .part-btn.empty {
   border-style: dashed;
   opacity: 0.45;
+  box-shadow: none;
+}
+.part-btn.armed {
+  transform: translate(2px, 2px);
+  box-shadow: var(--hard-sm);
 }
 .dock-actions {
   display: flex;
@@ -487,9 +535,7 @@ body {
   font-size: 1.15rem;
   font-weight: 800;
   cursor: pointer;
-}
-.run-btn:active {
-  transform: translateY(1px);
+  box-shadow: var(--hard);
 }
 
 .inspector {
@@ -520,6 +566,7 @@ body {
   border: var(--ink-line) solid var(--border);
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: var(--hard);
 }
 .inspector .group button {
   min-height: 40px;
@@ -571,6 +618,7 @@ body {
   border: var(--ink-line) solid var(--border);
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: var(--hard);
 }
 .speed button {
   min-height: 48px;

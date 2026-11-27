@@ -2,6 +2,15 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-01',
+    title: 'A fresh look',
+    items: [
+      'Each board is now a sheet of paper on a cutting mat, with a crisp ink shadow.',
+      'Buttons, cards and level tiles have solid ink shadows and press down when tapped.',
+      'Level select: solved levels show their stars on white, the next one to play is filled in black, and locks are drawn in ink.',
+    ],
+  },
+  {
     id: '2026-11-30',
     title: 'Make your own levels',
     items: [
