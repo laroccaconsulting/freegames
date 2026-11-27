@@ -521,5 +521,24 @@ judges fairness and fun before merge.
    the level's fixed parts, and a fixed motor can be set to wait for a
    signal). Level settings has a time limit. All of it is in level links;
    lists from a link are capped to what the editor makes.
+14. ✅ Clockwork: a real anchor escapement. Teeth are rotor bodies (one
+   convex triangle each) on the escape wheel's axle, so they touch the
+   pendulum's two pallets (rotors on another train) through the ordinary
+   contact solver; masks keep teeth and pallets touching only each other.
+   The geometry (`js/escapement.js`) puts the pendulum's peg 3 pegs above
+   the wheel with pallets at ±45° from the top, so each pallet moves
+   radially in and out of the teeth; tooth depth, pallet depth, lift and
+   width came from a random search scored on a steady swing and one tooth
+   per swing, then checked for slack. The wheel's drive is a gentle
+   spring (a motor with low stall torque and light damping); a pendulum
+   train is never held and starts with a small push. A 4-cell rod beats
+   about once a second (59.5 s a turn: about 1% fast), and the swing
+   settles rather than dying away (checked for 30 minutes with the full
+   train). New parts: Escape wheel, Pendulum, Dial (a hand showing its
+   peg's turn); in the sandbox from the Memory chapter. Gallery:
+   Clockwork, with gears 15:25, 10:30, 10:40, 10:30 (60:1) to the minute
+   hand and a 1:1 chain plus 10:40, 10:30 (12:1) to the hour hand. Two
+   layers of gears cannot hold six stages in a row: a big gear always
+   fouls the next peg's small one, hence the chain.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.

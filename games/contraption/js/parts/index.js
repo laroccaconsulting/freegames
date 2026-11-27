@@ -35,9 +35,12 @@ import nand from './nand.js';
 import delay from './delay.js';
 import pixel from './pixel.js';
 import chip from './chip.js';
+import escape from './escape.js';
+import pendulum from './pendulum.js';
+import dial from './dial.js';
 import { PARTS_REF } from './ref.js';
 
-export const PARTS = Object.fromEntries([ramp, lever, weight, conveyor, motor, gear, chain, bouncer, plate, beam, wire, nand, delay, pixel, chip].map((p) => [p.type, p]));
+export const PARTS = Object.fromEntries([ramp, lever, weight, conveyor, motor, gear, chain, bouncer, plate, beam, wire, nand, delay, pixel, escape, pendulum, dial, chip].map((p) => [p.type, p]));
 Object.assign(PARTS_REF, PARTS);
 export const PART_TYPES = Object.keys(PARTS);
 export const partOf = (part) => PARTS[part.type];

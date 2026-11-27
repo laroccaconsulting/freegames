@@ -214,6 +214,9 @@ function iconCanvas(type, w = 40, h = 32, palette = pal()) {
     nand: { type: 'nand', p: [1.5, 1.2] },
     delay: { type: 'delay', p: [1.5, 1.0], wait: 1 },
     pixel: { type: 'pixel', p: [1.5, 1.2], mode: 'toggle' },
+    escape: { type: 'escape', p: [1.5, 1.2] },
+    pendulum: { type: 'pendulum', p: [1.5, -0.2], l: 3.1 },
+    dial: { type: 'dial', p: [1.5, 1.2], r: 1.1 },
     chip: { type: 'chip', p: [0, 0.2], def: { name: '', parts: [], links: [], inputs: ['a'], outputs: ['a'] } },
   }[type];
   v.s = Math.min(w / 3, h / 2.4);
@@ -230,9 +233,10 @@ function iconCanvas(type, w = 40, h = 32, palette = pal()) {
     ctx.translate(0, 0);
     drawPart(v, palette, { type: 'chain', a: g1.p, b: g2.p }, [g1, g2]);
     ctx.restore();
-  } else if (type === 'gear') {
+  } else if (type === 'gear' || type === 'escape' || type === 'pendulum') {
+    const k = { gear: 0.85, escape: 0.55, pendulum: 0.62 }[type];
     ctx.translate(1.5, 1.2);
-    ctx.scale(0.85, 0.85);
+    ctx.scale(k, k);
     ctx.translate(-1.5, -1.2);
     drawPart(v, palette, sample);
   } else if (sample) drawPart(v, palette, sample);
