@@ -365,7 +365,7 @@ export default {
     {
       "id": "all-levels",
       "title": "Master builder",
-      "desc": "Solve all thirty levels.",
+      "desc": "Solve thirty levels.",
       "goal": 30
     },
     {
@@ -406,6 +406,11 @@ export default {
       "id": "signals-done",
       "title": "Switched on",
       "desc": "Finish the Signals chapter."
+    },
+    {
+      "id": "logic-done",
+      "title": "Logician",
+      "desc": "Finish the Logic chapter."
     }
   ],
   "corridors": [

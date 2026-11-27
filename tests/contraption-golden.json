@@ -388,6 +388,33 @@
      1.988167
     ]
    ]
+  },
+  "upside-down": {
+   "status": "win",
+   "steps": 215,
+   "items": [
+    [
+     12.164722,
+     7.05,
+     0
+    ]
+   ]
+  },
+  "heartbeat": {
+   "status": "win",
+   "steps": 489,
+   "items": []
+  },
+  "remember": {
+   "status": "win",
+   "steps": 308,
+   "items": [
+    [
+     6,
+     14.6,
+     0
+    ]
+   ]
   }
  }
 }

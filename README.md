@@ -49,7 +49,7 @@ below in `js/` (rules, kept free of the DOM and unit-tested in `tests/`).
 | [Nine Men's Morris](https://laroccaconsulting.github.io/freegames/morris/) | [`games/morris`](games/morris) | Make mills, take pieces | `morris.js` (rules + alpha-beta) |
 | [Backgammon](https://laroccaconsulting.github.io/freegames/backgammon/) | [`games/backgammon`](games/backgammon) | Race, hit and bear off against the computer | `engine.js`, `bot.js`, `board.js` |
 | [Wand](https://laroccaconsulting.github.io/freegames/wand/) | [`games/wand`](games/wand) | Trace the shape, cast the spell | `recognizer.js`, `glyphs.js`, `levels.js`, `scene.js` |
-| [Contraption](https://laroccaconsulting.github.io/freegames/contraption/) | [`games/contraption`](games/contraption) | Build a machine from ramps, levers, belts and gears; real physics, 33 levels with sensors and wires, a sandbox, a gallery and machines shared by link, ink-on-paper look for daylight and e-paper screens ([requirements](docs/contraption.md)) | `physics.js` (rigid bodies, gear trains), `machine.js` (parts, rules, runs), `levels.js` (each with a proven solution), `progress.js`, `render.js`/`draw.js` |
+| [Contraption](https://laroccaconsulting.github.io/freegames/contraption/) | [`games/contraption`](games/contraption) | Build a machine from ramps, levers, belts and gears; real physics, 36 levels with sensors, wires and logic gates, a sandbox, a gallery and machines shared by link, ink-on-paper look for daylight and e-paper screens ([requirements](docs/contraption.md)) | `physics.js` (rigid bodies, gear trains), `machine.js` (parts, rules, runs), `levels.js` (each with a proven solution), `progress.js`, `render.js`/`draw.js` |
 
 ## Docs
 

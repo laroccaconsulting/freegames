@@ -11,7 +11,7 @@ import { LEVELS, simulate, withIds } from './lib.mjs';
 import { ENGINE } from '../../games/contraption/js/physics.js';
 
 const FILE = new URL('../../tests/contraption-golden.json', import.meta.url);
-const r6 = (v) => Math.round(v * 1e6) / 1e6;
+const r6 = (v) => Math.round(v * 1e6) / 1e6 || 0; // no -0: JSON cannot keep it
 
 export function outcomes() {
   const out = {};

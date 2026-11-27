@@ -8,18 +8,18 @@ const at = (others, p, pin) => others.find((o) => PARTS_REF[o.type]?.[pin] && ke
 export default {
   type: 'wire',
   name: 'Wire',
-  blurb: 'Carries a signal from a plate or beam to a motor.',
+  blurb: 'Carries a signal from a sensor or gate to a motor, gate or pixel.',
   physics: 'Signals are on or off. A wired motor runs only while a wire into it is on.',
   tip: 'Tap the sensor, then the motor.',
   layer: 5,
   back: true,
   free: true,
-  link: { first: 'output', second: 'input', words: ['a plate or beam', 'a motor'] },
+  link: { first: 'output', second: 'input', words: ['where the signal comes from', 'where it goes'] },
   pegs: (part) => [part.a, part.b],
   shape: (part) => ({ verts: [part.a, part.b], radius: 0.25 }),
   check: (level, part, others) => {
-    if (!at(others, part.a, 'output')) return 'A wire starts at a plate or a beam lamp';
-    if (!at(others, part.b, 'input')) return 'A wire ends at a motor';
+    if (!at(others, part.a, 'output')) return 'A wire starts at a sensor or a gate';
+    if (!at(others, part.b, 'input')) return 'A wire ends at a motor, gate or pixel';
     if (key(part.a) === key(part.b)) return 'Pick two different parts';
     const same = (o) => key(o.a) === key(part.a) && key(o.b) === key(part.b);
     if (others.some((o) => o !== part && o.id !== part.id && o.type === 'wire' && same(o))) return 'Already wired';

@@ -13,7 +13,7 @@ import { encodeMachine, decodeMachine, machineFromHash } from './js/share.js';
 import { GALLERY, SUBMIT } from './js/gallery.js';
 import { CHANGES } from './js/changes.js';
 import { DT as _DT, ENGINE } from './js/physics.js';
-import { LEVELS, CHAPTERS, levelById, SANDBOX, ALL_PARTS_SANDBOX } from './js/levels.js';
+import { LEVELS, CHAPTERS, levelById, SANDBOX, ALL_PARTS_SANDBOX, BENCH } from './js/levels.js';
 import { PARTS, PART_TYPES, PART_INFO, ITEM_INFO, problems, makeRun, key, moverMotion, gearR } from './js/machine.js';
 import { View, PALETTES, drawHandle } from './js/render.js';
 import { drawScene, drawPart, machineLayout, centre } from './js/draw.js';
@@ -196,6 +196,9 @@ function iconCanvas(type, w = 40, h = 32, palette = pal()) {
     plate: { type: 'plate', p: [1.5, 1.3] },
     beam: { type: 'beam', a: [0.5, 1.2], b: [2.5, 1.2] },
     wire: { type: 'wire', a: [0.5, 1.6], b: [2.5, 0.9] },
+    nand: { type: 'nand', p: [1.5, 1.2] },
+    delay: { type: 'delay', p: [1.5, 1.0], wait: 1 },
+    pixel: { type: 'pixel', p: [1.5, 1.2], mode: 'toggle' },
   }[type];
   v.s = Math.min(w / 3, h / 2.4);
   v.ox = (w - 3 * v.s) / 2;
@@ -769,7 +772,7 @@ function startRun() {
   store.set('stats', stats);
   ach.unlock('first-run');
   if (layout.trains.some((t) => t.jammed)) ach.unlock('jammed');
-  if (sandbox && parts.length >= 15) ach.unlock('tinkerer');
+  if (level.id === 'sandbox' && parts.length >= 15) ach.unlock('tinkerer');
   sfx.start();
   renderInspector();
   updateTray();
@@ -838,7 +841,7 @@ function onWin() {
   ach.at('stars-90', totalStars(progress));
   const c = level.chapter;
   if (chapterDone(progress, c)) {
-    ach.unlock(['slopes-done', 'levers-done', 'belts-done', 'gears-done', 'chains-done', 'timing-done', 'signals-done'][c]);
+    ach.unlock(['slopes-done', 'levers-done', 'belts-done', 'gears-done', 'chains-done', 'timing-done', 'signals-done', 'logic-done'][c]);
     const lv = LEVELS.filter((l) => l.chapter === c);
     if (lv.every((l) => progress[l.id].stars === 3)) ach.unlock('all-stars');
     if (lv.every((l) => !progress[l.id].hinted)) ach.unlock('no-hints');
@@ -999,7 +1002,7 @@ async function clearMachine() {
 
 function partsGuide() {
   const open = unlockedParts(progress);
-  const intro = { ramp: 1, lever: 2, weight: 2, conveyor: 3, motor: 3, gear: 4, chain: 5, bouncer: 6, plate: 7, beam: 7, wire: 7 };
+  const intro = { ramp: 1, lever: 2, weight: 2, conveyor: 3, motor: 3, gear: 4, chain: 5, bouncer: 6, plate: 7, beam: 7, wire: 7, nand: 8, delay: 8, pixel: 8 };
   openDialog({
     title: 'Parts guide',
     body: el(
@@ -1113,7 +1116,7 @@ async function gallery() {
   });
   const g = GALLERY.find((x) => x.id === v);
   if (!g) return;
-  const base = g.level === 'sandbox' ? ALL_PARTS_SANDBOX : levelById(g.level);
+  const base = g.level === 'sandbox' ? ALL_PARTS_SANDBOX : g.level === 'bench' ? BENCH : levelById(g.level);
   openLevel({ ...base, id: `gallery:${g.id}`, name: g.title, goalText: g.note }, { card: false, preset: g.parts });
   toast('Press Run to watch it. Change anything: your copy is kept.', { position: 'top', duration: 3500 });
 }
