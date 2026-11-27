@@ -57,6 +57,7 @@ let editing = false; // the level editor is open
 let draft = null;
 let edTool = 'wall';
 let edRect = null;
+let edLine = null; // a mover being dragged out
 let edUndo = [];
 let selecting = null; // the box being dragged by Make a chip
 let problemMap = new Map();
@@ -370,16 +371,22 @@ function buildTray() {
   updateTray();
 }
 
-const TOOL_LOOK = { wall: ['▦', 'Wall'], nobuild: ['▧', 'No-build'], danger: ['▲', 'Spikes'], cup: ['⊔', 'Cup'], ball: ['●', 'Ball'], crate: ['▣', 'Crate'], steel: ['◉', 'Steel'], egg: ['⬯', 'Egg'], erase: ['⌫', 'Erase'] };
+const TOOL_LOOK = { wall: ['▦', 'Wall'], nobuild: ['▧', 'No-build'], danger: ['▲', 'Spikes'], cup: ['⊔', 'Cup'], lamp: ['✺', 'Lamp'], ball: ['●', 'Ball'], crate: ['▣', 'Crate'], steel: ['◉', 'Steel'], egg: ['⬯', 'Egg'], mover: ['⇄', 'Mover'], machine: ['⚙', 'Machine'], erase: ['⌫', 'Erase'] };
+const TOOL_TIP = {
+  lamp: 'Tap to place the lamp. The goal becomes the lamp: set how in Level settings',
+  mover: 'Drag from where it starts to where it goes; tap for a spinning arm. Tap a mover to change it',
+  erase: 'Tap something to remove it',
+};
 
 function buildEditTray() {
   $('tray').replaceChildren(
     ...ED.TOOLS.map((t) => {
       const b = el('button', { class: `part-btn ${edTool === t ? 'armed' : ''}`, 'aria-label': TOOL_LOOK[t][1] }, el('span', { class: 'tool-glyph', 'aria-hidden': 'true' }, TOOL_LOOK[t][0]), el('span', {}, TOOL_LOOK[t][1]));
       b.addEventListener('click', () => {
+        if (t === 'machine') return editFixed();
         edTool = t;
         buildEditTray();
-        toast(ED.RECT_TOOLS.has(t) ? `Drag a box to add ${TOOL_LOOK[t][1].toLowerCase()}` : t === 'erase' ? 'Tap something to remove it' : `Tap to place the ${TOOL_LOOK[t][1].toLowerCase()}`, { position: 'top', duration: 1600 });
+        toast(TOOL_TIP[t] || (ED.RECT_TOOLS.has(t) ? `Drag a box to add ${TOOL_LOOK[t][1].toLowerCase()}` : `Tap to place the ${TOOL_LOOK[t][1].toLowerCase()}`), { position: 'top', duration: t === 'mover' || t === 'lamp' ? 3500 : 1600 });
       });
       return b;
     }),
@@ -618,7 +625,7 @@ canvas.addEventListener('pointerdown', (e) => {
   }
   const [wx, wy] = view.toWorld(sx, sy);
   if (editing) {
-    drag = ED.RECT_TOOLS.has(edTool) ? { kind: 'edrect', from: [wx, wy], to: [wx, wy] } : { kind: 'edtap', at: [wx, wy] };
+    drag = ED.RECT_TOOLS.has(edTool) ? { kind: 'edrect', from: [wx, wy], to: [wx, wy] } : edTool === 'mover' ? { kind: 'edmover', from: [wx, wy], to: [wx, wy] } : { kind: 'edtap', at: [wx, wy] };
     return;
   }
   if (selecting) {
@@ -687,6 +694,10 @@ canvas.addEventListener('pointermove', (e) => {
     drag.to = [wx, wy];
     edRect = { from: drag.from, to: drag.to };
     dirty = true;
+  } else if (drag.kind === 'edmover') {
+    drag.to = [wx, wy];
+    edLine = { from: drag.from, to: drag.to };
+    dirty = true;
   } else if (drag.kind === 'select') {
     drag.to = [wx, wy];
     selecting = { from: drag.from, to: drag.to };
@@ -730,6 +741,13 @@ function endPointer(e) {
   if (d.kind === 'edrect') {
     edRect = null;
     editDraft(ED.addRect(draft, edTool, d.from, d.to));
+  } else if (d.kind === 'edmover') {
+    edLine = null;
+    const short = Math.hypot(d.to[0] - d.from[0], d.to[1] - d.from[1]) < 0.75;
+    const at = ED.moverAt(draft, d.from);
+    if (short && at >= 0) moverSettings(at);
+    else if ((draft.movers || []).length >= ED.MAX_MOVERS) toast(`Up to ${ED.MAX_MOVERS} movers. Erase one first.`, { position: 'top' });
+    else editDraft(ED.addMover(draft, d.from, d.to));
   } else if (d.kind === 'edtap') {
     editDraft(edTool === 'erase' ? ED.eraseAt(draft, d.at) : ED.placeAt(draft, edTool, d.at));
   } else if (d.kind === 'select') {
@@ -808,6 +826,7 @@ function renderInspector() {
     }
     return group([el('button', { 'aria-label': c.aria, onclick: () => edit(part, c.apply) }, c.label)]);
   });
+  if (level?.fixedEditor && part.type === 'motor') controls.push(group([[false, 'Runs'], [true, 'Waits']].map(([v, lab]) => el('button', { class: !!part.switched === v ? 'on' : '', 'aria-label': v ? 'Waits for a signal' : 'Runs from the start', onclick: () => edit(part, { switched: v }) }, lab))));
   controls.push(el('button', { class: 'tool', 'aria-label': 'Delete', onclick: () => removePart(part.id) }, 'Delete'));
   host.replaceChildren(what, ...controls);
   host.hidden = false;
@@ -830,6 +849,7 @@ function edit(part, changes) {
 
 function startRun() {
   if (editing) return tryDraft();
+  if (level?.fixedEditor) return doneFixed();
   if (mode === 'run') return stopRun();
   if (problemMap.size) {
     const [id, why] = [...problemMap][0];
@@ -1353,7 +1373,7 @@ function openEditor() {
   show('play');
   if (!store.get('editorSeen')) {
     store.set('editorSeen', true);
-    toast('Draw walls, spikes and no-build zones, place the cup and items, then Try it. Menu for name and parts.', { position: 'top', duration: 6000 });
+    toast('Draw walls, spikes and no-build zones, place the cup (or a lamp) and items, add movers and fixed parts (Machine), then Try it. Menu for name and parts.', { position: 'top', duration: 6000 });
   }
 }
 
@@ -1364,6 +1384,58 @@ function editDraft(d, undoable = true) {
   store.set('draft', draft);
   level = draft;
   refresh();
+}
+
+// Machine: build the level's fixed parts with the ordinary tools (every
+// part, as many as you like). Done (or Back) makes them fixed.
+function editFixed() {
+  store.remove('machine:draft-fixed');
+  editing = false;
+  const all = Object.fromEntries(PART_TYPES.filter((t) => t !== 'chip').map((t) => [t, 99]));
+  openLevel({ ...draft, id: 'draft-fixed', name: 'Fixed parts', fixed: (draft.fixed || []).filter((p) => p.id === ED.LAMP), parts: all, fromEditor: true, fixedEditor: true }, { card: false, preset: ED.fixedMachine(draft) });
+  if (!store.get('fixedSeen')) {
+    store.set('fixedSeen', true);
+    toast('Place parts that come with the level. Players cannot move them. Tap a motor to make it wait for a signal. Done when finished.', { position: 'top', duration: 6000 });
+  }
+}
+
+function doneFixed() {
+  const d = ED.setFixed(draft, parts.map((p) => JSON.parse(JSON.stringify(p))));
+  store.remove('machine:draft-fixed');
+  if (JSON.stringify(d.fixed) !== JSON.stringify(draft.fixed)) {
+    edUndo = [...edUndo.slice(-40), draft];
+    store.set('draft', d);
+  }
+  openEditor();
+}
+
+async function moverSettings(i) {
+  const m = draft.movers[i];
+  let shape = ED.moverShapeOf(m);
+  const num = (value, min, max, step, aria) => el('input', { type: 'number', value, min, max, step, 'aria-label': aria, style: 'font:inherit;width:4.5em' });
+  const period = num(m.path?.period ?? 4, 1, 20, 0.5, 'Seconds there and back');
+  const hold = num(Math.round((m.path?.hold ?? 0.15) * 100), 0, 40, 5, 'Wait at each end, percent');
+  const phase = num(Math.round((m.path?.phase ?? 0) * 100), 0, 99, 5, 'Start part way, percent');
+  const speed = num(m.spin?.speed ?? 1, -4, 4, 0.25, 'Turn speed');
+  const length = num(m.length ?? 4, 2, 10, 0.5, 'Arm length');
+  const spikes = el('input', { type: 'checkbox', checked: !!m.danger, 'aria-label': 'Spikes' });
+  const slider = el('div', {}, el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Seconds there and back'), period), el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Wait at each end (%)'), hold), el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Start part way (%)'), phase));
+  const arm = el('div', {}, el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Turn speed (negative turns the other way)'), speed), el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Arm length'), length));
+  const shapes = [['platform', 'Platform'], ['gate', 'Gate'], ['block', 'Block'], ['arm', 'Arm']];
+  const pick = el('div', { class: 'group', role: 'radiogroup', 'aria-label': 'Shape' });
+  const paint = () => {
+    pick.replaceChildren(...shapes.map(([v, lab]) => el('button', { class: shape === v ? 'on' : '', role: 'radio', 'aria-checked': String(shape === v), onclick: () => ((shape = v), paint()) }, lab)));
+    slider.hidden = shape === 'arm';
+    arm.hidden = shape !== 'arm';
+  };
+  paint();
+  const v = await openDialog({
+    title: 'Mover',
+    body: el('div', { class: 'inspector mover-settings' }, pick, slider, arm, el('label', { class: 'field' }, spikes, ' Spikes: touching it breaks things'), shape !== 'arm' && m.spin ? el('p', { class: 'muted small' }, 'A new slider goes four cells right; erase it and drag one out to choose where.') : null),
+    actions: [{ label: 'Delete', value: 'delete' }, { label: 'Cancel', value: null }, { label: 'Save', value: 'ok', primary: true }],
+  });
+  if (v === 'delete') editDraft(ED.removeMover(draft, i));
+  else if (v === 'ok') editDraft(ED.setMover(draft, i, { shape, period: Number(period.value), hold: Number(hold.value) / 100, phase: Number(phase.value) / 100, speed: Number(speed.value), length: Number(length.value), danger: spikes.checked }));
 }
 
 function tryDraft() {
@@ -1383,13 +1455,41 @@ async function levelSettings() {
     counts[t] = input;
     return el('label', { class: 'card-part' }, iconCanvas(t, 36, 28), PART_INFO[t].name, input);
   });
+  const num = (value, min, max, step, aria) => el('input', { type: 'number', value, min, max, step, 'aria-label': aria, style: 'font:inherit;width:4.5em' });
+  const limit = num(draft.timeLimit ?? 20, 3, 120, 1, 'Time limit in seconds');
+  const lg = ED.lampGoalOf(draft.signalGoal);
+  let lampBox = null;
+  const lampIn = {};
+  if (lg) {
+    lampIn.kind = el('select', { 'aria-label': 'Lamp goal', style: 'font:inherit' }, [['lit', 'Stay lit'], ['blink', 'Blink'], ['pulse', 'Light, then go dark']].map(([k, lab]) => el('option', { value: k, selected: lg.kind === k }, lab)));
+    lampIn.hold = num(lg.hold, 0.1, 30, 0.5, 'Seconds lit');
+    lampIn.blinks = num(lg.blinks, 1, 20, 1, 'Blinks');
+    lampIn.darkHold = num(lg.darkHold, 0.1, 30, 0.5, 'Seconds dark after');
+    lampIn.darkUntil = num(lg.darkUntil, 0, 60, 0.5, 'Must stay dark until');
+    const row = (lab, input) => el('label', { class: 'field' }, el('span', { class: 'field-label' }, lab), input);
+    const rows2 = { hold: row('Seconds lit', lampIn.hold), blinks: row('Blinks', lampIn.blinks), darkHold: row('Then seconds dark', lampIn.darkHold) };
+    const paint = () => {
+      const k = lampIn.kind.value;
+      rows2.hold.hidden = k === 'blink';
+      rows2.blinks.hidden = k !== 'blink';
+      rows2.darkHold.hidden = k !== 'pulse';
+    };
+    lampIn.kind.addEventListener('change', paint);
+    lampBox = el('div', {}, el('p', { class: 'field-label' }, 'Lamp goal'), lampIn.kind, rows2.hold, rows2.blinks, rows2.darkHold, row('Lighting before this many seconds fails (0: never)', lampIn.darkUntil));
+    paint();
+  }
   const v = await openDialog({
     title: 'Level settings',
-    body: el('div', {}, el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Name'), name), el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Goal'), goal), el('p', { class: 'field-label' }, 'Parts on offer'), el('div', { class: 'card-parts' }, rows)),
+    body: el('div', {}, el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Name'), name), el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Goal'), goal), lampBox, el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Time limit (seconds)'), limit), el('p', { class: 'field-label' }, 'Parts on offer'), el('div', { class: 'card-parts' }, rows)),
     actions: [{ label: 'Cancel', value: null }, { label: 'Save', value: 'ok', primary: true }],
   });
   if (v !== 'ok') return;
   let d = ED.setText(draft, { name: name.value, goalText: goal.value });
+  if (Number(limit.value) !== (draft.timeLimit ?? 20)) d = ED.setTimeLimit(d, limit.value);
+  if (lg) {
+    const next = ED.setLampGoal(d, { kind: lampIn.kind.value, hold: lampIn.hold.value, blinks: lampIn.blinks.value, darkHold: lampIn.darkHold.value, darkUntil: lampIn.darkUntil.value });
+    if (JSON.stringify(next.signalGoal) !== JSON.stringify(d.signalGoal)) d = next;
+  }
   const offer = Object.fromEntries(Object.entries(counts).map(([t, i]) => [t, Math.max(0, Math.min(9, Math.round(Number(i.value) || 0)))]));
   if (JSON.stringify(Object.entries(offer).filter(([, n]) => n)) !== JSON.stringify(Object.entries(draft.parts).filter(([, n]) => n))) d = ED.setParts(d, offer);
   editDraft(d);
@@ -1436,7 +1536,7 @@ function updateHud() {
   } else bits.push(`${used} parts`);
   $('h-info').textContent = editing ? (draft?.solved ? 'Solved: ready to share' : 'Not solved yet: Try it') : bits.join(' · ');
   $('h-hint').hidden = sandbox || editing || !!level.fromEditor;
-  $('d-run').querySelector('span').textContent = editing ? 'Try it' : 'Run';
+  $('d-run').querySelector('span').textContent = editing ? 'Try it' : level.fixedEditor ? 'Done' : 'Run';
 }
 
 // ---------- layout and drawing ----------
@@ -1590,6 +1690,7 @@ function draw(now) {
     const part = parts.find((p) => p.id === selected);
     for (const h of handlesOf(part)) drawHandle(view.ctx, view, pal(), h.at[0], h.at[1], drag?.kind === 'handle' && drag.which === h.which);
     if (chainFrom) drawHandle(view.ctx, view, pal(), chainFrom[0], chainFrom[1], true);
+    if (editing) drawMoverPaths();
     const box = selecting?.from ? selecting : edRect;
     if (box) {
       const c = view.ctx;
@@ -1603,6 +1704,42 @@ function draw(now) {
       c.restore();
     }
   }
+}
+
+// In the editor, each slider shows where it goes: a dashed track and an
+// outline at the far end. The mover being dragged out shows as an arrow.
+function drawMoverPaths() {
+  const c = view.ctx;
+  const p = pal();
+  c.save();
+  c.strokeStyle = p.ink;
+  c.lineWidth = view.px(1.6);
+  c.setLineDash([5 / view.s, 4 / view.s]);
+  for (const m of draft.movers || []) {
+    if (!m.path) continue;
+    const [ax, ay] = m.path.from;
+    const [bx, by] = m.path.to;
+    c.beginPath();
+    c.moveTo(ax, ay);
+    c.lineTo(bx, by);
+    c.stroke();
+    c.strokeRect(bx - (m.w ?? 1) / 2, by - (m.h ?? 1) / 2, m.w ?? 1, m.h ?? 1);
+  }
+  if (edLine) {
+    const [ax, ay] = edLine.from;
+    const [bx, by] = edLine.to;
+    c.setLineDash([]);
+    c.lineWidth = view.px(2.4);
+    c.beginPath();
+    c.moveTo(ax, ay);
+    c.lineTo(bx, by);
+    const a = Math.atan2(by - ay, bx - ax);
+    c.moveTo(bx - 0.5 * Math.cos(a - 0.5), by - 0.5 * Math.sin(a - 0.5));
+    c.lineTo(bx, by);
+    c.lineTo(bx - 0.5 * Math.cos(a + 0.5), by - 0.5 * Math.sin(a + 0.5));
+    c.stroke();
+  }
+  c.restore();
 }
 
 let lastTs = performance.now();
@@ -1656,6 +1793,7 @@ $('t-settings').addEventListener('click', openSettings);
 $('l-back').addEventListener('click', () => show('title'));
 $('h-back').addEventListener('click', () => {
   stopRun();
+  if (level?.fixedEditor) return doneFixed();
   if (level?.fromEditor) return openEditor();
   if (editing) {
     editing = false;

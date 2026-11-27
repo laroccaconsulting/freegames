@@ -2,6 +2,16 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-03',
+    title: 'More to make levels with',
+    items: [
+      'Make a level: a Lamp tool. Place a lamp and the goal becomes lighting it: stay lit, blink so many times, or light and then go dark. Level settings also has a time limit now.',
+      'Movers: drag out a platform that slides back and forth, or tap for a spinning arm. Tap one to make it a gate or a block, change its speed and waits, or give it spikes.',
+      'Machine: build parts that come with your level (belts, gears, motors, wires, anything). Players cannot move them. A fixed motor can wait for a signal.',
+      'All of it travels in level links.',
+    ],
+  },
+  {
     id: '2026-12-02',
     title: 'Five new levels',
     items: [

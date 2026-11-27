@@ -353,3 +353,58 @@ test('lamps that must light, then go dark, and memory that must hold', async () 
   assert.equal(simulate(levelById('ride-along'), ids([{ type: 'beam', a: [10, 8], b: [12, 8] }, { type: 'wire', a: [10, 8], b: [9, 9] }])).status, 'fail');
   assert.equal(simulate(levelById('hold-the-door'), ids([{ type: 'beam', a: [3, 1], b: [3, 15] }, { type: 'wire', a: [3, 1], b: [8, 9] }])).status, 'fail');
 });
+
+test('editor: lamp goals, fixed parts and movers, solved and shared by link', async () => {
+  const ED = await import('../games/contraption/js/editor.js');
+  // a lamp level: the heartbeat, made in the editor
+  let d = ED.newDraft();
+  d = ED.placeAt(d, 'lamp', [16.2, 8.1]);
+  assert.equal(d.goal, null);
+  assert.deepEqual(d.fixed.find((p) => p.id === 'lamp').p, [16, 8]);
+  assert.ok(d.items.every((it) => it.deliver === false), 'a lamp level delivers nothing');
+  d = ED.setLampGoal(d, { kind: 'blink', blinks: 3 });
+  assert.deepEqual(d.signalGoal, { lamp: 'lamp', blinks: 3 });
+  d = ED.setParts(d, { nand: 1, delay: 1, wire: 3 });
+  assert.equal(ED.draftProblem(d), null);
+  const beat = [
+    { id: 'a', type: 'nand', p: [8, 8] }, { id: 'b', type: 'delay', p: [8, 11], wait: 1 },
+    { id: 'c', type: 'wire', a: [8, 8], b: [8, 11] }, { id: 'e', type: 'wire', a: [8, 11], b: [8, 8] }, { id: 'f', type: 'wire', a: [8, 8], b: [16, 8] },
+  ];
+  const r = simulate(d, beat);
+  assert.equal(r.status, 'win', r.reason);
+  d = ED.solvedWith(d, beat, r.time);
+  const back = await ED.decodeLevel(await ED.encodeLevel(d));
+  assert.ok(!back.unverified, 'the shared lamp level re-runs and wins');
+  assert.deepEqual(back.signalGoal, d.signalGoal);
+  // erasing the lamp takes the lamp goal with it; the cup brings deliveries back
+  const noLamp = ED.eraseAt(d, [16, 8]);
+  assert.equal(noLamp.signalGoal, undefined);
+  assert.match(ED.draftProblem(noLamp), /cup or a lamp/);
+  const cupped = ED.placeAt(noLamp, 'cup', [17, 13]);
+  assert.equal(cupped.items[0].deliver, true);
+
+  // fixed parts: a switched motor and belt the player must wire up
+  let f = ED.newDraft();
+  f = ED.setFixed(f, [{ id: 'x', type: 'conveyor', a: [5, 9], b: [12, 9] }, { id: 'y', type: 'motor', p: [5, 9], dir: 1, delay: 0, switched: true }]);
+  assert.deepEqual(f.fixed.map((p) => [p.id, p.fixed]), [['f1', true], ['f2', true]]);
+  assert.equal(ED.fixedMachine(f).length, 2);
+  assert.ok(ED.fixedMachine(f).every((p) => !p.fixed));
+
+  // movers: a drag makes a slider, a tap a spinning arm; settings change them; the eraser removes them
+  let m = ED.newDraft();
+  m = ED.addMover(m, [6.2, 6], [6.1, 10.3]);
+  assert.deepEqual(m.movers[0].path.from, [6, 6]);
+  assert.deepEqual(m.movers[0].path.to, [6, 10.5]);
+  m = ED.addMover(m, [10, 4], [10.1, 4.1]);
+  assert.equal(m.movers[1].shape, 'bar');
+  assert.equal(ED.moverAt(m, [6.5, 6.1]), 0);
+  m = ED.setMover(m, 0, { shape: 'gate', period: 6, danger: true });
+  assert.equal(ED.moverShapeOf(m.movers[0]), 'gate');
+  assert.equal(m.movers[0].path.period, 6);
+  assert.equal(m.movers[0].danger, true);
+  assert.ok(simulate(m, []).status !== 'win', 'movers run without crashing');
+  const back2 = await ED.decodeLevel(await ED.encodeLevel(m));
+  assert.deepEqual(back2.movers, m.movers);
+  m = ED.eraseAt(m, [10, 4]);
+  assert.equal(m.movers.length, 1);
+});

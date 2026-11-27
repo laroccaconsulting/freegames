@@ -779,3 +779,23 @@ body {
   font-size: 1.5rem;
   line-height: 32px;
 }
+
+/* mover settings (level editor) */
+.mover-settings {
+  display: block;
+  border-bottom: 0;
+}
+.mover-settings .group {
+  margin-bottom: 12px;
+}
+.mover-settings .group button {
+  padding: 0 10px;
+}
+dialog .field {
+  display: block;
+  margin-bottom: 10px;
+}
+dialog .field input,
+dialog select {
+  margin-top: 4px;
+}
