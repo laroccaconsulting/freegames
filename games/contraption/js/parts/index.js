@@ -18,6 +18,7 @@
 //   controls?(part)  inspector controls; hint(part, ctx) one line of help
 //   output?(part) / input?(part)  the peg where a signal leaves or enters
 //   sense?(part, run, body)       a sensor's state after each step
+//   logic?(part, inputs, state)   a gate's output from last step's inputs
 //   link?  placed by tapping two parts (chain, wire): which pins it joins
 import ramp from './ramp.js';
 import lever from './lever.js';
@@ -30,9 +31,12 @@ import bouncer from './bouncer.js';
 import plate from './plate.js';
 import beam from './beam.js';
 import wire from './wire.js';
+import nand from './nand.js';
+import delay from './delay.js';
+import pixel from './pixel.js';
 import { PARTS_REF } from './ref.js';
 
-export const PARTS = Object.fromEntries([ramp, lever, weight, conveyor, motor, gear, chain, bouncer, plate, beam, wire].map((p) => [p.type, p]));
+export const PARTS = Object.fromEntries([ramp, lever, weight, conveyor, motor, gear, chain, bouncer, plate, beam, wire, nand, delay, pixel].map((p) => [p.type, p]));
 Object.assign(PARTS_REF, PARTS);
 export const PART_TYPES = Object.keys(PARTS);
 export const partOf = (part) => PARTS[part.type];

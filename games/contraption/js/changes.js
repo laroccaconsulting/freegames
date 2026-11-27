@@ -6,6 +6,7 @@ export const CHANGES = [
     title: 'Bigger machines',
     items: [
       'New chapter, Signals: pressure plates, light beams and wires. A wired motor waits for its signal.',
+      'New chapter, Logic: NAND gates, delays and pixels. Build a heartbeat, and one bit of memory. The Gallery has a binary counter.',
       'Share a machine by link, or save it to a file and open it again later.',
       'Gallery: machines worth watching, with credit. Send yours in.',
       'Gears now come in 10 to 40 teeth, on a back and a front layer: stack two on one peg to multiply ratios.',

@@ -131,9 +131,76 @@ test('every gallery machine still does what it says', async () => {
   for (const g of GALLERY) {
     assert.ok(!ids.has(g.id), `${g.id} unique`);
     ids.add(g.id);
-    const level = g.level === 'sandbox' ? ALL_PARTS_SANDBOX : levelById(g.level);
+    const { BENCH } = await import('../games/contraption/js/levels.js');
+    const level = g.level === 'sandbox' ? ALL_PARTS_SANDBOX : g.level === 'bench' ? BENCH : levelById(g.level);
     const parts = g.parts.map((p, i) => ({ ...p, id: `g${i}` }));
-    assert.equal(problems(level, parts).size, 0, `${g.id} is placeable`);
-    assert.equal(simulate(level, parts).status, 'win', `${g.id} delivers`);
+    assert.equal(problems(level, parts).size, 0, `${g.id} is placeable ${JSON.stringify([...problems(level, parts)])}`);
+    if (g.show) {
+      const { makeRun } = await import('../games/contraption/js/machine.js');
+      const run = makeRun(level, parts);
+      for (let i = 0; i < g.show * 120; i++) run.tick();
+      assert.equal(run.status, 'running', `${g.id} keeps running`);
+    } else assert.equal(simulate(level, parts).status, 'win', `${g.id} delivers`);
   }
+});
+
+test('logic: NAND + delay ticks, toggles count in binary, crossed NANDs remember', async () => {
+  const { makeRun } = await import('../games/contraption/js/machine.js');
+  const board = { id: 't', w: 24, h: 16, items: [], walls: [], parts: {}, stars: { parts: 99, time: 99 }, timeLimit: 30 };
+  const W = (id, a, b) => ({ id, type: 'wire', a, b });
+  // oscillator: NAND → delay(0.5 s) → back into the NAND; the NAND drives a chain of toggles
+  const parts = [
+    { id: 'n', type: 'nand', p: [2, 2] },
+    { id: 'd', type: 'delay', p: [4, 2], wait: 0.5 },
+    W('w1', [2, 2], [4, 2]),
+    W('w2', [4, 2], [2, 2]),
+    { id: 'b0', type: 'pixel', p: [6, 2], mode: 'toggle' },
+    { id: 'b1', type: 'pixel', p: [8, 2], mode: 'toggle' },
+    { id: 'b2', type: 'pixel', p: [10, 2], mode: 'toggle' },
+    // each bit flips when the one before it falls: through a NOT (a one-wire NAND)
+    { id: 'i0', type: 'nand', p: [6, 4] },
+    { id: 'i1', type: 'nand', p: [8, 4] },
+    W('w3', [2, 2], [6, 2]),
+    W('w4', [6, 2], [6, 4]),
+    W('w5', [6, 4], [8, 2]),
+    W('w6', [8, 2], [8, 4]),
+    W('w7', [8, 4], [10, 2]),
+  ];
+  const run = makeRun(board, parts);
+  let rises = 0;
+  let was = run.signals.get('n');
+  for (let i = 0; i < 120 * 10; i++) {
+    run.tick();
+    const on = run.signals.get('n');
+    if (on && !was) rises++;
+    was = on;
+  }
+  // one full tick = two delays plus two one-step gate delays: about 1 s, so ~10 rises in 10 s
+  assert.ok(rises >= 8 && rises <= 10, `oscillator rose ${rises} times in 10 s`);
+  // the toggles count the NAND's rising edges, in binary (allow a step for the ripple)
+  for (let i = 0; i < 12; i++) run.tick();
+  const value = ['b0', 'b1', 'b2'].reduce((v, id, i) => v + (run.signals.get(id) ? 1 << i : 0), 0);
+  assert.equal(value, rises % 8, `counter shows ${value}, rises ${rises}`);
+  // SR latch: two crossed NANDs. "Set" (active low) is held for half a
+  // second at the start, then released; the latch has to keep its state.
+  const latch = makeRun(board, [
+    { id: 'one', type: 'nand', p: [2, 8] }, // no inputs: always on
+    { id: 'd', type: 'delay', p: [4, 8], wait: 0.5 }, // off for 0.5 s, then on
+    { id: 'set', type: 'nand', p: [6, 8] }, // NOT of that: on for 0.5 s, then off
+    { id: 'setLow', type: 'nand', p: [8, 8] }, // NOT again: low (asserted) for 0.5 s, then released
+    W('p1', [2, 8], [4, 8]),
+    W('p2', [4, 8], [6, 8]),
+    W('p3', [6, 8], [8, 8]),
+    { id: 'a', type: 'nand', p: [2, 2] },
+    { id: 'c', type: 'nand', p: [2, 4] },
+    W('x', [2, 2], [2, 4]),
+    W('y', [2, 4], [2, 2]),
+    W('s', [8, 8], [2, 2]),
+  ]);
+  for (let i = 0; i < 240; i++) latch.tick();
+  const a1 = latch.signals.get('a');
+  assert.equal(a1, true, 'set');
+  assert.equal(latch.signals.get('c'), false);
+  for (let i = 0; i < 240; i++) latch.tick();
+  assert.equal(latch.signals.get('a'), a1, 'and it holds');
 });

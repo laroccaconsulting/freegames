@@ -1,7 +1,7 @@
 // Offline support for the hub page only. Each game has its own service
 // worker for its own folder, so requests outside FILES are left alone.
 // VERSION and FILES are rewritten by scripts/build-sw.mjs.
-const VERSION = '4f32b791c374';
+const VERSION = '39d736c11ef6';
 const FILES = [
   './',
   './achievements.js',

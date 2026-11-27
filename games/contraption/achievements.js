@@ -11,7 +11,7 @@ export default [
   { id: 'chains-done', title: 'Linked', desc: 'Finish the Chains chapter.' },
   { id: 'timing-done', title: 'Clockmaker', desc: 'Finish the Timing chapter.' },
   { id: 'all-stars', title: 'Starry', desc: 'Get three stars on every level of a chapter.' },
-  { id: 'all-levels', title: 'Master builder', desc: 'Solve all thirty levels.', goal: 30 },
+  { id: 'all-levels', title: 'Master builder', desc: 'Solve thirty levels.', goal: 30 },
   { id: 'stars-90', title: 'Perfectionist', desc: 'Collect all ninety stars.', goal: 90 },
   { id: 'long-throw', title: 'Long throw', desc: 'Send something more than twelve cells through the air.' },
   { id: 'jammed', title: 'Stuck fast', desc: 'Run a gear train that jams.', secret: true },
@@ -19,4 +19,5 @@ export default [
   { id: 'no-hints', title: 'On my own', desc: 'Finish a chapter without using a hint.' },
   { id: 'persistence', title: 'Persistence', desc: 'Fail fifty runs. Every one teaches something.', goal: 50, secret: true },
   { id: 'signals-done', title: 'Switched on', desc: 'Finish the Signals chapter.' },
+  { id: 'logic-done', title: 'Logician', desc: 'Finish the Logic chapter.' },
 ];

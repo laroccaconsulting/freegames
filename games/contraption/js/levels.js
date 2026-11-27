@@ -15,6 +15,7 @@ export const CHAPTERS = [
   { id: 'chains', name: 'Chains', part: 'chain', blurb: 'Send the turning somewhere else, and wait for the moment.' },
   { id: 'timing', name: 'Timing', part: 'bouncer', blurb: 'Moving pieces. Bounce, wait, and go.' },
   { id: 'signals', name: 'Signals', part: 'plate', blurb: 'Sensors and wires: the machine reacts to what happens.' },
+  { id: 'logic', name: 'Logic', part: 'nand', blurb: 'NOT, a heartbeat, and one bit of memory.' },
 ];
 
 export const LEVELS = [
@@ -705,6 +706,77 @@ export const LEVELS = [
       { id: 's4', type: 'wire', a: [16, 9], b: [4, 12] },
     ],
   },
+  // ---------------- 8. Logic ----------------
+  {
+    id: 'upside-down',
+    chapter: 7,
+    name: 'Upside down',
+    goalText: 'Stop the crate in the box. The belt has to run until the crate gets there, then stop.',
+    w: 24,
+    h: 16,
+    items: [{ type: 'crate', x: 5, y: 6.5 }],
+    walls: [[0, 15, 24, 1]],
+    danger: [[0, 14, 24, 1]],
+    goal: { x: 10, y: 6.4, w: 3, h: 1.3 },
+    fixed: [
+      { id: 'f1', type: 'conveyor', a: [3, 8], b: [20, 8], fixed: true },
+      { id: 'f2', type: 'motor', p: [3, 8], dir: 1, delay: 0, switched: true, fixed: true },
+    ],
+    parts: { beam: 1, nand: 1, wire: 2 },
+    stars: { parts: 4, time: 5 },
+    hint: 'A beam is on while the crate is in it, but the motor should run while it is NOT. Wire the beam through a NAND: one wire in makes NOT.',
+    solution: [
+      { id: 's1', type: 'beam', a: [12, 5], b: [12, 7] },
+      { id: 's2', type: 'nand', p: [14, 3] },
+      { id: 's3', type: 'wire', a: [12, 5], b: [14, 3] },
+      { id: 's4', type: 'wire', a: [14, 3], b: [3, 8] },
+    ],
+  },
+  {
+    id: 'heartbeat',
+    chapter: 7,
+    name: 'Heartbeat',
+    goalText: 'Make the lamp blink three times. Nothing moves here: it is all signals.',
+    w: 24,
+    h: 16,
+    items: [],
+    walls: [],
+    fixed: [{ id: 'f1', type: 'pixel', p: [16, 8], mode: 'lamp', fixed: true }],
+    signalGoal: { lamp: 'f1', blinks: 3 },
+    timeLimit: 12,
+    parts: { nand: 1, delay: 1, wire: 3 },
+    stars: { parts: 5, time: 5 },
+    hint: 'A NAND with its own output fed back (through a delay) can never make up its mind: it flips on and off for ever. Wire the NAND to the lamp too.',
+    solution: [
+      { id: 's1', type: 'nand', p: [8, 8] },
+      { id: 's2', type: 'delay', p: [8, 11], wait: 1 },
+      { id: 's3', type: 'wire', a: [8, 8], b: [8, 11] },
+      { id: 's4', type: 'wire', a: [8, 11], b: [8, 8] },
+      { id: 's5', type: 'wire', a: [8, 8], b: [16, 8] },
+    ],
+  },
+  {
+    id: 'remember',
+    chapter: 7,
+    name: 'Remember',
+    goalText: 'The ball flashes past the beam once. Keep the lamp lit afterwards.',
+    w: 24,
+    h: 16,
+    items: [{ type: 'ball', x: 6, y: 1.5, deliver: false }],
+    walls: [[0, 15, 24, 1]],
+    fixed: [{ id: 'f1', type: 'pixel', p: [18, 6], mode: 'lamp', fixed: true }],
+    signalGoal: { lamp: 'f1', hold: 2 },
+    timeLimit: 10,
+    parts: { beam: 1, pixel: 1, wire: 2 },
+    stars: { parts: 4, time: 3.5 },
+    hint: 'A beam is on only while the ball is in it. A pixel set to Toggle flips on when its signal comes on, and stays on.',
+    solution: [
+      { id: 's1', type: 'beam', a: [4, 8], b: [8, 8] },
+      { id: 's2', type: 'pixel', p: [12, 6], mode: 'toggle' },
+      { id: 's3', type: 'wire', a: [4, 8], b: [12, 6] },
+      { id: 's4', type: 'wire', a: [12, 6], b: [18, 6] },
+    ],
+  },
 ];
 
 // The sandbox: a big empty board. The game fills in the parts on offer
@@ -722,6 +794,22 @@ export const SANDBOX = {
   parts: {},
   stars: { parts: 99, time: 99 },
   timeLimit: 60,
+  solution: [],
+};
+// The workbench: an empty board for signal machines, with nothing to
+// deliver; a run goes on until you stop it.
+export const BENCH = {
+  id: 'bench',
+  chapter: -1,
+  name: 'Workbench',
+  goalText: 'Signals only.',
+  w: 24,
+  h: 16,
+  items: [],
+  walls: [],
+  parts: {},
+  stars: { parts: 99, time: 99 },
+  timeLimit: Infinity,
   solution: [],
 };
 export const ALL_PARTS_SANDBOX = { ...SANDBOX, parts: { ramp: 99, lever: 99, weight: 99, conveyor: 99, motor: 99, gear: 99, chain: 99, bouncer: 99 } };

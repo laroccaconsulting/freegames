@@ -463,7 +463,19 @@ judges fairness and fun before merge.
    separate switch part: a wired motor runs only while a wire into it is
    on, and a level can make a fixed motor wait (`switched: true`, drawn with
    a socket). Sensors read the world after each step; motors act on the next
-   step. Still to do: NAND, delay and pixel, and two more Signals levels.
+   step.
+7. ✅ (first half) Logic: NAND (any number of wires in; one wire is NOT),
+   delay (¼–5 s) and pixel (lamp, or toggle: flips on each rising edge, so
+   one bit of memory). Gates answer one step late, so loops are well
+   defined; at power-up the logic settles with sensors off so the switch-on
+   is not counted as an event. Tests cover an oscillator, a binary
+   up-counter (toggles chained through NOTs: they flip on falling edges)
+   and an SR latch that holds after its set is released. Levels can now
+   have a signal goal (a fixed lamp blinks N times, or stays lit N s).
+   Chapter 8 "Logic": Upside down, Heartbeat, Remember. The Gallery has a
+   4-bit binary counter on the Workbench (an item-free board). Still to
+   do: more Signals and Logic levels, a Memory chapter (latches, counters
+   as goals).
 7. Chips, displays, counters, then the two clocks.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.

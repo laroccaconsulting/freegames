@@ -293,12 +293,13 @@ export function build(level, parts, { sandbox = false } = {}) {
   // signals: wired motors start off and wait for their input
   const all2 = all;
   const sensors = all2.filter((p) => PARTS[p.type].sense);
+  const logic = all2.filter((p) => PARTS[p.type].logic);
   const wires = all2.filter((p) => p.type === 'wire').map((w) => ({ from: PARTS.wire.source(w, all2), to: PARTS.wire.target(w, all2) })).filter((w) => w.from && w.to);
   const gated = new Set([...wires.map((w) => w.to), ...all2.filter((p) => p.type === 'motor' && p.switched)]);
   for (const t of trainObjs) for (const m of t.motors) if (gated.has(m.part)) m.off = true;
   const signals = new Map();
   settle(world);
-  return { sensors, wires, signals, world, items, movers, statics, partBodies, trains: trainObjs, axles, analysis: trains, sandbox };
+  return { sensors, logic, logicState: new Map(), wires, signals, world, items, movers, statics, partBodies, trains: trainObjs, axles, analysis: trains, sandbox };
 }
 
 function moverShape(m) {
@@ -347,12 +348,33 @@ export function moverMotion(m) {
 
 // Sensors read the world after a step; wired motors act on the next step,
 // so a signal takes exactly one step to arrive. On/off only: no floats.
-function updateSignals(run) {
-  if (!run.sensors.length && !run.wires.length) return;
-  for (const p of run.sensors) run.signals.set(p.id, !!PARTS[p.type].sense(p, run, run.partBodies.get(p.id)));
-  const on = new Map();
-  for (const w of run.wires) if (run.signals.get(w.from.id)) on.set(w.to, true);
-  for (const t of run.trains) for (const m of t.motors) if (m.part && (m.part.switched || run.wires.some((w) => w.to === m.part))) m.off = !on.get(m.part);
+function updateSignals(run, settle = false) {
+  const { sensors, wires, logic } = run;
+  if (!sensors.length && !wires.length && !logic.length) return;
+  const prev = run.signals;
+  const next = new Map();
+  for (const p of sensors) next.set(p.id, settle ? false : !!PARTS[p.type].sense(p, run, run.partBodies.get(p.id)));
+  // sensors are read now; gates answer one step late, so loops are well defined
+  const val = (p) => (PARTS[p.type].sense ? next.get(p.id) : prev.get(p.id)) || false;
+  const ins = new Map();
+  for (const w of wires) {
+    if (!ins.has(w.to)) ins.set(w.to, []);
+    ins.get(w.to).push(val(w.from));
+  }
+  for (const g of logic) {
+    if (!run.logicState.has(g)) run.logicState.set(g, {});
+    next.set(g.id, !!PARTS[g.type].logic(g, ins.get(g) || [], run.logicState.get(g), settle));
+  }
+  for (const t of run.trains) for (const m of t.motors) if (m.part && (m.part.switched || ins.has(m.part))) m.off = !(ins.get(m.part) || []).some(Boolean);
+  run.signals = next;
+}
+
+// Power-up: before time starts, let the logic settle with every sensor off
+// (delays hold, toggles only note their input), so nothing counts the
+// switch-on as an event.
+function settleSignals(run) {
+  if (!run.logic.length) return;
+  for (let i = 0; i < 24; i++) updateSignals(run, true);
 }
 
 export const SETTLE_TIME = 0.5;
@@ -432,6 +454,18 @@ export function makeRun(level, parts, opts = {}) {
           if (run.inGoal[i] >= SETTLE_TIME) run.delivered[i] = true;
         }
       }
+      // a signal goal: a fixed lamp has to blink so many times
+      const sg = level.signalGoal;
+      if (sg) {
+        const lit = !!run.signals.get(sg.lamp);
+        if (lit && !run.lampWas) run.blinks = (run.blinks || 0) + 1;
+        run.lampWas = lit;
+        run.litFor = lit ? (run.litFor || 0) + DT : 0;
+        if ((sg.blinks && (run.blinks || 0) >= sg.blinks) || (sg.hold && run.litFor >= sg.hold)) {
+          run.status = 'win';
+          return run.status;
+        }
+      }
       if (goal && items.some((b) => b.deliver) && items.every((b) => !b.deliver || run.delivered[b.index])) {
         run.status = 'win';
         return run.status;
@@ -439,12 +473,17 @@ export function makeRun(level, parts, opts = {}) {
       // every undelivered item has come to rest: it is not going anywhere
       const waiting = run.trains.some((t) => t.motors.some((m) => world.time < (m.delay || 0)));
       const still = !waiting && items.every((b) => !b.deliver || run.delivered[b.index] || (Math.hypot(b.vx, b.vy) < 0.08 && Math.abs(b.w) < 0.3));
-      run.still = still ? run.still + DT : 0;
+      run.still = still && !level.signalGoal && items.some((b) => b.deliver) ? run.still + DT : 0;
       if (run.still >= STUCK_TIME) {
         const b = items.find((b) => b.deliver && !run.delivered[b.index]);
         return run.fail('stuck', b, `The ${ITEM_INFO[b.item.type].name} stopped short`);
       }
-      if (run.time >= limit) return run.fail('time', null, 'Out of time');
+      if (run.time >= limit) {
+        const sg = level.signalGoal;
+        if (sg?.blinks) return run.fail('time', null, `The lamp blinked ${run.blinks || 0} of ${sg.blinks} times`);
+        if (sg?.hold) return run.fail('time', null, `The lamp has to stay lit for ${sg.hold} s`);
+        return run.fail('time', null, 'Out of time');
+      }
       return run.status;
     },
     fail(kind, body, reason) {
@@ -455,6 +494,7 @@ export function makeRun(level, parts, opts = {}) {
       return run.status;
     },
   };
+  settleSignals(run);
   return run;
 }
 
