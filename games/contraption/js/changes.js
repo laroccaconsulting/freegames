@@ -3,8 +3,10 @@
 export const CHANGES = [
   {
     id: '2026-11-29',
-    title: 'Chips',
+    title: 'Chips and a clock',
     items: [
+      'Gallery: a working digital clock, minutes and seconds, made of 138 parts: NANDs, a delay and pixels, wrapped into counter and display chips.',
+      'Toggle pixels have a clear pin, the dot below them: while it is on, the toggle is held off. Counters can now wrap at any number.',
       'In the sandbox, open the menu and choose Make a chip: drag a box around gates, delays and pixels, and they become one part with pins.',
       'Wires that crossed the box become the chip\'s pins. Place more copies from the Chip button in the tray.',
       'Chips travel in share links and saved files.',

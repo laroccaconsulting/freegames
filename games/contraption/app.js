@@ -13,7 +13,7 @@ import { encodeMachine, decodeMachine, machineFromHash } from './js/share.js';
 import { GALLERY, SUBMIT } from './js/gallery.js';
 import { CHANGES } from './js/changes.js';
 import { DT as _DT, ENGINE } from './js/physics.js';
-import { LEVELS, CHAPTERS, levelById, SANDBOX, ALL_PARTS_SANDBOX, BENCH } from './js/levels.js';
+import { LEVELS, CHAPTERS, levelById, SANDBOX, ALL_PARTS_SANDBOX, BENCH, BIG_BENCH } from './js/levels.js';
 import { PARTS, PART_TYPES, PART_INFO, ITEM_INFO, problems, makeRun, key, moverMotion, gearR } from './js/machine.js';
 import { View, PALETTES, drawHandle } from './js/render.js';
 import { drawScene, drawPart, machineLayout, centre } from './js/draw.js';
@@ -464,7 +464,12 @@ function linkCandidates(type, stage, wx, wy) {
   const all = allParts();
   if (type === 'chain') return all.filter((o) => o.type === 'gear' && Math.hypot(o.p[0] - wx, o.p[1] - wy) < Math.max(0.8, gearR(o) * 0.7)).map((o) => ({ part: o, at: o.p }));
   const pin = PARTS.wire.link[stage === 0 ? 'first' : 'second'];
-  return all.filter((o) => PARTS[o.type][pin]).map((o) => ({ part: o, at: PARTS[o.type][pin](o) })).filter((c) => Math.hypot(c.at[0] - wx, c.at[1] - wy) < 0.9);
+  // every pin of every part (chips and toggles have several), nearest first
+  return all
+    .flatMap((o) => PARTS.wire.pinsOf(o, pin).map((at) => ({ part: o, at })))
+    .map((c) => ({ ...c, d: Math.hypot(c.at[0] - wx, c.at[1] - wy) }))
+    .filter((c) => c.d < 0.9)
+    .sort((a, b) => a.d - b.d);
 }
 
 function linkTap(wx, wy) {
@@ -1140,7 +1145,7 @@ async function gallery() {
   });
   const g = GALLERY.find((x) => x.id === v);
   if (!g) return;
-  const base = g.level === 'sandbox' ? ALL_PARTS_SANDBOX : g.level === 'bench' ? BENCH : levelById(g.level);
+  const base = g.level === 'sandbox' ? ALL_PARTS_SANDBOX : g.level === 'bench' ? BENCH : g.level === 'bench-big' ? BIG_BENCH : levelById(g.level);
   openLevel({ ...base, id: `gallery:${g.id}`, name: g.title, goalText: g.note }, { card: false, preset: g.parts });
   toast('Press Run to watch it. Change anything: your copy is kept.', { position: 'top', duration: 3500 });
 }

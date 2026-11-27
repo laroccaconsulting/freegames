@@ -24,7 +24,7 @@ export default {
   blurb: 'Carries a signal from a sensor or gate to a motor, gate or pixel.',
   physics: 'Signals are on or off. A wired motor runs only while a wire into it is on.',
   tip: 'Tap the sensor, then the motor.',
-  layer: 5,
+  layer: 4.5, // under gates and pixels, so wire ends do not dot a display
   back: true,
   free: true,
   link: { first: 'output', second: 'input', words: ['where the signal comes from', 'where it goes'] },

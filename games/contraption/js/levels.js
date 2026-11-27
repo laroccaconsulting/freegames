@@ -885,6 +885,7 @@ export const BENCH = {
   timeLimit: Infinity,
   solution: [],
 };
+export const BIG_BENCH = { ...BENCH, id: 'bench-big', w: 48, h: 32 };
 export const ALL_PARTS_SANDBOX = { ...SANDBOX, parts: { ramp: 99, lever: 99, weight: 99, conveyor: 99, motor: 99, gear: 99, chain: 99, bouncer: 99 } };
 
 export const levelById = (id) => (id === 'sandbox' ? SANDBOX : LEVELS.find((l) => l.id === id));

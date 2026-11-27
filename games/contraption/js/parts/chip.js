@@ -88,9 +88,13 @@ export function unpack(parts) {
       byId.set(q.id, clone);
       inner.push(clone);
     }
-    for (const [a, b] of c.def.links) if (byId.has(a) && byId.has(b)) links.push({ from: byId.get(a), to: byId.get(b) });
-    c.def.inputs.forEach((id, i) => pin.set(`${c.id}:in:${i}`, byId.get(id)));
-    c.def.outputs.forEach((id, i) => pin.set(`${c.id}:out:${i}`, byId.get(id)));
+    // links [from, to, toPin?]; inputs id or [id, pin]
+    for (const [a, b, p = 0] of c.def.links) if (byId.has(a) && byId.has(b)) links.push({ from: byId.get(a), to: byId.get(b), toPin: p });
+    c.def.inputs.forEach((ref, i) => {
+      const [id, p = 0] = Array.isArray(ref) ? ref : [ref];
+      pin.set(`${c.id}:in:${i}`, { part: byId.get(id), pin: p });
+    });
+    c.def.outputs.forEach((id, i) => pin.set(`${c.id}:out:${i}`, { part: byId.get(id), pin: 0 }));
   }
   return { inner, links, pin };
 }

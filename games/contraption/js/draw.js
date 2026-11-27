@@ -84,7 +84,8 @@ export function drawScene(view, pal, level, parts, opts = {}) {
   drawGoal(ctx, view, level, pal, time, opts.goalGlow || 0);
   layer(3); // levers, weights
   layer(4); // motors
-  layer(5); // wires
+  layer(4.5); // wires
+  layer(5); // gates, delays, pixels, chips
 
   (level.movers || []).forEach((m, i) => {
     const b = run?.movers[i];
