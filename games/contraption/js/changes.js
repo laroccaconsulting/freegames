@@ -2,6 +2,14 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-07',
+    title: 'Round and round',
+    items: [
+      'Endless loops: a cleated belt can now have a Scoop, a curved trough round its first drum. Balls dropped into its mouth underneath are swept round the drum and up the belt again, so a track can come back under the belt instead of having to cross it.',
+      'Gallery: Marble machine. Two balls go round for ever, and a beam counts their laps in binary.',
+    ],
+  },
+  {
     id: '2026-12-06',
     title: 'Going up',
     items: [
