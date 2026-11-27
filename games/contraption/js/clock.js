@@ -94,15 +94,22 @@ export function readDigit(lit) {
  */
 // A beat is (2 × wait + 5 steps) long, steps being 1/120 s; 58 steps of
 // wait makes 121/120 s, as near one second as whole steps allow.
-export function buildClock({ wait = 58 / 120 } = {}) {
+export function buildClock({ wait = 58 / 120, pendulum = false } = {}) {
   const parts = [];
   let n = 0;
   const id = (s) => `${s}${n++}`;
   const wire = (a, b) => parts.push({ id: id('w'), type: 'wire', a, b });
-  // heartbeat: one beat a second
-  parts.push({ id: 'beat', type: 'nand', p: [3, 26] }, { id: 'tick', type: 'delay', p: [3, 29], wait });
-  wire([3, 26], [3, 29]);
-  wire([3, 29], [3, 26]);
+  // the beat: a NAND-and-delay heartbeat, or a pendulum swinging through a beam
+  const beatAt = pendulum ? [8, 25] : [3, 26];
+  if (pendulum) {
+    // a rod 5¾ cells long on a free peg, held 30° out; it swings through the
+    // beam below it about once a second (real physics, not a timer)
+    parts.push({ id: 'rod', type: 'lever', p: [8, 21], angle: 60, l1: 0.5, l2: 5.75 }, { id: 'beat', type: 'beam', a: [8, 25], b: [8, 28] });
+  } else {
+    parts.push({ id: 'beat', type: 'nand', p: [3, 26] }, { id: 'tick', type: 'delay', p: [3, 29], wait });
+    wire([3, 26], [3, 29]);
+    wire([3, 29], [3, 26]);
+  }
   // digits left to right: tens of minutes, minutes, tens of seconds, seconds
   const digits = [
     { x: 2, mod: 6 },
@@ -111,7 +118,7 @@ export function buildClock({ wait = 58 / 120 } = {}) {
     { x: 36, mod: 10 },
   ];
   const display = [];
-  let carryFrom = [3, 26]; // the beat drives the seconds
+  let carryFrom = beatAt; // the beat drives the seconds
   for (const d of [...digits].reverse()) {
     const counter = { id: id('k'), type: 'chip', p: [d.x, 12], def: counterChip(d.mod) };
     const decoder = { id: id('d'), type: 'chip', p: [d.x + 5, 12], def: decoderChip() };
@@ -137,7 +144,7 @@ export function buildClock({ wait = 58 / 120 } = {}) {
   // the colon blinks with the beat
   for (const y of [5, 7]) {
     parts.push({ id: id('colon'), type: 'pixel', p: [23, y], mode: 'lamp' });
-    wire([3, 26], [23, y]);
+    wire(beatAt, [23, y]);
   }
   return { parts, display };
 }
@@ -148,3 +155,10 @@ export function readClock(signals, display) {
   const [a, b, c, d] = display.map(digit);
   return `${a}${b}:${c}${d}`;
 }
+
+/** The board for the pendulum clock: a ball rests on the rod's tip to set it going. */
+// (just off the rod's upper face, near its end, so it starts touching nothing)
+const ROD = { c: Math.cos(Math.PI / 3), s: Math.sin(Math.PI / 3) };
+export const PENDULUM_BOARD = {
+  items: [{ type: 'ball', x: 8 + 5.25 * ROD.c + 0.6 * ROD.s, y: 21 + 5.25 * ROD.s - 0.6 * ROD.c, deliver: false }],
+};

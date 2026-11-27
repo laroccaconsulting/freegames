@@ -497,7 +497,15 @@ judges fairness and fun before merge.
    stores the solution and sets the targets (its parts; its time + 20%),
    and any edit un-solves it. Solved levels share as #lv= links; on opening,
    the maker's solution is re-run and a level whose solution fails here is
-   flagged. Still to do: movers, fixed parts and signal goals in the
-   editor; the mechanical clock; more Signals, Logic and Memory levels.
+   flagged.
+10. ✅ Pendulum clock (Gallery): a 5¾-cell rod on a free peg, set going by
+   a ball resting on its tip, swings through a beam about once a second
+   (beams now see levers as well as items); the beam drives the same
+   counter and display chips as the digital clock. Tested: right reading
+   after every swing for 75 s, within 3% of real time. A geared
+   escapement clock is still open: it needs toothed contact shapes the
+   engine does not have yet.
+Still to do: movers, fixed parts and signal goals in the editor; a fifth
+level for Signals, Logic and Memory.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.

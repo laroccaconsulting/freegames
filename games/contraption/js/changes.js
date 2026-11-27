@@ -9,6 +9,7 @@ export const CHANGES = [
       'Try it and solve it once: your solution sets the star targets, and only solved levels can be shared.',
       'Share a level by link. Whoever opens it can play it; your solution stays hidden unless they ask for a hint.',
       'Two new levels: One switch, two belts (Signals) and Both home (Logic).',
+      'Gallery: a pendulum clock. A swinging rod keeps the time; logic counts it. Beams now see swinging levers too.',
     ],
   },
   {
