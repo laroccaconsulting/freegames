@@ -60,9 +60,9 @@ export function nextLevel(progress) {
 /** Part types you have met: those of every open chapter. */
 export function unlockedParts(progress) {
   const types = new Set();
-  const intro = { 0: ['ramp'], 1: ['lever', 'weight'], 2: ['conveyor', 'motor'], 3: ['gear'], 4: ['chain'], 5: ['bouncer'], 6: ['plate', 'beam', 'wire'], 7: ['nand', 'delay', 'pixel'] };
+  const intro = { 0: ['ramp'], 1: ['lever', 'weight'], 2: ['conveyor', 'motor'], 3: ['gear'], 4: ['chain'], 5: ['bouncer'], 6: ['plate', 'beam', 'wire'], 7: ['nand', 'delay', 'pixel'], 8: [] };
   CHAPTERS.forEach((_, c) => {
-    if (chapterOpen(progress, c)) for (const t of intro[c]) types.add(t);
+    if (chapterOpen(progress, c)) for (const t of intro[c] || []) types.add(t);
   });
   return types;
 }

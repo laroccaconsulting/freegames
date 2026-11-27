@@ -473,9 +473,10 @@ judges fairness and fun before merge.
    and an SR latch that holds after its set is released. Levels can now
    have a signal goal (a fixed lamp blinks N times, or stays lit N s).
    Chapter 8 "Logic": Upside down, Heartbeat, Remember. The Gallery has a
-   4-bit binary counter on the Workbench (an item-free board). Still to
-   do: more Signals and Logic levels, a Memory chapter (latches, counters
-   as goals).
+   4-bit binary counter on the Workbench (an item-free board). Chapter 9
+   "Memory": Count to two, Count to three (signal goals can require the
+   lamp to stay dark until a time, so lighting on the wrong count fails).
+   Still to do: more Signals, Logic and Memory levels.
 7. Chips, displays, counters, then the two clocks.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.

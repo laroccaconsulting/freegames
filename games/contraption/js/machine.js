@@ -459,6 +459,7 @@ export function makeRun(level, parts, opts = {}) {
       const sg = level.signalGoal;
       if (sg) {
         const lit = !!run.signals.get(sg.lamp);
+        if (lit && sg.darkUntil && run.time < sg.darkUntil) return run.fail('early', null, 'The lamp lit too early');
         if (lit && !run.lampWas) run.blinks = (run.blinks || 0) + 1;
         run.lampWas = lit;
         run.litFor = lit ? (run.litFor || 0) + DT : 0;

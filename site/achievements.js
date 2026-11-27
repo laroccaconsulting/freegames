@@ -411,6 +411,11 @@ export default {
       "id": "logic-done",
       "title": "Logician",
       "desc": "Finish the Logic chapter."
+    },
+    {
+      "id": "memory-done",
+      "title": "Counting machine",
+      "desc": "Finish the Memory chapter."
     }
   ],
   "corridors": [

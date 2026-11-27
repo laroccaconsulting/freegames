@@ -20,4 +20,5 @@ export default [
   { id: 'persistence', title: 'Persistence', desc: 'Fail fifty runs. Every one teaches something.', goal: 50, secret: true },
   { id: 'signals-done', title: 'Switched on', desc: 'Finish the Signals chapter.' },
   { id: 'logic-done', title: 'Logician', desc: 'Finish the Logic chapter.' },
+  { id: 'memory-done', title: 'Counting machine', desc: 'Finish the Memory chapter.' },
 ];
