@@ -9,6 +9,7 @@ export const CHANGES = [
       'Set a lever precisely: tap it for left arm, right arm and angle buttons.',
       'Levers are lighter, so whatever lands on one decides which way it tips.',
       'Tipping point and Seesaw are reworked to match.',
+      'New chapter, Memory: count balls with toggles, and light the lamp only on the right count.',
     ],
   },
   {
