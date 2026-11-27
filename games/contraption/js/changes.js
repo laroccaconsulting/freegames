@@ -2,6 +2,16 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-11-29',
+    title: 'Chips',
+    items: [
+      'In the sandbox, open the menu and choose Make a chip: drag a box around gates, delays and pixels, and they become one part with pins.',
+      'Wires that crossed the box become the chip\'s pins. Place more copies from the Chip button in the tray.',
+      'Chips travel in share links and saved files.',
+      'Moving a part now carries its wires with it.',
+    ],
+  },
+  {
     id: '2026-11-28',
     title: 'Friendlier levers',
     items: [

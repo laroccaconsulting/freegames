@@ -14,6 +14,7 @@
 import { makeWorld, addBody, addTrain, settle, step, circle, capsule, box, makeShape, placeShape, overlap, DT } from './physics.js';
 import { MOTOR, DRUM_R, GEAR_TEETH, ITEM_INFO, key, dist, leverEnds, cupWalls, gearR } from './geom.js';
 import { PARTS, PART_TYPES, partOf } from './parts/index.js';
+import { unpack } from './parts/chip.js';
 
 export { MOTOR, DRUM_R, GEAR_TEETH, ITEM_INFO, key, leverEnds, cupWalls, gearR, PARTS, PART_TYPES, partOf };
 
@@ -293,9 +294,15 @@ export function build(level, parts, { sandbox = false } = {}) {
   });
   // signals: wired motors start off and wait for their input
   const all2 = all;
+  const chips = unpack(all2);
   const sensors = all2.filter((p) => PARTS[p.type].sense);
-  const logic = all2.filter((p) => PARTS[p.type].logic);
-  const wires = all2.filter((p) => p.type === 'wire').map((w) => ({ from: PARTS.wire.source(w, all2), to: PARTS.wire.target(w, all2) })).filter((w) => w.from && w.to);
+  const logic = [...all2.filter((p) => PARTS[p.type].logic), ...chips.inner];
+  // a wire to or from a chip pin goes to the gate behind that pin
+  const end = (hit, dir) => (hit?.part.type === 'chip' ? chips.pin.get(`${hit.part.id}:${dir}:${hit.pin}`) : hit?.part);
+  const wires = [
+    ...all2.filter((p) => p.type === 'wire').map((w) => ({ from: end(PARTS.wire.source(w, all2), 'out'), to: end(PARTS.wire.target(w, all2), 'in') })),
+    ...chips.links,
+  ].filter((w) => w.from && w.to);
   const gated = new Set([...wires.map((w) => w.to), ...all2.filter((p) => p.type === 'motor' && p.switched)]);
   for (const t of trainObjs) for (const m of t.motors) if (gated.has(m.part)) m.off = true;
   const signals = new Map();
@@ -475,7 +482,8 @@ export function makeRun(level, parts, opts = {}) {
       // every undelivered item has come to rest: it is not going anywhere
       const waiting = run.trains.some((t) => t.motors.some((m) => world.time < (m.delay || 0)));
       const still = !waiting && items.every((b) => !b.deliver || run.delivered[b.index] || (Math.hypot(b.vx, b.vy) < 0.08 && Math.abs(b.w) < 0.3));
-      run.still = still && !level.signalGoal && items.some((b) => b.deliver) ? run.still + DT : 0;
+      // the sandbox has no 'stopped short': a machine there runs until you stop it
+      run.still = still && !level.signalGoal && !opts.sandbox && items.some((b) => b.deliver) ? run.still + DT : 0;
       if (run.still >= STUCK_TIME) {
         const b = items.find((b) => b.deliver && !run.delivered[b.index]);
         return run.fail('stuck', b, `The ${ITEM_INFO[b.item.type].name} stopped short`);

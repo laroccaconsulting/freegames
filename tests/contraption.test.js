@@ -204,3 +204,49 @@ test('logic: NAND + delay ticks, toggles count in binary, crossed NANDs remember
   for (let i = 0; i < 240; i++) latch.tick();
   assert.equal(latch.signals.get('a'), a1, 'and it holds');
 });
+
+test('chips: wrapped logic behaves exactly like the gates inside it', async () => {
+  const { makeRun } = await import('../games/contraption/js/machine.js');
+  const board = { id: 't', w: 24, h: 16, items: [], walls: [], parts: {}, stars: { parts: 99, time: 99 }, timeLimit: 30 };
+  const NOT = { name: 'NOT', parts: [{ id: 'n', type: 'nand' }], links: [], inputs: ['n'], outputs: ['n'] };
+  // chip at (6,2): input pin (6,3), output pin (9,3)
+  const chip = { id: 'c', type: 'chip', p: [6, 2], def: NOT };
+  const lamp = { id: 'L', type: 'pixel', p: [12, 3], mode: 'lamp' };
+  const one = { id: 'one', type: 'nand', p: [2, 3] }; // always on
+  const wIn = { id: 'w1', type: 'wire', a: [2, 3], b: [6, 3] };
+  const wOut = { id: 'w2', type: 'wire', a: [9, 3], b: [12, 3] };
+  const run = (parts) => {
+    const r = makeRun(board, parts);
+    for (let i = 0; i < 30; i++) r.tick();
+    return r.signals.get('L');
+  };
+  assert.equal(run([one, chip, lamp, wIn, wOut]), false, 'NOT(on) is off');
+  assert.equal(run([one, chip, lamp, wOut]), true, 'NOT(nothing) is on');
+  // a chip's inner wiring: a 2-bit counter packed as one part keeps counting
+  const COUNTER = {
+    name: 'CNT',
+    parts: [{ id: 'b0', type: 'pixel', mode: 'toggle' }, { id: 'i0', type: 'nand' }, { id: 'b1', type: 'pixel', mode: 'toggle' }],
+    links: [['b0', 'i0'], ['i0', 'b1']],
+    inputs: ['b0'],
+    outputs: ['b0', 'b1'],
+  };
+  const r = makeRun(board, [
+    { id: 'n', type: 'nand', p: [2, 2] },
+    { id: 'd', type: 'delay', p: [2, 5], wait: 0.5 },
+    { id: 'x1', type: 'wire', a: [2, 2], b: [2, 5] },
+    { id: 'x2', type: 'wire', a: [2, 5], b: [2, 2] },
+    { id: 'k', type: 'chip', p: [6, 2], def: COUNTER },
+    { id: 'x3', type: 'wire', a: [2, 2], b: [6, 3] },
+  ]);
+  let rises = 0;
+  let was = r.signals.get('n');
+  for (let i = 0; i < 120 * 6; i++) {
+    r.tick();
+    const on = r.signals.get('n');
+    if (on && !was) rises++;
+    was = on;
+  }
+  for (let i = 0; i < 6; i++) r.tick();
+  const v = (r.signals.get('k/b0') ? 1 : 0) + (r.signals.get('k/b1') ? 2 : 0);
+  assert.equal(v, rises % 4, `chip counter shows ${v} after ${rises} beats`);
+});
