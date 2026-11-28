@@ -2,6 +2,17 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-16',
+    title: 'Five more machines',
+    items: [
+      'Binary clock: minutes and seconds in columns of lights, one column per digit.',
+      'Egg drop: a cleated belt running downhill lowers an egg that any track would crack.',
+      'Stepping escalator: a pendulum and a pulse stretcher make the belt tick like a clock hand.',
+      'Pinball: plunger, lane, bumpers, two scoring beams and a 3-bit score.',
+      'Juggler: two springs keep two balls in the air for ever.',
+    ],
+  },
+  {
     id: '2026-12-15',
     title: 'A Gallery you can browse',
     items: [
