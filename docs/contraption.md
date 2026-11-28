@@ -609,5 +609,17 @@ judges fairness and fun before merge.
    here for every Gallery machine; drawing at a 6x CPU slowdown gives
    18–27 frames a second (Clockwork, with its gear teeth and dial ticks,
    is the slowest) while machine time keeps up with real time.
+22. ✅ The Gallery pipeline: each showpiece is a module in js/machines/
+   (board, parts, note, and a check: seconds, watch(run, s) each step,
+   verify(run, s) → null or why not), listed in machines/index.js and
+   appended to the Gallery. kit.js has the common pieces (an item resting
+   on a ramp, a heartbeat, a counter-and-decoder digit, edge counting).
+   scripts/contraption/bench.mjs runs one headless (placement, outcome,
+   item paths, where things land, signal timelines); gallery-shot.mjs
+   screenshots one in the real game. The test runs every check. First
+   batch: Lap counter, Gearbox, Pendulum wave, Traffic lights, Ball
+   dispenser, Spring shot, Belt relay, Alarm clock. Dropped for now: a
+   weight sorter (the counterweight sits in the path of the balls that
+   should roll across the balance).
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.

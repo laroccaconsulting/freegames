@@ -4,6 +4,7 @@
 // for the copy each player tinkers with.
 import { buildClock, PENDULUM_BOARD, buildGearClock, GEAR_CLOCK_BOARD } from './clock.js';
 import { TRAPDOOR_CATAPULT, ESCALATOR, LONG_WAY, MARBLE_MACHINE, KICK_AND_CURVE, WINCH_LIFT } from './showcase.js';
+import { MACHINES } from './machines/index.js';
 
 export const SUBMIT = 'https://github.com/laroccaconsulting/freegames/issues/new?labels=contraption-machine&title=Machine%3A+&body=Link%3A+%0A%0AWhat+it+does%3A+';
 
@@ -142,4 +143,6 @@ export const GALLERY = [
     note: 'The ball rolls into the bucket and waits. Then a motor, geared down three to one, winds the drum: the rope shortens, the bucket climbs nine cells, tips over its lip at the top and pours the ball down the chute into the cup.',
     parts: WINCH_LIFT.parts,
   },
+  // the showpieces in js/machines/, each with its own check
+  ...MACHINES.map(({ id, title, note, board, parts, show }) => ({ id, title, by: 'The Contraption workshop', level: 'bench', board, parts, note, show: show ?? (board.goal ? undefined : 30) })),
 ];
