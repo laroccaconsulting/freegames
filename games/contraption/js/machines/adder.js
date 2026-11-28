@@ -50,6 +50,8 @@ const rowPegs = (row) => [0, 1, 2].map((i) => [27 - i, 6 + 2 * row]);
 
 export default {
   id: 'adder',
+  category: 'logic',
+  since: '2026-12-13',
   title: 'Adder',
   note: 'A computer\'s first trick, in NANDs. Two counters tick at different speeds; their bits feed three full-adder chips (open one: fifteen NANDs, two of them XORs), each passing its carry to the next. The top row of lamps is always the sum of the two rows below.',
   board: { w: 30, h: 18 },

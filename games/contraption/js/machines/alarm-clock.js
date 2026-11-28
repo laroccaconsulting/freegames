@@ -22,6 +22,8 @@ const LAMP = parts.find((p) => p.type === 'pixel' && p.mode === 'lamp').id;
 
 export default {
   id: 'alarm-clock',
+  category: 'time',
+  since: '2026-12-13',
   title: 'Alarm clock',
   note: 'Clockwork as a timer. The pendulum lets the escape wheel turn once a minute; a gear passes that to a pusher whose paddle creeps out, and about half a minute in it nudges the ball off its shelf. The ball falls through a beam, a toggle remembers, and a heartbeat rings the lamp until you stop it.',
   board: { w: 24, h: 16, walls: [[0, 15, 24, 1], [11.1, 7.4, 1.6, 0.5]], items: [{ type: 'ball', x: 11.75, y: 7 }] },

@@ -10,7 +10,7 @@ import ACHIEVEMENTS from './achievements.js';
 import { DT } from './js/physics.js';
 import { toSave, fromSave } from './js/format.js';
 import { encodeMachine, decodeMachine, machineFromHash } from './js/share.js';
-import { GALLERY, SUBMIT } from './js/gallery.js';
+import { GALLERY, SUBMIT, CATEGORIES } from './js/gallery.js';
 import { CHANGES } from './js/changes.js';
 import * as ED from './js/editor.js';
 import { DT as _DT, ENGINE } from './js/physics.js';
@@ -157,11 +157,13 @@ function show(name) {
   screen = name;
   $('title').hidden = name !== 'title';
   $('levels').hidden = name !== 'levels';
+  $('gallery').hidden = name !== 'gallery';
   $('hud').hidden = name !== 'play';
   $('dock').hidden = name !== 'play' || mode !== 'build';
   $('runbar').hidden = name !== 'play' || mode !== 'run';
   if (name === 'title') startTitle();
   if (name === 'levels') renderLevels();
+  if (name === 'gallery') renderGallery();
   layoutView();
   dirty = true;
 }
@@ -1353,20 +1355,103 @@ async function openFromHash() {
 }
 addEventListener('hashchange', openFromHash);
 
-async function gallery() {
-  const v = await openDialog({
-    title: 'Gallery',
-    body: el(
-      'div',
-      { class: 'gallery' },
-      GALLERY.map((g) => el('div', { class: 'gallery-item' }, el('h3', {}, g.title), el('small', {}, `by ${g.by} · ${g.parts.length} parts`), el('p', {}, g.note), el('button', { class: 'btn btn-primary', onclick: (e) => e.target.closest('dialog').closeWith(g.id) }, 'Open'))),
-      el('p', { class: 'muted small' }, 'Built something worth watching? ', el('a', { href: SUBMIT, target: '_blank', rel: 'noopener' }, 'Send us its link'), ' and it may appear here, with your name.'),
-    ),
-  });
-  const g = GALLERY.find((x) => x.id === v);
-  if (!g) return;
+// ---------- gallery ----------
+// A screen of shelves (tabs) and cards, each with a drawing of the machine;
+// a card opens a sheet with the whole story and an Open button.
+
+const galleryBase = (g) => {
   const base = g.level === 'sandbox' ? ALL_PARTS_SANDBOX : g.level === 'bench' ? BENCH : g.level === 'bench-big' ? BIG_BENCH : levelById(g.level);
-  openLevel({ ...base, ...(g.board || {}), id: `gallery:${g.id}`, name: g.title, goalText: g.note }, { card: false, preset: g.parts });
+  return { ...base, ...(g.board || {}), id: `gallery:${g.id}`, name: g.title, goalText: g.note };
+};
+const gallerySeen = () => new Set(store.get('gallerySeen', []));
+const isNewMachine = (g) => !!g.since && !gallerySeen().has(g.id);
+const firstSentence = (t) => (t.match(/^.*?[.!?](\s|$)/)?.[0] || t).trim();
+const galleryTags = (g) => [g.board?.goal || (g.level !== 'bench' && g.level !== 'bench-big') ? 'Delivers' : 'Runs for ever', `${g.parts.length} parts`];
+
+function gallery() {
+  show('gallery');
+}
+
+function renderGallery() {
+  const tab = store.get('galleryTab', 'all');
+  const tabs = [{ id: 'all', name: 'All' }, ...CATEGORIES];
+  const count = (id) => GALLERY.filter((g) => id === 'all' || g.category === id).length;
+  const fresh = GALLERY.filter(isNewMachine).length;
+  $('gallery-count').textContent = fresh ? `${fresh} new` : `${GALLERY.length} machines`;
+  $('gallery-tabs').replaceChildren(
+    ...tabs.map((c) =>
+      el('button', { class: `gallery-tab ${c.id === tab ? 'on' : ''}`, role: 'tab', 'aria-selected': String(c.id === tab), onclick: () => (store.set('galleryTab', c.id), renderGallery()) }, `${c.name} `, el('small', {}, String(count(c.id)))),
+    ),
+  );
+  const shown = GALLERY.filter((g) => tab === 'all' || g.category === tab);
+  const blurb = CATEGORIES.find((c) => c.id === tab)?.blurb;
+  const observer = 'IntersectionObserver' in window ? new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && (observer.unobserve(e.target), e.target.draw())), { rootMargin: '200px' }) : null;
+  $('gallery-grid').replaceChildren(
+    ...(blurb ? [el('p', { class: 'gallery-blurb' }, blurb)] : []),
+    ...shown.map((g) => {
+      const thumb = galleryThumb(g);
+      if (observer) observer.observe(thumb);
+      else thumb.draw();
+      return el(
+        'button',
+        { class: 'gcard', 'aria-label': `${g.title}. ${firstSentence(g.note)}`, onclick: () => galleryDetail(g) },
+        thumb,
+        isNewMachine(g) ? el('span', { class: 'gcard-new' }, 'New') : null,
+        el('b', {}, g.title),
+        el('span', { class: 'gcard-text' }, firstSentence(g.note)),
+        el('span', { class: 'gcard-tags' }, galleryTags(g).join(' · ')),
+      );
+    }),
+    el('p', { class: 'muted small gallery-foot' }, 'Built something worth watching? ', el('a', { href: SUBMIT, target: '_blank', rel: 'noopener' }, 'Send us its link'), ' and it may appear here, with your name.'),
+  );
+  $('gallery-grid').scrollTop = 0;
+}
+
+// A drawing of the machine as it stands before it runs, made when it scrolls into view.
+function galleryThumb(g) {
+  const W = 168;
+  const H = 104;
+  const c = el('canvas', { class: 'gcard-thumb', width: W * 2, height: H * 2, 'aria-hidden': 'true' });
+  c.style.aspectRatio = `${W} / ${H}`;
+  c.draw = () => {
+    const lvl = galleryBase(g);
+    const v = new View(c);
+    v.dpr = 2;
+    v.w = W;
+    v.h = H;
+    // frame the machine (its parts, items and cup), not the whole board
+    const pts = [];
+    for (const p of g.parts) for (const q of [p.p, p.a, p.b]) if (q) pts.push(q);
+    for (const it of lvl.items || []) pts.push([it.x, it.y]);
+    if (lvl.goal) pts.push([lvl.goal.x, lvl.goal.y], [lvl.goal.x + lvl.goal.w, lvl.goal.y + lvl.goal.h]);
+    const m = 2.5;
+    const x0 = Math.max(0, Math.min(...pts.map((q) => q[0])) - m);
+    const y0 = Math.max(0, Math.min(...pts.map((q) => q[1])) - m);
+    const x1 = Math.min(lvl.w, Math.max(...pts.map((q) => q[0])) + m);
+    const y1 = Math.min(lvl.h, Math.max(...pts.map((q) => q[1])) + m);
+    v.fit(x1 - x0, y1 - y0, { x: 0, y: 0, w: W, h: H }, 4);
+    v.ox -= x0 * v.s;
+    v.oy -= y0 * v.s;
+    try {
+      drawScene(v, pal(), lvl, g.parts.map((p, i) => ({ id: `g${i}`, ...p })), { mode: 'build', pegs: false });
+    } catch {
+      /* a drawing is a nicety: the card works without it */
+    }
+  };
+  return c;
+}
+
+async function galleryDetail(g) {
+  const thumb = galleryThumb(g);
+  thumb.draw();
+  const v = await openDialog({
+    title: g.title,
+    body: el('div', { class: 'gallery-detail' }, thumb, el('p', {}, g.note), el('p', { class: 'muted small' }, `${CATEGORIES.find((c) => c.id === g.category)?.name || ''} · ${galleryTags(g).join(' · ')} · by ${g.by}`)),
+    actions: [{ label: 'Back', value: null }, { label: 'Open', value: 'open', primary: true }],
+  });
+  if (v !== 'open') return;
+  store.set('gallerySeen', [...gallerySeen(), g.id]);
+  openLevel(galleryBase(g), { card: false, preset: g.parts });
   toast('Press Run to watch it. Change anything: your copy is kept.', { position: 'top', duration: 3500 });
 }
 
@@ -1922,6 +2007,7 @@ $('t-sandbox').addEventListener('click', () => {
 });
 $('t-parts').addEventListener('click', partsGuide);
 $('t-gallery').addEventListener('click', gallery);
+$('g-back').addEventListener('click', () => show('title'));
 $('t-editor').addEventListener('click', () => {
   if (!chapterDone(progress, 0)) return toast('The level editor opens when you finish chapter 1, Slopes.');
   openEditor();
@@ -1930,6 +2016,7 @@ $('t-settings').addEventListener('click', openSettings);
 $('l-back').addEventListener('click', () => show('title'));
 $('h-back').addEventListener('click', () => {
   stopRun();
+  if (level?.id?.startsWith('gallery:')) return show('gallery');
   if (level?.fixedEditor) return doneFixed();
   if (level?.fromEditor) return openEditor();
   if (editing) {

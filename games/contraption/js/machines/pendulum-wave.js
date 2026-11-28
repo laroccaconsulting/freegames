@@ -15,6 +15,8 @@ const beams = parts.filter((p) => p.type === 'beam').map((p) => p.id);
 
 export default {
   id: 'pendulum-wave',
+  category: 'time',
+  since: '2026-12-13',
   title: 'Pendulum wave',
   note: 'Five pendulums, three to five cells long, all let go together. Each one blinks its lamp as it swings through the beam by its peg. A pendulum\'s beat depends only on its length, so the short ones run ahead and the lamps drift in and out of step, then line up again.',
   board: { w: 22, h: 13 },
