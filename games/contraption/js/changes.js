@@ -2,6 +2,16 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-14',
+    title: 'Four more machines',
+    items: [
+      'Race timer: a stopwatch made of logic times a ball down three ramps, in seconds and tenths.',
+      'Adder: two counters and three full-adder chips (fifteen NANDs each) add 3-bit numbers on lamps.',
+      'Breakfast machine: kick, curve, beam, spring, lob, cup, light.',
+      'Cuckoo clock: clockwork sweeps an arm through a beam and the cuckoo pops out into its nest.',
+    ],
+  },
+  {
     id: '2026-12-13',
     title: 'Eight new machines in the Gallery',
     items: [

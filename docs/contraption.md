@@ -620,6 +620,13 @@ judges fairness and fun before merge.
    batch: Lap counter, Gearbox, Pendulum wave, Traffic lights, Ball
    dispenser, Spring shot, Belt relay, Alarm clock. Dropped for now: a
    weight sorter (the counterweight sits in the path of the balls that
-   should roll across the balance).
+   should roll across the balance). Second batch: Race timer (a toggle
+   set and cleared by two beams gates a tenth-second heartbeat; the
+   heartbeat's half beat is the delay plus two gate steps, so 4/120 s
+   gives 0.05), Adder (a full-adder chip of 15 NANDs, each input through a
+   two-NOT buffer because a chip input feeds one gate), Breakfast machine
+   (three proven stages chained) and Cuckoo clock (the arm on the slow
+   shaft must be balanced: a 3-cell arm out to one side weighs twenty
+   times the escape spring's torque and jams the escapement).
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.

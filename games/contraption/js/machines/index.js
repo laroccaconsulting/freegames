@@ -16,5 +16,9 @@ import dispenser from './dispenser.js';
 import springShot from './spring-shot.js';
 import beltRelay from './belt-relay.js';
 import alarmClock from './alarm-clock.js';
+import raceTimer from './race-timer.js';
+import adder from './adder.js';
+import breakfast from './breakfast.js';
+import cuckoo from './cuckoo.js';
 
-export const MACHINES = [lapCounter, gearbox, pendulumWave, trafficLights, dispenser, springShot, beltRelay, alarmClock];
+export const MACHINES = [lapCounter, gearbox, pendulumWave, trafficLights, dispenser, springShot, beltRelay, alarmClock, raceTimer, adder, breakfast, cuckoo];
