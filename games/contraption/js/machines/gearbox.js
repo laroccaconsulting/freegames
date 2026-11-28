@@ -20,6 +20,8 @@ const turns = (run, peg) => {
 
 export default {
   id: 'gearbox',
+  category: 'gears',
+  since: '2026-12-13',
   title: 'Gearbox',
   note: 'One motor and three dials. The first turns with the motor; a 10-tooth gear driving a 40 turns the second a quarter as fast, the other way; another 10 and 40 turn the third a sixteenth as fast. Slower, but four times as strong at every step.',
   board: { w: 19, h: 14 },

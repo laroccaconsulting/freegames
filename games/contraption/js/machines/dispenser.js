@@ -14,6 +14,8 @@ const parts = withIds([
 
 export default {
   id: 'dispenser',
+  category: 'time',
+  since: '2026-12-13',
   title: 'Ball dispenser',
   note: 'A pendulum is the metronome. Every time its rod passes the beam by its peg, the gate on the ramp opens: its front pin drops to let one ball go while the back pin holds the rest. One ball a swing, about a second apart, however long the queue.',
   board: { w: 22, h: 16, walls: [[0, 15, 22, 1]], goal: { x: 12.75, y: 12, w: 4.5, h: 3, cup: true },

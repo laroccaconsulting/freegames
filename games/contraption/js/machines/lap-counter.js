@@ -13,6 +13,8 @@ const beamId = parts.find((p) => p.type === 'beam').id;
 
 export default {
   id: 'lap-counter',
+  category: 'lifts',
+  since: '2026-12-13',
   title: 'Lap counter',
   note: 'The marble machine again, now counting in decimal. The beam at the top of the lift clocks a counter chip; when it wraps from 9 to 0 its carry clocks the tens. Each digit is a decoder chip of 21 NANDs lighting fifteen pixels. Open the chips to see the toggles inside.',
   board: { ...MARBLE_MACHINE.board, h: 31 },

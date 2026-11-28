@@ -8,9 +8,19 @@ import { MACHINES } from './machines/index.js';
 
 export const SUBMIT = 'https://github.com/laroccaconsulting/freegames/issues/new?labels=contraption-machine&title=Machine%3A+&body=Link%3A+%0A%0AWhat+it+does%3A+';
 
+// Shelves in the Gallery, in order. Each entry names one.
+export const CATEGORIES = [
+  { id: 'chains', name: 'Chain reactions', blurb: 'One thing sets off the next.' },
+  { id: 'lifts', name: 'Lifts and loops', blurb: 'Going up, and round for ever.' },
+  { id: 'time', name: 'Clockwork and time', blurb: 'Pendulums, escapements and timers.' },
+  { id: 'gears', name: 'Gears and belts', blurb: 'Ratios, chains and speed.' },
+  { id: 'logic', name: 'Logic and displays', blurb: 'NANDs that count, add and show.' },
+];
+
 export const GALLERY = [
   {
     id: 'twenty-to-one',
+    category: 'gears',
     title: 'Twenty to one',
     by: 'The Contraption workshop',
     level: 'sandbox',
@@ -33,6 +43,7 @@ export const GALLERY = [
   },
   {
     id: 'binary-counter',
+    category: 'logic',
     title: 'Binary counter',
     by: 'The Contraption workshop',
     level: 'bench',
@@ -61,6 +72,7 @@ export const GALLERY = [
   },
   {
     id: 'digital-clock',
+    category: 'logic',
     title: 'Digital clock',
     by: 'The Contraption workshop',
     level: 'bench-big',
@@ -70,6 +82,7 @@ export const GALLERY = [
   },
   {
     id: 'pendulum-clock',
+    category: 'time',
     title: 'Pendulum clock',
     by: 'The Contraption workshop',
     level: 'bench-big',
@@ -80,6 +93,7 @@ export const GALLERY = [
   },
   {
     id: 'gear-clock',
+    category: 'time',
     title: 'Clockwork',
     by: 'The Contraption workshop',
     level: 'bench',
@@ -90,6 +104,7 @@ export const GALLERY = [
   },
   {
     id: 'trapdoor-catapult',
+    category: 'chains',
     title: 'Trapdoor catapult',
     by: 'The Contraption workshop',
     level: 'bench',
@@ -99,6 +114,7 @@ export const GALLERY = [
   },
   {
     id: 'escalator',
+    category: 'lifts',
     title: 'Escalator',
     by: 'The Contraption workshop',
     level: 'bench',
@@ -108,6 +124,7 @@ export const GALLERY = [
   },
   {
     id: 'long-way-round',
+    category: 'chains',
     title: 'The long way round',
     by: 'The Contraption workshop',
     level: 'bench',
@@ -117,6 +134,7 @@ export const GALLERY = [
   },
   {
     id: 'marble-machine',
+    category: 'lifts',
     title: 'Marble machine',
     by: 'The Contraption workshop',
     level: 'bench',
@@ -127,6 +145,7 @@ export const GALLERY = [
   },
   {
     id: 'kick-and-curve',
+    category: 'chains',
     title: 'Kick and curve',
     by: 'The Contraption workshop',
     level: 'bench',
@@ -136,6 +155,7 @@ export const GALLERY = [
   },
   {
     id: 'winch',
+    category: 'lifts',
     title: 'Winch',
     by: 'The Contraption workshop',
     level: 'bench',
@@ -144,5 +164,5 @@ export const GALLERY = [
     parts: WINCH_LIFT.parts,
   },
   // the showpieces in js/machines/, each with its own check
-  ...MACHINES.map(({ id, title, note, board, parts, show }) => ({ id, title, by: 'The Contraption workshop', level: 'bench', board, parts, note, show: show ?? (board.goal ? undefined : 30) })),
+  ...MACHINES.map(({ id, title, note, board, parts, show, category, since }) => ({ id, title, category, since, by: 'The Contraption workshop', level: 'bench', board, parts, note, show: show ?? (board.goal ? undefined : 30) })),
 ];

@@ -5,6 +5,8 @@ import { withIds } from './kit.js';
 // one before: the crate speeds up at each hand-over and flies off the last.
 export default {
   id: 'belt-relay',
+  category: 'gears',
+  since: '2026-12-13',
   title: 'Belt relay',
   note: 'One motor drives three belts. A chain from a 30-tooth gear to a 20 makes the second belt run half as fast again as the first, and another the third half as fast again as that. The crate drops from belt to belt, quicker each time, and the last one throws it into the cup.',
   board: {w: 27, h: 16, walls: [[0, 15, 27, 1]], items: [{type: 'crate', x: 4, y: 3.0}], goal: {x: 22.5, y: 12, w: 4, h: 3, cup: true}},

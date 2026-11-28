@@ -27,6 +27,8 @@ const [RED, AMBER, GREEN] = [id(20, 2), id(20, 3), id(20, 4)];
 
 export default {
   id: 'traffic-lights',
+  category: 'logic',
+  since: '2026-12-13',
   title: 'Traffic lights',
   note: 'A heartbeat clocks a counter chip that counts 0, 1, 2 and round again. Amber is its first bit, green its second, and red is neither: two NOTs and a NAND make OR, and one more NOT turns it round. The green light also drives the belt (geared down, so it coasts a little as it stops): the crate goes on green and waits on red.',
   board: { w: 22, h: 16, walls: [[0, 15, 22, 1]], goal: { x: 17.75, y: 10.8, w: 4, h: 4.2, cup: true }, items: [{ type: 'crate', x: 6, y: 10 }] },

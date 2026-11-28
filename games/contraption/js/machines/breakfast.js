@@ -23,6 +23,8 @@ const LIGHT = parts.find((p) => p.type === 'pixel').id;
 
 export default {
   id: 'breakfast',
+  category: 'chains',
+  since: '2026-12-13',
   title: 'Breakfast machine',
   note: 'A proper Rube Goldberg chain. A second in, the motor\'s crank kicks the first ball off its shelf; a curve turns its fall into a dash across the floor, through a beam that fires a spring under the second ball; an upside-down curve bends that shot into a lob, into the cup, through the last beam, and the light comes on: breakfast is ready.',
   board: { w: 36, h: 16, walls: [[0, 15, 36, 1], [2, 6, 4.5, 0.5], [29.75, 11, 4.5, 0.5], [35, 12, 0.5, 3]], goal: { x: 30, y: 8.5, w: 4, h: 2.5, cup: true },

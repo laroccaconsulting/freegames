@@ -2,6 +2,15 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-15',
+    title: 'A Gallery you can browse',
+    items: [
+      'The Gallery is now its own screen with shelves: Chain reactions, Lifts and loops, Clockwork and time, Gears and belts, Logic and displays.',
+      'Every machine has a card with a drawing of it, a line about it and whether it delivers or runs for ever. New ones are marked until you open them.',
+      'Tap a card for the whole story, then Open. Back from a Gallery machine returns to the Gallery.',
+    ],
+  },
+  {
     id: '2026-12-14',
     title: 'Four more machines',
     items: [

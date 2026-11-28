@@ -28,6 +28,8 @@ const beams = parts.filter((p) => p.type === 'beam').map((p) => p.id);
 
 export default {
   id: 'race-timer',
+  category: 'logic',
+  since: '2026-12-13',
   title: 'Race timer',
   note: 'A stopwatch built from logic, timing a ball down three ramps. The beam at the start sets a toggle and the beam at the finish clears it. While it is set, a heartbeat ticking ten times a second clocks the tenths digit, whose carry clocks the seconds.',
   board: { w: 36, h: 23, walls: [[0, 22, 36, 1], [12.6, 2, 0.4, 6], [1.2, 8, 0.4, 3.5]], items: [{ type: 'ball', x: 2.6, y: 2.4 }] },
