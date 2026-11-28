@@ -792,6 +792,19 @@ body {
 .gallery-item p {
   margin: 6px 0 10px;
 }
+.chip-list {
+  display: grid;
+  gap: 10px;
+}
+.chip-list > p {
+  margin: 0;
+}
+.chip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
 .changes h3 {
   margin: 12px 0 4px;
   font-size: 1rem;

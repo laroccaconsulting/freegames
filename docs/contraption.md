@@ -482,6 +482,16 @@ judges fairness and fun before merge.
    links carry it) and a library keeps up to 30 for the tray. At run time a
    chip is unpacked into its gates, so it behaves exactly like them (tested
    with a wrapped NOT and a wrapped 2-bit counter).
+   Managing chips (`js/chips.js`): Unwrap on a selected chip puts its gates
+   and wires back on the board, at the spots they were wrapped from (`at`
+   in the definition) or, for chips without that, in columns by depth from
+   the inputs, packed tighter if space is short, on free pegs nearby. Wires
+   to its pins move to the gates behind them. Keep saves a chip from the
+   board (a Gallery one) to My chips; the My chips sheet places, renames
+   (names stay unique) and deletes. Make a chip and the Chip tile are in
+   the sandbox once logic is open, and in every Gallery machine. Tested:
+   every chip in every Gallery machine unwraps and the machine still
+   passes its check.
 8. ✅ Digital clock (`js/clock.js`, in the Gallery): a NAND-and-delay
    heartbeat, four counter chips (toggles in a ripple chain; a NAND spots
    10 or 6 and drives every bit's new clear pin) and four 7-segment decoder

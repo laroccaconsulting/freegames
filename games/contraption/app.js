@@ -13,6 +13,7 @@ import { encodeMachine, decodeMachine, machineFromHash } from './js/share.js';
 import { GALLERY, SUBMIT, CATEGORIES } from './js/gallery.js';
 import { CHANGES } from './js/changes.js';
 import * as ED from './js/editor.js';
+import { unwrap, renameIn } from './js/chips.js';
 import { DT as _DT, ENGINE } from './js/physics.js';
 import { LEVELS, CHAPTERS, levelById, SANDBOX, ALL_PARTS_SANDBOX, BENCH, BIG_BENCH } from './js/levels.js';
 import { PARTS, PART_TYPES, PART_INFO, ITEM_INFO, problems, makeRun, key, moverMotion, gearR } from './js/machine.js';
@@ -111,7 +112,8 @@ const fmt = (s) => `${s.toFixed(1)} s`;
 const starText = (n, of = 3) => '★'.repeat(n) + '☆'.repeat(of - n);
 
 function offered(type) {
-  if (type === 'chip') return sandbox && chipLibrary().length ? Infinity : 0;
+  // chips: in the Gallery, and in the sandbox once logic is open (with no chips yet, the tile explains how)
+  if (type === 'chip') return sandbox && (level.id.startsWith('gallery:') || unlockedParts(progress).has('nand') || chipLibrary().length) ? Infinity : 0;
   if (level.id.startsWith('gallery:')) return Infinity;
   if (sandbox) return unlockedParts(progress).has(type) ? Infinity : 0;
   return level.parts?.[type] ?? 0;
@@ -894,7 +896,7 @@ function renderInspector() {
   }
   const info = PART_INFO[part.type];
   const why = problemMap.get(part.id);
-  const what = el('div', { class: 'what' }, el('b', {}, info.name), why ? el('small', { class: 'problem' }, `⚠ ${why}`) : el('small', {}, hintFor(part)));
+  const what = el('div', { class: 'what' }, el('b', {}, part.type === 'chip' ? `Chip ${part.def.name}` : info.name), why ? el('small', { class: 'problem' }, `⚠ ${why}`) : el('small', {}, hintFor(part)));
   const controls = (PARTS[part.type].controls?.(part) || []).map((c) => {
     if (c.kind === 'choice') return group(c.options.map(([v, lab, aria]) => el('button', { class: c.value === v ? 'on' : '', 'aria-label': aria, onclick: () => edit(part, { [c.field]: v }) }, lab)));
     if (c.kind === 'stepper') {
@@ -904,6 +906,11 @@ function renderInspector() {
     return group([el('button', { 'aria-label': c.aria, onclick: () => edit(part, c.apply) }, c.label)]);
   });
   if (level?.fixedEditor && part.type === 'motor') controls.push(group([[false, 'Runs'], [true, 'Waits']].map(([v, lab]) => el('button', { class: !!part.switched === v ? 'on' : '', 'aria-label': v ? 'Waits for a signal' : 'Runs from the start', onclick: () => edit(part, { switched: v }) }, lab))));
+  if (part.type === 'chip') {
+    controls.push(group([el('button', { 'aria-label': `Unwrap ${part.def.name} into its gates`, onclick: () => unwrapChip(part) }, 'Unwrap')]));
+    const kept = chipLibrary().some((d) => JSON.stringify(d) === JSON.stringify(part.def));
+    if (sandbox && !kept) controls.push(group([el('button', { 'aria-label': `Keep ${part.def.name} in My chips`, onclick: () => keepChip(part) }, 'Keep')]));
+  }
   controls.push(el('button', { class: 'tool', 'aria-label': 'Delete', onclick: () => removePart(part.id) }, 'Delete'));
   host.replaceChildren(what, ...controls);
   host.hidden = false;
@@ -1210,7 +1217,7 @@ async function playMenu() {
     body: el('div', {}, el('p', {}, level.goalText), settingsBody()),
     actions: [
       ...(sandbox ? [] : [{ label: 'Level card', value: 'card' }]),
-      ...(sandbox ? [{ label: 'Make a chip', value: 'chip' }] : []),
+      ...(sandbox ? [{ label: 'Make a chip', value: 'chip' }, { label: 'My chips', value: 'chips' }] : []),
       { label: 'Share link', value: 'share' },
       { label: 'Save to file', value: 'save' },
       { label: 'Open file', value: 'open' },
@@ -1221,10 +1228,8 @@ async function playMenu() {
   });
   if (v === 'card') levelCard();
   else if (v === 'share') shareMachine();
-  else if (v === 'chip') {
-    selecting = { from: null, to: null };
-    toast('Drag a box around the gates, delays and pixels to wrap', { position: 'top', duration: 0 });
-  }
+  else if (v === 'chip') startChip();
+  else if (v === 'chips') pickChip();
   else if (v === 'save') saveFile();
   else if (v === 'open') openFile();
   else if (v === 'clear') clearMachine();
@@ -1518,6 +1523,8 @@ async function makeChip(from, to) {
     links: internal.map((e) => [e.from.id, e.to.id]),
     inputs: inputs.map((p) => p.id),
     outputs: outputs.map((p) => p.id),
+    // where each part sat, so unwrapping puts them back the same way
+    at: Object.fromEntries(inner.map((p) => [p.id, [p.p[0] - Math.floor(x0), p.p[1] - Math.floor(y0)]])),
   };
   pushUndo();
   const chip = { id: uid(), type: 'chip', p: [Math.floor(x0), Math.floor(y0)], def };
@@ -1536,18 +1543,116 @@ async function makeChip(from, to) {
   toast(`Chip ${def.name} made. Find it in the tray to place more.`, { position: 'top' });
 }
 
+function startChip() {
+  selecting = { from: null, to: null };
+  toast('Drag a box around the gates, delays and pixels to wrap', { position: 'top', duration: 0 });
+}
+
+const pinText = (d) => `${d.parts.length} parts · ${d.inputs.length} in, ${d.outputs.length} out`;
+
+// The Chips sheet: every chip you made, to place, rename or delete.
 async function pickChip() {
   const lib = chipLibrary();
-  if (!lib.length) return toast('Make a chip first: menu, Make a chip.');
+  if (!lib.length) {
+    const v = await openDialog({
+      title: 'Chips',
+      body: el(
+        'div',
+        {},
+        el('p', {}, 'A chip wraps logic you built (NANDs, delays and pixels) into one part with pins, so you can use it again and again.'),
+        el('p', {}, 'Build and wire some logic, then choose Make a chip and drag a box around it. Wires that cross the box become its pins. Your chips are kept here.'),
+        el('p', {}, 'To see inside a chip, tap it on the board and choose Unwrap.'),
+      ),
+      actions: [{ label: 'Close', value: null }, { label: 'Make a chip', value: 'make', primary: true }],
+    });
+    if (v === 'make') startChip();
+    return;
+  }
   const v = await openDialog({
-    title: 'Chips',
-    body: el('div', { class: 'gallery' }, lib.map((d, i) => el('div', { class: 'gallery-item' }, el('h3', {}, d.name), el('small', {}, `${d.parts.length} parts · ${d.inputs.length} in, ${d.outputs.length} out`), el('p', {}), el('button', { class: 'btn btn-primary', onclick: (e) => e.target.closest('dialog').closeWith(String(i)) }, 'Place')))),
+    title: 'My chips',
+    body: el(
+      'div',
+      { class: 'gallery chip-list' },
+      el('p', {}, 'Tap Place, then a peg. To change a chip, place it, tap it and choose Unwrap, then make it again with the same name.'),
+      lib.map((d, i) =>
+        el(
+          'div',
+          { class: 'gallery-item' },
+          el('h3', {}, d.name),
+          el('small', {}, pinText(d)),
+          el(
+            'div',
+            { class: 'chip-actions' },
+            el('button', { class: 'btn btn-primary', onclick: (e) => e.target.closest('dialog').closeWith(`place:${i}`) }, 'Place'),
+            el('button', { class: 'btn', onclick: (e) => e.target.closest('dialog').closeWith(`rename:${i}`) }, 'Rename'),
+            el('button', { class: 'btn', onclick: (e) => e.target.closest('dialog').closeWith(`delete:${i}`) }, 'Delete'),
+          ),
+        ),
+      ),
+    ),
+    actions: [{ label: 'Make a new chip', value: 'make' }],
   });
   if (v == null) return;
-  armedChip = lib[Number(v)];
-  armed = 'chip';
-  toast(`Tap a peg to place ${armedChip.name}`, { position: 'top', duration: 1800 });
-  updateTray();
+  if (v === 'make') return startChip();
+  const [what, n] = v.split(':');
+  const d = lib[Number(n)];
+  if (what === 'place') {
+    armedChip = d;
+    armed = 'chip';
+    toast(`Tap a peg to place ${d.name}`, { position: 'top', duration: 1800 });
+    updateTray();
+  } else if (what === 'rename') {
+    const field = el('input', { maxlength: 6, value: d.name, 'aria-label': 'Chip name', style: 'font:inherit;font-weight:800;text-transform:uppercase;width:8em' });
+    const ok = await openDialog({
+      title: `Rename ${d.name}`,
+      body: el('div', {}, el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Name'), field), el('p', {}, 'Chips already on the board keep their old name.')),
+      actions: [{ label: 'Cancel', value: null }, { label: 'Rename', value: 'ok', primary: true }],
+    });
+    if (ok === 'ok') {
+      const next = renameIn(lib, d.name, field.value);
+      if (!next) toast('That name is empty or already taken.');
+      else store.set('chips', next);
+    }
+    return pickChip();
+  } else if (what === 'delete') {
+    const ok = await openDialog({
+      title: `Delete ${d.name}?`,
+      body: 'It goes from your chips. Any already on a board stay, and you can keep one again from there.',
+      actions: [{ label: 'Keep it', value: null }, { label: 'Delete', value: 'yes', primary: true }],
+    });
+    if (ok === 'yes') {
+      store.set('chips', lib.filter((x) => x !== d));
+      if (armedChip === d) {
+        armedChip = null;
+        armed = null;
+        updateTray();
+      }
+    }
+    if (chipLibrary().length) return pickChip();
+  }
+}
+
+// A chip on the board back into its gates and wires, ready to change.
+function unwrapChip(part) {
+  const next = unwrap(level, parts, part.id, uid);
+  if (!next) return toast(`No room to unwrap ${part.def.name}: it needs ${part.def.parts.length} free pegs nearby.`);
+  pushUndo();
+  parts = next;
+  selected = null;
+  saveMachine();
+  buildTray();
+  refresh();
+  toast(`${part.def.name} unwrapped. Change it, then Make a chip again to wrap it up.`, { position: 'top' });
+}
+
+// Keep a chip from the board (a Gallery one, say) in My chips.
+function keepChip(part) {
+  const lib = chipLibrary();
+  const same = lib.find((d) => d.name === part.def.name);
+  store.set('chips', [part.def, ...lib.filter((d) => d !== same)].slice(0, 30));
+  buildTray();
+  renderInspector();
+  toast(same ? `${part.def.name} in My chips replaced.` : `${part.def.name} kept in My chips.`);
 }
 
 // ---------- level editor ----------
