@@ -470,6 +470,30 @@ test('cleats carry a ball up a slope a smooth belt cannot; a trapdoor holds unti
   assert.ok(Math.abs(noWire.items[1].y - TRAPDOOR_CATAPULT.board.items[1].y) < 0.1, 'the steel ball is still on the trapdoor');
 });
 
+test('a latched lever holds a resting ball and lets go only when hit hard', async () => {
+  const { makeRun, problems } = await import('../games/contraption/js/machine.js');
+  const { BENCH } = await import('../games/contraption/js/levels.js');
+  const board = (h, y = 5.44) => ({ ...BENCH, id: 'gallery:t', timeLimit: Infinity, w: 12, h: 12, walls: [[0, 11, 12, 1]], items: [
+    { type: 'ball', x: 4.55, y },
+    ...(h ? [{ type: 'steel', x: 7.6, y: 5.44 - h }] : []),
+  ] });
+  const lever = (latch) => [{ id: 'l', type: 'lever', p: [6, 6], angle: 0, l1: 2, l2: 2, latch }];
+  // only a latched lever may start with a ball on it
+  assert.equal(problems(board(0, 5.5), lever(true)).size, 0);
+  assert.equal(problems(board(0, 5.5), lever(false)).get('l'), 'In the way of the start');
+  const go = (h) => {
+    const run = makeRun(board(h), lever(true), { sandbox: true });
+    while (run.status === 'running' && run.time < 3) run.tick();
+    return run;
+  };
+  const rest = go(0);
+  assert.ok(rest.trains[0].held, 'a resting ball does not wake it');
+  assert.ok(Math.abs(rest.items[0].y - 5.44) < 0.1);
+  const hit = go(3);
+  assert.ok(!hit.trains[0].held, 'a dropped steel ball sets it off');
+  assert.ok(hit.items[0].y < 5 || hit.items[0].x > 6, 'and it flings the ball on the other end');
+});
+
 test('the marble machine loops for ever: every ball keeps lapping, one at a time through the gate, and the counter keeps count', async () => {
   const { MARBLE_MACHINE } = await import('../games/contraption/js/showcase.js');
   const { makeRun } = await import('../games/contraption/js/machine.js');

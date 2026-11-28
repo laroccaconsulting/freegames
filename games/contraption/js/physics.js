@@ -483,8 +483,8 @@ export function addBody(world, opts) {
  * extra inertia of gears, drums and motor rotors). motors: [{ k, stall,
  * speed, dir, delay }]. jammed trains never move.
  */
-export function addTrain(world, { inertia = 0, motors = [], damping = 0.02, jammed = false, held = false } = {}) {
-  const t = { id: world.trains.length, inertia, motors, damping, jammed, held, theta: 0, v: 0, invI: 0, torque: 0 };
+export function addTrain(world, { inertia = 0, motors = [], damping = 0.02, jammed = false, held = false, latch = 0 } = {}) {
+  const t = { id: world.trains.length, inertia, motors, damping, jammed, held, latch, theta: 0, v: 0, invI: 0, torque: 0 };
   world.trains.push(t);
   return t;
 }
@@ -780,6 +780,11 @@ export function step(world, dt = DT) {
   for (const c of contacts) {
     for (const [r, o] of [[c.a, c.b], [c.b, c.a]]) {
       if (r.kind === 'rotor' && r.train.held && o.kind === 'dynamic') {
+        // a latched train only lets go when it is hit hard enough, not leant on
+        if (r.train.latch) {
+          const s = r === c.a ? 1 : -1;
+          if ((o.vx * c.nx + o.vy * c.ny) * s > -r.train.latch) continue;
+        }
         r.train.held = false;
         r.train.invI = r.train.jammed ? 0 : 1 / r.train.I;
       }

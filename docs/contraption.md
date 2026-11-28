@@ -635,9 +635,14 @@ judges fairness and fun before merge.
    cleared by its own delay stretches each beam flash into a 0.3 s motor
    pulse), Pinball and Juggler (a beam just above a spring fires it at the
    falling ball; with power 2 each kick gives back what the fall took).
-   Not built: a ball counter (the dispenser's queue holds four balls), a
-   seesaw cascade (anything resting on a lever wakes it, so the payloads
-   cannot wait balanced) and a spring volley (springs fire straight, so
-   nothing reverses the ball's sideways motion).
+   Not built: a ball counter (the dispenser's queue holds four balls) and
+   a spring volley (springs fire straight, so nothing reverses the ball's
+   sideways motion). A seesaw cascade needed a game change, since anything
+   resting on a lever woke it: a lever can now be **latched**, held until
+   something hits it at more than 1.5 cells a second (`LATCH` in
+   machine.js; a resting or settling item never does). A latched lever,
+   like a trapdoor, may start with an item on it, and draws a solid catch
+   in its fulcrum while it holds. Seesaw cascade: four latched seesaws,
+   each tipping onto a stop so its ball rolls off onto the next.
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.
