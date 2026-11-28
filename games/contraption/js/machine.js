@@ -181,8 +181,9 @@ export function problem(level, part, others = []) {
     if (z.walls.some(touch)) return 'Hits a wall';
     if (z.noBuild.some(touch)) return 'No building here';
     if (def.front && z.danger.some(touch)) return 'In a danger zone';
-    // a trapdoor may carry an item from the start: touching is fine, overlapping is not
-    if (def.front && z.items.some(def.carries ? (s) => overlap(shape, s) < -0.12 : touch)) return 'In the way of the start';
+    // a trapdoor (or a latched lever) may carry an item from the start: touching is fine, overlapping is not
+    const carries = typeof def.carries === 'function' ? def.carries(part) : def.carries;
+    if (def.front && z.items.some(carries ? (s) => overlap(shape, s) < -0.12 : touch)) return 'In the way of the start';
     const g = level.goal;
     if (g && def.front && inRect([shape.minX, shape.minY], [g.x, g.y, g.w, g.h]) && inRect([shape.maxX, shape.maxY], [g.x, g.y, g.w, g.h])) return 'Inside the goal';
   }
@@ -239,7 +240,7 @@ export function build(level, parts, { sandbox = false } = {}) {
     // a train with no motor (a free lever, a loose gear) holds still until something touches it
     // a part that swings by itself (a pendulum) is never held
     const free = t.axles.some((a) => axleParts(a).some((p) => PARTS[p.type].swings));
-    return addTrain(world, { inertia, motors, damping: motors.length ? (motors.every((m) => m.spring) ? 0.005 : 0.2) : free ? 0.0005 : 0.03, jammed: t.jammed, held: !motors.length && !free });
+    return addTrain(world, { inertia, motors, damping: motors.length ? (motors.every((m) => m.spring) ? 0.005 : 0.2) : free ? 0.0005 : 0.03, jammed: t.jammed, held: !motors.length && !free, latch: t.axles.some((a) => axleParts(a).some((p) => p.latch)) ? LATCH : 0 });
   });
   const ctx = {
     axle: (p) => {
@@ -402,6 +403,8 @@ function settleSignals(run) {
 }
 
 export const SETTLE_TIME = 0.5;
+/** How hard (cells per second) something must hit a latched lever to let it go. */
+export const LATCH = 1.5;
 export const STUCK_TIME = 2.5;
 
 /**

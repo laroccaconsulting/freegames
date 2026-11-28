@@ -2,6 +2,14 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-17',
+    title: 'Latched levers',
+    items: [
+      'A lever can now be Latched: balls can rest on it, and it only lets go when something hits it hard.',
+      'Seesaw cascade in the Gallery: four latched seesaws, each one tipping the next.',
+    ],
+  },
+  {
     id: '2026-12-16',
     title: 'Five more machines',
     items: [

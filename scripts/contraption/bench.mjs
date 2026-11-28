@@ -36,7 +36,7 @@ const still = run.items.map(() => 0);
 const sigIds = (opt('--signals') || '').split(',').filter(Boolean);
 const sigWas = new Map();
 const sigLog = [];
-while (run.time < T && (run.status === 'running' || !board.goal)) {
+while (run.time < T && run.status === 'running') {
   run.tick();
   spec.watch?.(run, s);
   if (run.steps % 30 === 0) run.items.forEach((b, i) => trace[i].push(`${b.x.toFixed(1)},${b.y.toFixed(1)}`));

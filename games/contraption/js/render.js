@@ -429,7 +429,7 @@ export function drawBouncer(ctx, view, pal, a, b, squash = 0) {
   ctx.stroke();
 }
 
-export function drawLever(ctx, view, pal, part, angle) {
+export function drawLever(ctx, view, pal, part, angle, latched = false) {
   const a = angle ?? ((part.angle || 0) * Math.PI) / 180;
   const [x, y] = part.p;
   const c = Math.cos(a);
@@ -447,6 +447,16 @@ export function drawLever(ctx, view, pal, part, angle) {
   ctx.strokeStyle = pal.back;
   ctx.lineWidth = view.px(1.8);
   ctx.stroke();
+  // a latch: a solid catch in the fulcrum while it is locked
+  if (latched) {
+    ctx.beginPath();
+    ctx.moveTo(x, y + 0.12);
+    ctx.lineTo(x - 0.22, y + 0.5);
+    ctx.lineTo(x + 0.22, y + 0.5);
+    ctx.closePath();
+    ctx.fillStyle = pal.ink;
+    ctx.fill();
+  }
   capsulePath(ctx, e1[0], e1[1], e2[0], e2[1], 0.14);
   ctx.fillStyle = pal.paper;
   ctx.fill();

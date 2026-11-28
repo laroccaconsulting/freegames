@@ -13,6 +13,8 @@ export default {
   tip: 'Drop something heavy on the short arm to throw something light off the long one.',
   layer: 3,
   front: true,
+  // a latched lever can hold a ball from the start
+  carries: (part) => !!part.latch,
   ...onePeg,
   shape: (part) => {
     const [e1, e2] = leverEnds(part);
@@ -29,7 +31,7 @@ export default {
     const A = ctx.axle(part.p);
     return addBody(world, { kind: 'rotor', shape: capsule(-part.l1, 0, part.l2, 0, 0.14), x: part.p[0], y: part.p[1], base: rad(part.angle || 0), train: A.train, k: A.k, density: 0.4, friction: 0.6, restitution: 0.1, tag: 'lever' });
   },
-  draw: (view, pal, part, live) => drawLever(view.ctx, view, pal, part, live.body ? live.body.angle : undefined),
+  draw: (view, pal, part, live) => drawLever(view.ctx, view, pal, part, live.body ? live.body.angle : undefined, !!part.latch && (!live.body || live.body.train.held)),
   defaults: ([x, y]) => [[2, 2], [1.5, 1.5], [1, 1], [2, 1], [1, 2], [0.5, 0.5]].map(([l1, l2]) => ({ type: 'lever', p: [x, y], angle: 0, l1, l2 })),
   distance: (part, wx, wy) => {
     const [e1, e2] = leverEnds(part);
@@ -59,6 +61,7 @@ export default {
     { kind: 'stepper', field: 'l1', value: part.l1, step: 0.5, min: ARM[0], max: ARM[1], label: (v) => `left ${v}`, aria: ['Shorter left arm', 'Longer left arm'] },
     { kind: 'stepper', field: 'l2', value: part.l2, step: 0.5, min: ARM[0], max: ARM[1], label: (v) => `right ${v}`, aria: ['Shorter right arm', 'Longer right arm'] },
     { kind: 'stepper', field: 'angle', value: part.angle || 0, step: 15, min: -75, max: 75, label: (v) => `${v}°`, aria: ['Tilt left end down', 'Tilt right end down'] },
+    { kind: 'choice', field: 'latch', value: !!part.latch, options: [[false, 'Free', 'Free: lets go when anything touches it'], [true, 'Latched', 'Latched: only lets go when something hits it hard, so balls can wait on it']] },
   ],
-  hint: (part) => `Holds this angle until something touches it. The long arm moves farther and faster.`,
+  hint: (part) => (part.latch ? 'Latched: balls can rest on it. It lets go only when something hits it hard, like a seesaw waiting to be kicked.' : 'Holds this angle until something touches it. Tap Latched to let balls wait on it.'),
 };
