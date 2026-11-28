@@ -17,7 +17,7 @@ export default {
   name: 'Chip',
   blurb: 'Logic you built, wrapped up as one part with pins.',
   physics: 'Inside it is the same NANDs, delays and pixels, wired the same way: wrap a counter once, use it many times.',
-  tip: 'In the sandbox or on the workbench, open the menu and choose Make a chip.',
+  tip: 'In the sandbox or the Gallery, open the menu and choose Make a chip. Tap a chip and choose Unwrap to see inside it.',
   layer: 5,
   back: true,
   ...onePeg,
@@ -68,7 +68,7 @@ export default {
     inPins(part).forEach((q) => pin(q, false));
     outPins(part).forEach((q, i) => pin(q, live.signalId?.(`${part.id}/${part.def.outputs[i]}`)));
   },
-  hint: (part) => `${part.def.inputs.length} in, ${part.def.outputs.length} out. Wire to the round pins.`,
+  hint: (part) => `${part.def.inputs.length} in, ${part.def.outputs.length} out. Wire to the round pins. Unwrap to see or change what is inside.`,
 };
 
 /**

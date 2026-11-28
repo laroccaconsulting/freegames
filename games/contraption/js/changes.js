@@ -2,6 +2,16 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-18',
+    title: 'Chips you can open',
+    items: [
+      'Tap a chip and choose Unwrap: its gates and wires come back onto the board, so you can see how it works and change it.',
+      'My chips (in the menu, or the Chip tile in the tray): place, rename or delete your chips.',
+      'Keep: save a chip from a Gallery machine into My chips.',
+      'Make a chip is in the menu in the Sandbox and every Gallery machine, and the Chip tile is always in the tray there.',
+    ],
+  },
+  {
     id: '2026-12-17',
     title: 'Latched levers',
     items: [

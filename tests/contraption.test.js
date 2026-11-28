@@ -470,6 +470,43 @@ test('cleats carry a ball up a slope a smooth belt cannot; a trapdoor holds unti
   assert.ok(Math.abs(noWire.items[1].y - TRAPDOOR_CATAPULT.board.items[1].y) < 0.1, 'the steel ball is still on the trapdoor');
 });
 
+test('every chip unwraps back into gates that do the same job', async () => {
+  const { makeRun, problems } = await import('../games/contraption/js/machine.js');
+  const { BENCH } = await import('../games/contraption/js/levels.js');
+  const { MACHINES } = await import('../games/contraption/js/machines/index.js');
+  const { unwrap, renameIn, layoutOf } = await import('../games/contraption/js/chips.js');
+  let n = 0;
+  const uid = () => `u${n++}`;
+  let tried = 0;
+  for (const m of MACHINES) {
+    let parts = m.parts.map((p, i) => ({ id: p.id || `g${i}`, ...p }));
+    const chips = parts.filter((p) => p.type === 'chip');
+    if (!chips.length) continue;
+    const board = { ...BENCH, id: `gallery:${m.id}`, timeLimit: Infinity, ...m.board };
+    for (const c of chips) {
+      parts = unwrap(board, parts, c.id, uid);
+      assert.ok(parts, `${m.id}: room to unwrap ${c.def.name}`);
+    }
+    assert.equal(parts.filter((p) => p.type === 'chip').length, 0);
+    assert.deepEqual([...problems(board, parts)], [], `${m.id}: unwrapped gates fit`);
+    const run = makeRun(board, parts, { sandbox: true });
+    const s = {};
+    while (run.time < (m.seconds || 20) && run.status === 'running') {
+      run.tick();
+      m.watch?.(run, s);
+    }
+    assert.equal(m.verify(run, s) ?? null, null, `${m.id} still works unwrapped`);
+    tried++;
+  }
+  assert.ok(tried >= 4);
+  // a chip made by the player keeps its layout
+  assert.deepEqual(layoutOf({ parts: [{ id: 'a' }, { id: 'b' }], links: [], inputs: [], outputs: [], at: { a: [0, 0], b: [3, 1] } }), { a: [0, 0], b: [3, 1] });
+  const lib = [{ name: 'ONE' }, { name: 'TWO' }];
+  assert.deepEqual(renameIn(lib, 'ONE', 'uno'), [{ name: 'UNO' }, { name: 'TWO' }]);
+  assert.equal(renameIn(lib, 'ONE', 'two'), null, 'names stay unique');
+  assert.equal(renameIn(lib, 'ONE', '  '), null);
+});
+
 test('a latched lever holds a resting ball and lets go only when hit hard', async () => {
   const { makeRun, problems } = await import('../games/contraption/js/machine.js');
   const { BENCH } = await import('../games/contraption/js/levels.js');
