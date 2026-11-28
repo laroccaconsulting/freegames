@@ -628,5 +628,16 @@ judges fairness and fun before merge.
    (three proven stages chained) and Cuckoo clock (the arm on the slow
    shaft must be balanced: a 3-cell arm out to one side weighs twenty
    times the escape spring's torque and jams the escapement).
+   The Gallery became a screen with shelves (categories) and cards with a
+   drawing of each machine, framed on its parts. Third batch: Binary clock,
+   Egg drop (a downhill cleated belt: any 7-cell track would land the egg
+   at three times its breaking speed), Stepping escalator (a toggle
+   cleared by its own delay stretches each beam flash into a 0.3 s motor
+   pulse), Pinball and Juggler (a beam just above a spring fires it at the
+   falling ball; with power 2 each kick gives back what the fall took).
+   Not built: a ball counter (the dispenser's queue holds four balls), a
+   seesaw cascade (anything resting on a lever wakes it, so the payloads
+   cannot wait balanced) and a spring volley (springs fire straight, so
+   nothing reverses the ball's sideways motion).
 8. More mechanical parts as levels call for them: ratchet, pendulum,
    cam, springs, rope and pulley.

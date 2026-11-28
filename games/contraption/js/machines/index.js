@@ -20,5 +20,10 @@ import raceTimer from './race-timer.js';
 import adder from './adder.js';
 import breakfast from './breakfast.js';
 import cuckoo from './cuckoo.js';
+import binaryClock from './binary-clock.js';
+import eggDrop from './egg-drop.js';
+import steppingEscalator from './stepping-escalator.js';
+import pinball from './pinball.js';
+import juggler from './juggler.js';
 
-export const MACHINES = [lapCounter, gearbox, pendulumWave, trafficLights, dispenser, springShot, beltRelay, alarmClock, raceTimer, adder, breakfast, cuckoo];
+export const MACHINES = [lapCounter, gearbox, pendulumWave, trafficLights, dispenser, springShot, beltRelay, alarmClock, raceTimer, adder, breakfast, cuckoo, binaryClock, eggDrop, steppingEscalator, pinball, juggler];

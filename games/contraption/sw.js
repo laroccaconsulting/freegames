@@ -1,6 +1,6 @@
 // Offline support: every file is cached on install and served cache-first.
 // VERSION and FILES are rewritten by scripts/build-sw.mjs; run it before deploying.
-const VERSION = '395254452eaf';
+const VERSION = 'f439bb1fa855';
 const FILES = [
   './',
   './achievements.js',
@@ -40,16 +40,21 @@ const FILES = [
   './js/machines/adder.js',
   './js/machines/alarm-clock.js',
   './js/machines/belt-relay.js',
+  './js/machines/binary-clock.js',
   './js/machines/breakfast.js',
   './js/machines/cuckoo.js',
   './js/machines/dispenser.js',
+  './js/machines/egg-drop.js',
   './js/machines/gearbox.js',
   './js/machines/index.js',
+  './js/machines/juggler.js',
   './js/machines/kit.js',
   './js/machines/lap-counter.js',
   './js/machines/pendulum-wave.js',
+  './js/machines/pinball.js',
   './js/machines/race-timer.js',
   './js/machines/spring-shot.js',
+  './js/machines/stepping-escalator.js',
   './js/machines/traffic-lights.js',
   './js/parts/_logic.js',
   './js/parts/_two-peg.js',
