@@ -2,6 +2,14 @@
 // to returning players. Add an entry with every update players can see.
 export const CHANGES = [
   {
+    id: '2026-12-13',
+    title: 'Eight new machines in the Gallery',
+    items: [
+      'Lap counter: the marble machine counting its laps in decimal on a two-digit display.',
+      'Gearbox, Pendulum wave, Traffic lights (the crate only moves on green), Ball dispenser (a pendulum lets one ball go per swing), Spring shot, Belt relay and Alarm clock (clockwork that rings after half a minute).',
+    ],
+  },
+  {
     id: '2026-12-12',
     title: 'Watch it again',
     items: [

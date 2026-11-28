@@ -568,3 +568,25 @@ test('a spring fires at its delay, or on each signal once re-cocked', async () =
   }
   assert.ok(fires.size >= 3, `fired ${fires.size} times on a 2-second heartbeat over 7 s`);
 });
+
+test('every showpiece machine does what its note says', async () => {
+  const { MACHINES } = await import('../games/contraption/js/machines/index.js');
+  const { makeRun, problems } = await import('../games/contraption/js/machine.js');
+  const { BENCH } = await import('../games/contraption/js/levels.js');
+  const ids = new Set();
+  for (const m of MACHINES) {
+    assert.ok(!ids.has(m.id), `${m.id} is unique`);
+    ids.add(m.id);
+    const board = { ...BENCH, timeLimit: Infinity, ...m.board };
+    const parts = m.parts.map((p, i) => ({ id: p.id || `g${i}`, ...p }));
+    assert.equal(problems(board, parts).size, 0, `${m.id} is placeable: ${JSON.stringify([...problems(board, parts)])}`);
+    const run = makeRun(board, parts, { sandbox: true });
+    const s = {};
+    while (run.time < m.seconds && (run.status === 'running' || !board.goal)) {
+      run.tick();
+      m.watch?.(run, s);
+      if (board.goal && run.status !== 'running') break;
+    }
+    assert.equal(m.verify(run, s), null, `${m.id}`);
+  }
+});
